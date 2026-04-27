@@ -12,6 +12,8 @@ export class MainMenu extends Phaser.Scene {
     private titleText!: Phaser.GameObjects.Text
     private playButton!: Phaser.GameObjects.Text
     private music!: Phaser.Sound.BaseSound
+    private sounds!: Phaser.Sound.BaseSound
+    private soundd!:Phaser.Sound.BaseSound
 
     // ─── CONSTRUCTOR ────────────────────────────────────────────
     constructor() {
@@ -30,12 +32,19 @@ export class MainMenu extends Phaser.Scene {
     preload(): void {
         this.load.image('Mainmenu', '/Main.png')
         this.load.image('full', '/fullscreen.png')
+        this.load.image('Logo', '/LogoApp.png')
         this.load.spritesheet('btn-tutorial', '/buttonTutorial.png', {
             frameWidth: 687,
             frameHeight: 282
         })
-        this.load.audio('ambient_track', '/ambient_track.mp3')
-        this.load.image('Banner','/Banner.png')
+        this.load.spritesheet('Platon', '/PlatonSaluda.png', {
+            frameWidth: 187,
+            frameHeight: 196
+        })
+        this.load.audio('ambient_track', '/Sound/ambient_track.mp3')
+        this.load.audio('Click', '/Sound/Click.mp3')
+        this.load.audio('Hover', '/Sound/hiverSound.mp3')
+        this.load.image('Banner', '/BannerMain.png')
 
     }
 
@@ -47,51 +56,68 @@ export class MainMenu extends Phaser.Scene {
      * todos tus objetos con new.
      */
     create(): void {
-
         const { width, height } = this.scale
         const ratio = width / height
-        // --- Fondo de color sólido ---
+
         this.cameras.main.setBackgroundColor('#000000')
-        let fondoKey = 'Mainmenu'
 
 
-        if (ratio > 1.9) fondoKey = 'full'
-        // pantallas ultrawide
-
-        this.add.image(width / 2, height / 2, fondoKey)
+        this.add.image(width / 2, height / 2, 'full')
             .setDisplaySize(width, height)
-        this.music = this.sound.add('ambient_track', { volume: 0.3, loop: true })
+
+
+
+        this.music = this.sound.add('ambient_track', { volume: 0.1, loop: true })
         this.music.play()
-        
-        this.add.image(width/2,height * 0.4,'Banner')
-            .setDisplaySize(1400,600)
 
+        this.sounds = this.sound.add('Click', { volume: 0.1, loop: false })
+        this.soundd = this.sound.add('Hover', { volume: 0.1, loop: false })
+    
+        this.input.once('pointerdown', () => this.sounds.play())
+        this.input.on('pointerover', () => this.soundd.play())
+
+        this.add.image(700, height * 0.4, 'Banner')
+            .setDisplaySize(541 * 2, 461 * 2)
+        this.add.image(700, height * 0.2, 'Logo')
+            .setDisplaySize(541 * 1.5, 461 * 1.5)
         this.anims.create({
-            key: 'btn-hover',       
-            frames: this.anims.generateFrameNumbers('btn-tutorial', {
-                start: 0, end: 15  
-            }),
-            frameRate: 60,
+            key: 'btn-hover',
+            frames: this.anims.generateFrameNumbers('btn-tutorial', { start: 0, end: 15 }),
+            frameRate: 70,
             repeat: 0
         })
 
         this.anims.create({
-            key: 'btn-idle',     
-            frames: this.anims.generateFrameNumbers('btn-tutorial', {
-                start: 15, end: 0  
-            }),
+            key: 'btn-idle',
+            frames: this.anims.generateFrameNumbers('btn-tutorial', { start: 15, end: 0 }),
             frameRate: 60,
             repeat: 0
         })
-        const btn = this.add.sprite(width / 2, height * 0.40, 'btn-tutorial')
-            .setDisplaySize(500, 200)
+        this.anims.create({
+            key: 'PltnSl',
+            frames: this.anims.generateFrameNames('Platon', { start: 0, end: 15 }),
+            frameRate: 15
+            , repeat: -1
+        })
+
+        const btn = this.add.sprite(690, height * 0.5, 'btn-tutorial')
+            .setDisplaySize(500 * 1.5, 200 * 1.5)
             .setInteractive()
 
-        btn.play('btn-idle')   // arranca con animación idle
+        const platon = this.add.sprite(1640, height * 0.84, 'Platon')
+            .setDisplaySize(300 * 1.5, 200 * 1.5)
 
+        platon.play('PltnSl')
+        btn.play('btn-idle')
+
+        
         btn.on('pointerover', () => btn.play('btn-hover'))
         btn.on('pointerout', () => btn.play('btn-idle'))
-        btn.on('pointerdown', () => this.scene.start('GameScene'))
+
+        btn.on('pointerdown', () => {
+            this.sounds.play()
+            this.scene.start('GameScene')
+        })
 
 
         // --- Título ---
