@@ -51,7 +51,8 @@
 }
 
 #root {
-  width: 1126px;
+  width: 100vw;
+  height: 100vh;
   max-width: 100%;
   margin: 0 auto;
   text-align: center;
@@ -64,6 +65,9 @@
 
 body {
   margin: 0;
+  padding: 0;
+  overflow: hidden;
+  background: black;
 }
 
 h1,
@@ -108,4 +112,9 @@ code {
   line-height: 135%;
   padding: 4px 8px;
   background: var(--code-bg);
+}
+
+canvas {
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
 }
