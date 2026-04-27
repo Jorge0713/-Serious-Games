@@ -18,6 +18,7 @@ export class DialogueSystem {
 
   private isTyping = false;
   private canContinue = false;
+  private typingEvent: Phaser.Time.TimerEvent | null = null; 
 
   constructor(config: DialogueConfig) {
     this.scene = config.scene;
@@ -29,13 +30,18 @@ export class DialogueSystem {
 
     // Texto
     this.text = this.scene.add.text(config.x + 10, config.y + 10, "", {
-      fontSize: "18px",
+      fontFamily: "Gill Sans MT", 
+      fontSize: "19px",
       color: "#000",
       wordWrap: { width: config.width - 20 }
     });
   }
 
   show(text: string, duration: number = 2000) {
+    if (this.typingEvent){
+      this.typingEvent.remove(false); 
+      this.typingEvent = null;
+    }
     this.fullText = text;
     this.currentText = "";
     this.index = 0;
@@ -53,6 +59,7 @@ export class DialogueSystem {
   }
 
   private typeEffect() {
+    this.typingEvent = 
     this.scene.time.addEvent({
       delay: 30,
       repeat: this.fullText.length - 1,
@@ -67,8 +74,25 @@ export class DialogueSystem {
       }
     });
   }
+  private finishText() { 
+    if (this.typingEvent){
+      this.typingEvent.remove(false);
+      this.typingEvent = null; 
+    }
+      this.text.setText(this.fullText);
+      this.currentText = this.fullText; 
+      this.index = this.fullText.length; 
+      
+      this.isTyping = false; 
+      this.canContinue = true;
+  }
+  
 
   next(onComplete: () => void) {
+    if(this.isTyping){ 
+      this.finishText(); 
+      return; 
+    }
     if (!this.canContinue) return;
 
     onComplete();
