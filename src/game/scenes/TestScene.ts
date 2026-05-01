@@ -29,7 +29,7 @@ export class TestScene extends Phaser.Scene {
     this.anims.create({
       key: "wave",
       frames: this.anims.generateFrameNumbers("platon", {
-        start: 0,   // 👈 ajusta según tu spritesheet
+        start: 0,   // ajusta según tu spritesheet
         end: 15
       }),
       frameRate: 12,

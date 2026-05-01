@@ -7,7 +7,7 @@ export class TutorialScene extends Phaser.Scene {
 
   private platon!: Phaser.GameObjects.Sprite;
   private plato!: Phaser.GameObjects.Image;
-  private fondo_cocina!: Phaser.GameObjects.Image; 
+  private fondo_cocina!: Phaser.GameObjects.Image;
 
   constructor() {
     super("TutorialScene");
@@ -24,13 +24,13 @@ export class TutorialScene extends Phaser.Scene {
   }
 
   create() {
-    const{width, height} = this.scale;
+    const { width, height } = this.scale;
     // 🎨 Fondo
     this.fondo_cocina = this.add.image(
-      this.scale.width / 2, 
+      this.scale.width / 2,
       this.scale.height / 2,
       "Fondo-cocina"
-    ).setScale(0.5).setDisplaySize(width,height);
+    ).setScale(0.5).setDisplaySize(width, height);
     // 🍽️ Plato (centrado)
     this.plato = this.add.image(
       this.scale.width * 0.65,
@@ -45,7 +45,7 @@ export class TutorialScene extends Phaser.Scene {
       "platon"
     ).setScale(1.3);
 
-    // 🔥 Animación (solo ejemplo: saludo)
+    // Animación (solo ejemplo: saludo)
     this.anims.create({
       key: "wave",
       frames: this.anims.generateFrameNumbers("platon", {
@@ -62,9 +62,9 @@ export class TutorialScene extends Phaser.Scene {
     this.dialog = new DialogueSystem({
       scene: this,
       x: 50,
-      y: this.scale.height - 140,
+      y: this.scale.height - 200,
       width: this.scale.width - 850,
-      
+
     });
 
     // ▶️ Iniciar
@@ -85,7 +85,7 @@ export class TutorialScene extends Phaser.Scene {
       "Este plato nos ayuda a comer de mejor manera y poder mantener una vida saludable!🫂",
       "El Plato del Bien Comer divide los alimentos en tres grupos principales: verduras y frutas, cereales, y leguminosas con alimentos de origen animal. Cada uno aporta nutrientes distintos que tu cuerpo necesita todos los días. ",
       "La idea principal no es comer solo un grupo, sino combinar los tres en proporciones adecuadas. Así obtienes energía, vitaminas, proteínas y minerales para crecer fuerte y mantenerte activo. ",
-      "El plato tiene tres secciones y comenzaremos con las verduaras. Prepárate para descubrir cómo funciona una comida balanceada.😉"
+      "El plato tiene tres secciones y- comenzaremos con las verduaras. Prepárate para descubrir cómo funciona una comida balanceada.😉"
     ];
 
     if (this.step < steps.length) {

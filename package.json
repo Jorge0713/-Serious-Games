@@ -4,14 +4,14 @@
   "version": "0.0.0",
   "type": "module",
   "main": "electron/main.cjs",
-  "scripts": {
-    "dev": "vite",
-    "build": "tsc -b && vite build",
-    "lint": "eslint .",
-    "preview": "vite preview",
-    "electron": "wait-on http://localhost:5173 && electron .",
-    "start": "concurrently \"npm run dev\" \"npm run electron\""
-  },
+"scripts": {
+  "dev": "vite",
+  "build": "tsc -b && vite build",
+  "lint": "eslint .",
+  "preview": "vite preview",
+  "electron": "wait-on http://localhost:5173 && electron .",
+  "start": "concurrently \"npm run dev\" \"npm run electron\""
+},
   "dependencies": {
     "better-sqlite3": "^12.9.0",
     "phaser": "^4.0.0",
