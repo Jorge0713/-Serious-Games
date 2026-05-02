@@ -1,4 +1,6 @@
 import * as Phaser from 'phaser'
+
+
 import { hoverScale } from "../../componentes/HoverScale";
 export class MainMenu extends Phaser.Scene {
 
@@ -20,14 +22,10 @@ export class MainMenu extends Phaser.Scene {
         this.load.image('Mainmenu', '/assets/Main.png')
         this.load.image('full', '/assets/fullscreen.png')
         this.load.image('Logo', '/assets/LogoApp.png')
-        this.load.image('CrearPlatoInactivo', '/assets/CrearPlatoInactivo.png')
-        this.load.image('CrearPlatoActivo', '/assets/CrearPlatoActivo.png')
-        this.load.image('btn-tutorial', '/assets/BottonInicio.png')
-
-        this.load.spritesheet('Platon', '/assets/PlatonSaluda.png', {
-            frameWidth: 187,
-            frameHeight: 196
-        })
+        this.load.image('btn-CrearPlatoInactivo', '/assets/Buttons/BotonCrearPlatoInactivo.png')
+        this.load.image('btn-CrearPlatoActivo', '/assets/Buttons/BotonCrearPlatoActivo.png')
+        this.load.image('btn-tutorial', '/assets/Buttons/BotonTutorial.png')
+        this.load.image('marco', '/assets/Marco.png')
         this.load.audio('ambient_track', '/Sound/ambient_track.mp3')
         this.load.audio('Click', '/Sound/Click.mp3')
         this.load.audio('Hover', '/Sound/hiverSound.mp3')
@@ -44,7 +42,8 @@ export class MainMenu extends Phaser.Scene {
 
         this.add.image(width / 2, height / 2, 'full')
             .setDisplaySize(width * 1.0, height * 1.0)
-
+        this.add.image(width / 2, height / 2, 'marco')
+            .setDisplaySize(width * 1, height * 1)
 
 
         this.music = this.sound.add('ambient_track', { volume: 0.3, loop: true })
@@ -56,46 +55,36 @@ export class MainMenu extends Phaser.Scene {
         this.input.once('pointerdown', () => this.sounds.play())
         this.input.on('pointerover', () => this.soundd.play())
         //banner
-        this.add.image(700, height * 0.4, 'Banner')
+        this.add.image(width / 2, height * 0.4, 'Banner')
             .setDisplaySize(541 * 2, 461 * 2)
         //logo
-        this.add.image(700, height * 0.20, 'Logo')
+        this.add.image(width / 2, height * 0.15, 'Logo')
             .setDisplaySize(541 * 1.5, 461 * 1.5)
-
-        this.anims.create({
-            key: 'PltnSl',
-            frames: this.anims.generateFrameNames('Platon', { start: 0, end: 15 }),
-            frameRate: 15
-            , repeat: -1
-        })
-
-        const btnTutorial = this.add.image(690, height * 0.42, 'btn-tutorial')
-            .setDisplaySize(500 * 1.5, 250)
-            .setScale(0.9)
+        /*
+                this.anims.create({
+                    key: 'PltnSl',
+                    frames: this.anims.generateFrameNames('Platon', { start: 0, end: 15 }),
+                    frameRate: 15
+                    , repeat: -1
+                })
+        */
+        const btnTutorial = this.add.image(width / 2, height * 0.42, 'btn-tutorial')
             .setInteractive()
 
-
         hoverScale(this, btnTutorial, {
-            scaleOver: 1.1,
+            scaleOver: 1.2,
             duration: 150,
             hoverSound: this.soundd
         })
 
-        const btnPlato = this.add.image(690, height * 0.63, 'CrearPlatoInactivo')
-            .setDisplaySize(500 * 1.5, 300)
+        const btnPlato = this.add.image(width / 2, height * 0.6, 'btn-CrearPlatoInactivo')
             .setInteractive()
 
         hoverScale(this, btnPlato, {
-            scaleOver: 1,
+            scaleOver: 1.2,
             duration: 150,
             hoverSound: this.soundd
         })
-
-
-        const platon = this.add.sprite(1700, height * 0.82, 'Platon')
-            .setDisplaySize(250 * 1.5, 200 * 1.5)
-
-        platon.play('PltnSl')
 
         btnTutorial.on('pointerdown', () => {
             this.sounds.play()
@@ -141,70 +130,6 @@ export class MainMenu extends Phaser.Scene {
         })
 
 
-        // --- Título ---
-        /*this.titleText = this.add.text(
-            width / 2,          // posición X (centro)
-            height * 0.3,       // posición Y (30% desde arriba)
-            'Nutrición App',    // texto
-            {
-                fontSize: '48px',
-                color: '#ffffff',
-                fontStyle: 'bold'
-            }
-        ).setOrigin(0.5)        // setOrigin(0.5) = centrar el texto en su propio eje
-
-        // --- Subtítulo ---
-        this.add.text(
-            width / 2,
-            height * 0.45,
-            'Aprende sobre nutrición jugando',
-            {
-                fontSize: '20px',
-                color: '#a0a0c0'
-            }
-        ).setOrigin(0.5)
-
-        // --- Botón "Jugar" ---
-        this.playButton = this.add.text(
-            width / 2,
-            height * 0.65,
-            ' JUGAR ',
-            {
-                fontFamily: 'Gill Sants',
-                backgroundColor: 'white',
-                fontSize: '32px',
-                color: '#00ff88',
-                fontStyle: 'bold'
-
-            },
-
-        )
-            .setOrigin(0.5)
-            .setInteractive()       // lo hace clickeable (como agregar un MouseListener en Java)
-
-        // --- Eventos del botón ---
-        /*
-         * Analogía Java:
-         * playButton.addActionListener(e -> cambiarPantalla());
-         *
-         * En Phaser:
-         * objeto.on('evento', callback)
-         *//*
-this.playButton.on('pointerover', () => {
-// Mouse encima → cambiar color (hover)
-this.playButton.setColor('#ffffff')
-})
-
-this.playButton.on('pointerout', () => {
-// Mouse sale → restaurar color
-this.playButton.setColor('#00ff88')
-})
-
-this.playButton.on('pointerdown', () => {
-// Click → cambiar de escena
-// Analogía Java: cardLayout.show(panel, "GameScene")
-this.scene.start('GameScene')
-})*/
         this.scale.on('resize', (gameSize: Phaser.Structs.Size) => {
             const { width, height } = gameSize
             this.cameras.main.setSize(width, height)
