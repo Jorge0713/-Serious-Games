@@ -56,6 +56,7 @@ export class TutorialScene extends Phaser.Scene {
       height / 2,
       "Fondo-cocina"
     ).setScale(0.5).setDisplaySize(width, height);
+    void this.fondo_cocina;
 
     // 🍽️ Plato (centrado a la derecha)
     this.plato = this.add.image(
@@ -135,6 +136,30 @@ export class TutorialScene extends Phaser.Scene {
       .on("pointerdown", () => {
         this.clickSound.play();
         this.scene.start("MainMenu");
+      });
+
+      // Botón transparente para tutorial de Frutas y Verduras
+      const btnTutorialFV = this.add.text(
+        width - 180,
+        40,
+        "Frutas y Verduras",
+        {
+          fontFamily: 'Arial',
+          fontSize: '1px',  // Texto minuscule para que casi no se vea
+          color: '#00000000'  // Transparente
+        }
+      )
+        .setInteractive({ useHandCursor: true })
+        .setAlpha(0.01)  // Casi invisible
+        .setDepth(99)
+        .setName("btn-tutorial-fv");
+
+      btnTutorialFV.on("pointerdown", () => {
+        this.clickSound.play();
+        const showTutorial = (window as any).showTutorial;
+        if (showTutorial) {
+          showTutorial();
+        }
       });
   }
 
@@ -265,12 +290,31 @@ export class TutorialScene extends Phaser.Scene {
 
     // Caso Verduras / Frutas
     if (sectionId === "verduras" || sectionId === "frutas") {
-      // Verduras a la izquierda
+      // Verduras a la izquierda (solo visual)
       const verduraSprite = this.add.sprite(-200, centerY, "partes_plato", 0).setScale(0.8);
-      // Frutas a la derecha
-      const frutaSprite = this.add.sprite(width + 200, centerY, "partes_plato", 1).setScale(0.8);
+      // Frutas a la derecha (clickeable para abrir tutorial)
+      const frutaSprite = this.add.sprite(width + 200, centerY, "partes_plato", 1).setScale(0.8)
+        .setInteractive({ useHandCursor: true });
 
       this.expandedSprites.push(verduraSprite, frutaSprite);
+
+      // Click en frutas -> abre tutorial de frutas y verduras
+      frutaSprite.on("pointerdown", () => {
+        this.clickSound.play();
+        const showTutorial = (window as any).showTutorial;
+        if (showTutorial) {
+          showTutorial();
+        }
+      });
+
+      // Hover effect para frutas
+      frutaSprite.on("pointerover", () => {
+        this.hoverSound.play();
+        frutaSprite.setTint(0xdddddd);
+      });
+      frutaSprite.on("pointerout", () => {
+        frutaSprite.clearTint();
+      });
 
       // Animación de entrada
       this.tweens.add({
