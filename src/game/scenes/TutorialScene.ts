@@ -56,17 +56,14 @@ export class TutorialScene extends Phaser.Scene {
       height / 2,
       "Fondo-cocina"
     ).setScale(0.5).setDisplaySize(width, height);
-// Evitar error de TypeScript - variable asignada
     void this.fondo_cocina;
-    // 🍽️ Plato (centrgit add src/game/scenes/TutorialScene.ts
+
+    // 🍽️ Plato (centrado a la derecha)
     this.plato = this.add.image(
       width * 0.65,
       height / 2,
       "plato"
     ).setScale(0.3);
-
-    // Evitar error de TypeScript - variable asignada
-    void this.plato;
 
     // 🧍 Platón (lado izquierdo)
     this.platon = this.add.sprite(
@@ -122,37 +119,105 @@ export class TutorialScene extends Phaser.Scene {
       .setAlpha(0)
       .setDepth(100)
       .on("pointerdown", () => this.restorePlate());
+
+    // 🏠 BOTÓN IR AL MENÚ PRINCIPAL
+    this.add.text(width - 50, 50, "Menú Principal", {
+      fontSize: "32px",
+      fontFamily: "Arial",
+      color: "#ffffff",
+      backgroundColor: "#4CAF50", // Verde para destacar
+      padding: { x: 20, y: 10 }
+    })
+      .setOrigin(1, 0) // Alineado a la derecha
+      .setInteractive({ useHandCursor: true })
+      .setDepth(100)
+      .on("pointerover", function (this: Phaser.GameObjects.Text) { this.setTint(0xdddddd); })
+      .on("pointerout", function (this: Phaser.GameObjects.Text) { this.clearTint(); })
+      .on("pointerdown", () => {
+        this.clickSound.play();
+        this.scene.start("MainMenu");
+      });
+
+      // Botón transparente para tutorial de Frutas y Verduras
+      const btnTutorialFV = this.add.text(
+        width - 180,
+        40,
+        "Frutas y Verduras",
+        {
+          fontFamily: 'Arial',
+          fontSize: '1px',  // Texto minuscule para que casi no se vea
+          color: '#00000000'  // Transparente
+        }
+      )
+        .setInteractive({ useHandCursor: true })
+        .setAlpha(0.01)  // Casi invisible
+        .setDepth(99)
+        .setName("btn-tutorial-fv");
+
+      btnTutorialFV.on("pointerdown", () => {
+        this.clickSound.play();
+        const showTutorial = (window as any).showTutorial;
+        if (showTutorial) {
+          showTutorial();
+        }
+      });
   }
 
   /**
    * Crea zonas geométricas transparentes sobre la imagen del plato.
    */
   private createInteractiveZones() {
+    // El centro de la imagen escalada
     const px = this.plato.x;
     const py = this.plato.y;
 
-    // Dimensiones exactas visuales del plato (ancho original 2963 x escala 0.3)
-    const pw = 2963 * 0.3; // ~888.9
-    const ph = 1828 * 0.3; // ~548.4
+    // 🔧 AJUSTE DEL CENTRO REAL DEL PLATO
+    // Como el círculo del plato no está perfectamente centrado en la imagen, aplicamos un offset (en píxeles escalados).
+    // Valores negativos en Y mueven las zonas hacia ARRIBA.
+    const offsetX = 0;
+    const offsetY = -40; // <-- Ajusta este valor si las zonas siguen muy arriba o muy abajo
 
-    // Dividimos el plato sin superposiciones (overlap):
-    // - Mitad superior: dividida en 2 (Verduras, Frutas)
-    // - Mitad inferior: dividida en 3 (Cereales, Leguminosas, Animal)
+    const centerX = px + offsetX;
+    const centerY = py + offsetY;
+
+    // Medidas EXACTAS del plato dadas
+    const radioOriginal = 560;
+
+    // Escala usada al crear la imagen
+    const scale = 0.3;
+    const rBase = radioOriginal * scale;
+
+    // Multiplicamos por valores diferentes para arriba y abajo para ajustar al dibujo
+    const rTop = rBase * 1.45;    // ~10% menos para que Frutas y Verduras no se salgan
+    const rBottom = rBase * 1.6;  // 1.6 quedó perfecto para la parte de abajo
+
+    // Modo debug: Cambia a true para ver las zonas de colores y ajustarlas perfectamente
+    const DEBUG_ZONES = false;
+
+    // Dividimos el plato sin superposiciones (overlap) usando los radios ajustados:
     // Nota: El frame 2 está vacío, así que Cereales es 3, Leguminosas es 4, Animal es 5.
     const zonesConfig = [
-      // Top half (2 columnas)
-      { id: "verduras", ox: -pw / 4, oy: -ph / 4, w: pw / 2, h: ph / 2, frame: 0, msg: "¡Aprende sobre frutas y verduras!" },
-      { id: "frutas", ox: pw / 4, oy: -ph / 4, w: pw / 2, h: ph / 2, frame: 1, msg: "¡Aprende sobre frutas y verduras!" },
-      
-      // Bottom half (3 columnas)
-      { id: "cereales", ox: -pw / 3, oy: ph / 4, w: pw / 3, h: ph / 2, frame: 3, msg: "¡Conoce los cereales y tubérculos!" },
-      { id: "leguminosas", ox: 0, oy: ph / 4, w: pw / 3, h: ph / 2, frame: 4, msg: "¡Descubre las leguminosas!" },
-      { id: "animal", ox: pw / 3, oy: ph / 4, w: pw / 3, h: ph / 2, frame: 5, msg: "¡Conoce los alimentos de origen animal!" }
+      // Top half (2 columnas). Recortamos el alto un 10% de abajo hacia arriba para no invadir la mitad inferior.
+      { id: "verduras", ox: -rTop / 2, oy: -rTop * 0.55, w: rTop, h: rTop * 0.9, frame: 0, msg: "¡Aprende sobre frutas y verduras!", color: 0x00ff00 },
+      { id: "frutas", ox: rTop / 2, oy: -rTop * 0.55, w: rTop, h: rTop * 0.9, frame: 1, msg: "¡Aprende sobre frutas y verduras!", color: 0xff0000 },
+
+      // Bottom half (3 zonas). Ajustado para que Leguminosas no invada Cereales a la izquierda
+      { id: "cereales", ox: -rBottom * 0.55, oy: rBottom / 2, w: rBottom * 0.9, h: rBottom, frame: 3, msg: "¡Conoce los cereales y tubérculos!", color: 0xffff00 },
+      { id: "leguminosas", ox: rBottom * 0.05, oy: rBottom / 2, w: rBottom * 0.3, h: rBottom, frame: 4, msg: "¡Descubre las leguminosas!", color: 0xffa500 },
+      { id: "animal", ox: rBottom * 0.6, oy: rBottom / 2, w: rBottom * 0.8, h: rBottom, frame: 5, msg: "¡Conoce los alimentos de origen animal!", color: 0x8b4513 }
     ];
 
     zonesConfig.forEach(z => {
-      const zone = this.add.zone(px + z.ox, py + z.oy, z.w, z.h)
+      const zoneX = centerX + z.ox;
+      const zoneY = centerY + z.oy;
+
+      const zone = this.add.zone(zoneX, zoneY, z.w, z.h)
         .setInteractive({ useHandCursor: true });
+
+      // Si el modo debug está activo, dibuja un rectángulo visible para calibrar
+      if (DEBUG_ZONES) {
+        this.add.rectangle(zoneX, zoneY, z.w, z.h, z.color, 0.3).setDepth(200);
+      }
 
       // LÓGICA DE HOVER (ENTER)
       zone.on("pointerover", () => {
@@ -225,12 +290,31 @@ export class TutorialScene extends Phaser.Scene {
 
     // Caso Verduras / Frutas
     if (sectionId === "verduras" || sectionId === "frutas") {
-      // Verduras a la izquierda
+      // Verduras a la izquierda (solo visual)
       const verduraSprite = this.add.sprite(-200, centerY, "partes_plato", 0).setScale(0.8);
-      // Frutas a la derecha
-      const frutaSprite = this.add.sprite(width + 200, centerY, "partes_plato", 1).setScale(0.8);
+      // Frutas a la derecha (clickeable para abrir tutorial)
+      const frutaSprite = this.add.sprite(width + 200, centerY, "partes_plato", 1).setScale(0.8)
+        .setInteractive({ useHandCursor: true });
 
       this.expandedSprites.push(verduraSprite, frutaSprite);
+
+      // Click en frutas -> abre tutorial de frutas y verduras
+      frutaSprite.on("pointerdown", () => {
+        this.clickSound.play();
+        const showTutorial = (window as any).showTutorial;
+        if (showTutorial) {
+          showTutorial();
+        }
+      });
+
+      // Hover effect para frutas
+      frutaSprite.on("pointerover", () => {
+        this.hoverSound.play();
+        frutaSprite.setTint(0xdddddd);
+      });
+      frutaSprite.on("pointerout", () => {
+        frutaSprite.clearTint();
+      });
 
       // Animación de entrada
       this.tweens.add({
