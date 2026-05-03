@@ -9,8 +9,8 @@ export class MainMenu extends Phaser.Scene {
 
     // ─── PROPIEDADES ────────────────────────────────────────────
     // Analogía Java: atributos de instancia privados
-    private titleText!: Phaser.GameObjects.Text
-    private playButton!: Phaser.GameObjects.Text
+    // private titleText!: Phaser.GameObjects.Text  // Descomentar cuando se use
+    // private playButton!: Phaser.GameObjects.Text  // Descomentar cuando se use
     private music!: Phaser.Sound.BaseSound
     private sounds!: Phaser.Sound.BaseSound
     private soundd!: Phaser.Sound.BaseSound
@@ -57,7 +57,7 @@ export class MainMenu extends Phaser.Scene {
      */
     create(): void {
         const { width, height } = this.scale
-        const ratio = width / height
+        // const ratio = width / height  // Descomentar cuando se use
 
         this.cameras.main.setBackgroundColor('#000000')
 
@@ -117,6 +117,44 @@ export class MainMenu extends Phaser.Scene {
         btn.on('pointerdown', () => {
             this.sounds.play()
             this.scene.start('TutorialScene')
+        })
+
+        // Botón para tutorial de Frutas y Verduras
+        const btnTutorialFV = this.add.text(
+            690,
+            height * 0.7,
+            '🍎 Frutas y Verduras',
+            {
+                fontFamily: 'Georgia',
+                fontSize: '28px',
+                color: '#ffffff',
+                backgroundColor: '#2d5a27',
+                padding: { x: 20, y: 12 },
+            }
+        )
+            .setOrigin(0.5)
+            .setInteractive({ useHandCursor: true })
+            .setStroke('#4a7c3a', 2)
+
+        btnTutorialFV.on('pointerover', () => {
+            btnTutorialFV.setStyle({ backgroundColor: '#4a7c3a' })
+            this.soundd.play()
+        })
+
+        btnTutorialFV.on('pointerout', () => {
+            btnTutorialFV.setStyle({ backgroundColor: '#2d5a27' })
+        })
+
+        btnTutorialFV.on('pointerdown', () => {
+            this.sounds.play()
+            // Llamar al callback global para mostrar el tutorial de React
+            const showTutorial = (window as any).showTutorial
+            if (showTutorial) {
+                showTutorial()
+            } else {
+                // Si no está disponible, ir a la escena de tutorial existente
+                this.scene.start('TutorialScene')
+            }
         })
 
 

@@ -1,5 +1,5 @@
 import * as Phaser from "phaser";
-import { TutorialScene } from "./scenes/TutorialScene";
+import { TutorialScene } from "./Scenes/TutorialScene";
 
 const config = {
   type: Phaser.AUTO,

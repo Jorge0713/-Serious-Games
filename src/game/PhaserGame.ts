@@ -1,7 +1,7 @@
 import * as Phaser from 'phaser'
-import { MainMenu } from './scenes/MainMenu'
-import { TutorialScene } from './scenes/TutorialScene'
-import { Nivel1Scene } from './scenes/Nivel1Scene'
+import { MainMenu } from './Scenes/MainMenu'
+import { TutorialScene } from './Scenes/TutorialScene'
+import { Nivel1Scene } from './Scenes/Nivel1Scene'
 
 /*
  * Analogía Java: como el main() que instancia tu aplicación

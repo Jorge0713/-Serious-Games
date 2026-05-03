@@ -56,13 +56,17 @@ export class TutorialScene extends Phaser.Scene {
       height / 2,
       "Fondo-cocina"
     ).setScale(0.5).setDisplaySize(width, height);
-
-    // 🍽️ Plato (centrado a la derecha)
+    // Evitar error de TypeScript - variable asignada
+    void this.fondo_cocina;
+    // 🍽️ Plato (centrado)
     this.plato = this.add.image(
       width * 0.65,
       height / 2,
       "plato"
     ).setScale(0.3);
+
+    // Evitar error de TypeScript - variable asignada
+    void this.plato;
 
     // 🧍 Platón (lado izquierdo)
     this.platon = this.add.sprite(
