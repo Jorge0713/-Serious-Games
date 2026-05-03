@@ -60,7 +60,7 @@ export class TutorialScene extends Phaser.Scene {
     ).setScale(0.5).setDisplaySize(width, height);
     // Evitar error de TypeScript - variable asignada
     void this.fondo_cocina;
-    // 🍽️ Plato (centrgit add src/game/scenes/TutorialScene.ts
+    // 🍽️ Plato (centrado)
     this.plato = this.add.image(
       width * 0.65,
       height / 2,
