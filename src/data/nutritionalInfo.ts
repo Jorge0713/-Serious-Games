@@ -14,7 +14,7 @@ export const nutritionalInfo: FoodItem[] = [
         name: 'Artichoke',
         nameES: 'Alcachofa',
         category: 'vegetable',
-        image: '/verduras/artichoke.svg',
+        image: '/verduras/artichoke.png',
         description: 'Rica en fibra, magnesio y vitamina C. Contiene compuestos antioxidantes que ayudan a proteger el hígado y mejorar la digestión.'
     },
     {
@@ -22,7 +22,7 @@ export const nutritionalInfo: FoodItem[] = [
         name: 'Bok Choy',
         nameES: 'Bok Choy',
         category: 'vegetable',
-        image: '/verduras/bok_choy.svg',
+        image: '/verduras/pakchoi.png',
         description: 'Vegetal de hoja verde con alto contenido de vitaminas A, C y K. Excelente fuente de calcio y antioxidantes para fortalecer huesos y sistema inmune.'
     },
     {
@@ -62,7 +62,7 @@ export const nutritionalInfo: FoodItem[] = [
         name: 'Daikon',
         nameES: 'Daikon',
         category: 'vegetable',
-        image: '/verduras/daikon.svg',
+        image: '/verduras/daikon.png',
         description: 'Rábano japonés bajo en calorías y rico en vitamina C y enzimas digestivas. Contiene compuestos que ayudan a desintoxicar el cuerpo y mejorar la salud intestinal.'
     },
     {
@@ -70,7 +70,7 @@ export const nutritionalInfo: FoodItem[] = [
         name: 'Ginger',
         nameES: 'Jengibre',
         category: 'vegetable',
-        image: '/verduras/ginger.svg',
+        image: '/verduras/ginger.png',
         description: 'Posee propiedades antiinflamatorias y antioxidantes potentes. Ayuda a reducir náuseas, mejorar la digestión y fortalecer el sistema inmune.'
     },
     {
@@ -78,7 +78,7 @@ export const nutritionalInfo: FoodItem[] = [
         name: 'Green Bean',
         nameES: 'Judías Verdes',
         category: 'vegetable',
-        image: '/verduras/green_bean.svg',
+        image: '/verduras/greenbean.png',
         description: 'Buena fuente de fibra, vitamina C, K y folato. Bajas en calorías y ricas en antioxidantes que protegen la salud celular.'
     },
     {
@@ -102,7 +102,7 @@ export const nutritionalInfo: FoodItem[] = [
         name: 'Parsnip',
         nameES: 'Chirivía',
         category: 'vegetable',
-        image: '/verduras/parsnip.svg',
+        image: '/verduras/parsnip.png',
         description: 'Raíz rica en fibra, vitamina C, folato y potasio. Su contenido de antioxidantes ayuda a reducir la inflamación y apoya la salud digestiva.'
     },
     {
@@ -150,7 +150,7 @@ export const nutritionalInfo: FoodItem[] = [
         name: 'Yam',
         nameES: 'Ñame',
         category: 'vegetable',
-        image: '/verduras/yam.svg',
+        image: '/verduras/yam.png',
         description: 'Rica en potasio, manganeso y vitamina B6 para la salud neuromuscular. Su alto contenido de fibra ayuda a regular los niveles de azúcar en sangre.'
     },
     {
@@ -158,7 +158,7 @@ export const nutritionalInfo: FoodItem[] = [
         name: 'Zucchini',
         nameES: 'Calabacín',
         category: 'vegetable',
-        image: '/verduras/zucchini.svg',
+        image: '/verduras/zucchini_green.png',
         description: 'Baja en calorías y rica en vitamina A, C y manganeso. Contiene antioxidantes que protegen el corazón y apoyan la salud digestiva.'
     },
     // FRUTAS
@@ -255,7 +255,7 @@ export const nutritionalInfo: FoodItem[] = [
         name: 'Olive',
         nameES: 'Aceituna',
         category: 'fruit',
-        image: '/frutas/olive.svg',
+        image: '/frutas/olive.png',
         description: 'Rica en grasas monoinsaturadas saludables para el corazón. Contiene vitamina E y polifenoles antioxidantes que reducen la inflamación crónica.'
     },
     {
@@ -311,7 +311,7 @@ export const nutritionalInfo: FoodItem[] = [
         name: 'Star Fruit',
         nameES: 'Carambola',
         category: 'fruit',
-        image: '/frutas/star-fruit.png',
+        image: '/frutas/starfruit.png',
         description: 'Baja en calorías y rica en vitamina C, fibra y antioxidantes. Contiene compuestos que apoyan la salud metabólica y ayudan a regular el azúcar.'
     },
     {
