@@ -240,14 +240,14 @@ export class TutorialScene extends Phaser.Scene {
       // Animación de entrada
       this.tweens.add({
         targets: verduraSprite,
-        x: width * 0.35,
+        x: width * 0.62,
         duration: 500,
         ease: "Back.easeOut"
       });
 
       this.tweens.add({
         targets: frutaSprite,
-        x: width * 0.75,
+        x: width * 0.78,
         duration: 500,
         ease: "Back.easeOut"
       });
