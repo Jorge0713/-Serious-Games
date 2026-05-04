@@ -1,4 +1,6 @@
 import type { FoodItem } from '../../../data/nutritionalInfo';
+import { categoryConfig } from '../../../config/categoryConfig';
+import { categoryColors } from '../../../config/categoryColors';
 
 interface FoodDetailProps {
     food: FoodItem;
@@ -6,13 +8,21 @@ interface FoodDetailProps {
 }
 
 export const FoodDetail: React.FC<FoodDetailProps> = ({ food, onBack }) => {
+    const config = categoryConfig[food.category as keyof typeof categoryConfig];
+    const colors = categoryColors[food.category as keyof typeof categoryColors];
     return (
         <div className="food-detail-container">
             <button className="btn-back-detail" onClick={onBack}>
                 ← Volver atrás
             </button>
 
-            <div className="detail-card">
+            <div
+                className="detail-card"
+                style={{
+                    background: colors.card,
+                    borderColor: colors.border
+                }}
+            >
                 <img
                     src={food.image}
                     alt={food.nameES}
@@ -22,9 +32,14 @@ export const FoodDetail: React.FC<FoodDetailProps> = ({ food, onBack }) => {
                 <h2 className="detail-name">{food.nameES}</h2>
                 <span className="detail-english">{food.name}</span>
 
-                <div className="detail-category">
-                    {food.category === 'vegetable' ? '🥬' : '🍎'} {' '}
-                    {food.category === 'vegetable' ? 'Verdura' : 'Fruta'}
+                <div
+                    className="detail-category"
+                    style={{
+                        background: colors.border,
+                        borderColor: colors.border
+                    }}
+                >
+                    {config.emoji} {config.label}
                 </div>
 
                 <p className="detail-description">{food.description}</p>

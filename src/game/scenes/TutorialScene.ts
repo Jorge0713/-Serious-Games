@@ -265,7 +265,7 @@ export class TutorialScene extends Phaser.Scene {
         // Llamar al callback global para mostrar el tutorial de React
         const showTutorial = (window as any).showTutorial
         if (showTutorial) {
-          showTutorial()
+          showTutorial(['vegetable', 'fruit'])
         } else {
           // Si no está disponible, ir a la escena de tutorial existente
           this.scene.start('TutorialScene')
@@ -285,7 +285,7 @@ export class TutorialScene extends Phaser.Scene {
         // Llamar al callback global para mostrar el tutorial de React
         const showTutorial = (window as any).showTutorial
         if (showTutorial) {
-          showTutorial()
+          showTutorial(['fruit', 'vegetable'])
         } else {
           // Si no está disponible, ir a la escena de tutorial existente
           this.scene.start('TutorialScene')
@@ -293,21 +293,107 @@ export class TutorialScene extends Phaser.Scene {
       })
     }
     // Caso Cereales, Leguminosas, Animal
-    else {
-      // Mostrar módulo centrado
-      const sprite = this.add.sprite(width * 0.65, centerY, "partes_plato", frameId)
-        .setScale(0)
-        .setAlpha(0);
+    else if (sectionId === "cereales") {
+      const cerealSprite = this.add.sprite(width * 0.65, centerY, "partes_plato", 3).setScale(0.8).setInteractive({ useHandCursor: true });
 
-      this.expandedSprites.push(sprite);
+      this.expandedSprites.push(cerealSprite);
 
       this.tweens.add({
-        targets: sprite,
+        targets: cerealSprite,
         scale: 0.9,
         alpha: 1,
         duration: 500,
         ease: "Back.easeOut"
       });
+
+      cerealSprite.on('pointerover', () => {
+        this.hoverSound
+      })
+
+      cerealSprite.on('pointerout', () => {
+        this.hoverSound
+      })
+
+      cerealSprite.on('pointerdown', () => {
+        this.hoverSound
+        // Llamar al callback global para mostrar el tutorial de React
+        const showTutorial = (window as any).showTutorial
+        if (showTutorial) {
+          showTutorial('cereal')
+        } else {
+          // Si no está disponible, ir a la escena de tutorial existente
+          this.scene.start('TutorialScene')
+        }
+      })
+    }
+
+    else if (sectionId === "animal") {
+      const animalSprite = this.add.sprite(width * 0.65, centerY, "partes_plato", 5).setScale(0.8).setInteractive({ useHandCursor: true });
+
+      this.expandedSprites.push(animalSprite);
+
+      this.tweens.add({
+        targets: animalSprite,
+        scale: 0.9,
+        alpha: 1,
+        duration: 500,
+        ease: "Back.easeOut"
+      });
+
+      animalSprite.on('pointerover', () => {
+        this.hoverSound
+      })
+
+      animalSprite.on('pointerout', () => {
+        this.hoverSound
+      })
+
+      animalSprite.on('pointerdown', () => {
+        this.hoverSound
+        // Llamar al callback global para mostrar el tutorial de React
+        const showTutorial = (window as any).showTutorial
+        if (showTutorial) {
+          showTutorial('animal')
+        } else {
+          // Si no está disponible, ir a la escena de tutorial existente
+          this.scene.start('TutorialScene')
+        }
+      })
+    }
+
+    else {
+      // Mostrar módulo centrado
+      const legumeSprite = this.add.sprite(width * 0.65, centerY, "partes_plato", 4).setScale(0.8).setInteractive({ useHandCursor: true });
+
+      this.expandedSprites.push(legumeSprite);
+
+      this.tweens.add({
+        targets: legumeSprite,
+        scale: 0.9,
+        alpha: 1,
+        duration: 500,
+        ease: "Back.easeOut"
+      });
+
+      legumeSprite.on('pointerover', () => {
+        this.hoverSound
+      })
+
+      legumeSprite.on('pointerout', () => {
+        this.hoverSound
+      })
+
+      legumeSprite.on('pointerdown', () => {
+        this.hoverSound
+        // Llamar al callback global para mostrar el tutorial de React
+        const showTutorial = (window as any).showTutorial
+        if (showTutorial) {
+          showTutorial('legume')
+        } else {
+          // Si no está disponible, ir a la escena de tutorial existente
+          this.scene.start('TutorialScene')
+        }
+      })
     }
 
     // Mostrar botón de volver

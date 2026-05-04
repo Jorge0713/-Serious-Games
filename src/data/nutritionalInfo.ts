@@ -1,8 +1,10 @@
+export type FoodCategory ='fruit' | 'vegetable' | 'legume' | 'cereal' | 'animal';
+
 export interface FoodItem {
     id: string;
     name: string;
     nameES: string;
-    category: 'fruit' | 'vegetable';
+    category: FoodCategory;
     image: string;
     description: string;
 }
@@ -133,8 +135,8 @@ export const nutritionalInfo: FoodItem[] = [
         id: 'potato',
         name: 'Potato',
         nameES: 'Papa',
-        category: 'vegetable',
-        image: '/cerealesTuberculos/potato.png',
+        category: 'cereal',
+        image: '/cereales/potato.png',
         description: 'Buena fuente de potasio, vitamina C y vitamina B6. Al cocinarse con cáscara aporta fibra y antioxidantes que benefician la salud digestiva.'
     },
     {
@@ -337,5 +339,45 @@ export const nutritionalInfo: FoodItem[] = [
         category: 'fruit',
         image: '/frutas/watermelon.png',
         description: 'Rica en licopeno y vitamina C para la salud cardíaca. Su alto contenido de agua (92%) ayuda a mantener la hidratación óptima.'
+    },
+    {
+        id: 'arroz',
+        name: 'Rice',
+        nameES: 'Arroz',
+        category: 'cereal',
+        image: '/cereales/rice.png',
+        description: 'Fuente de energía rica en carbohidratos.'
+    },
+    {
+        id: 'arroz',
+        name: 'Rice',
+        nameES: 'Arroz',
+        category: 'animal',
+        image: '/cereales/rice.png',
+        description: 'Fuente de energía rica en carbohidratos.'
+    },
+    {
+        id: 'arroz',
+        name: 'Rice',
+        nameES: 'Arroz',
+        category: 'legume',
+        image: '/cereales/rice.png',
+        description: 'Fuente de energía rica en carbohidratos.'
+    },
+    {
+        id: 'tocino',
+        name: 'Bacon',
+        nameES: 'Tocino',
+        category: 'animal',
+        image: '/origenAnimal/bacon.png',
+        description: 'Rica en proteínas y grasas saturadas. Aporta sabor y textura a los platos.'
+    },
+    {
+        id: 'queso',
+        name: 'Cheese',
+        nameES: 'Queso',
+        category: 'animal',
+        image: '/origenAnimal/cheese.png',
+        description: 'Rica en proteínas y calcio. Aporta sabor y textura a los platos.'
     }
 ];

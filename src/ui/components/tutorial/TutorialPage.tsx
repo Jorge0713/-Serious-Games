@@ -7,17 +7,25 @@ import type { FoodItem } from '../../../data/nutritionalInfo';
 interface TutorialPageProps {
     onBackToMenu: () => void;
     onNextTutorial: () => void;
+    selectedCategory?: string | string[] | null;
 }
 
 export const TutorialPage: React.FC<TutorialPageProps> = ({
     onBackToMenu,
-    onNextTutorial
+    onNextTutorial,
+    selectedCategory = null
 }) => {
     const [selectedFood, setSelectedFood] = useState<FoodItem | null>(null);
 
     const handleSelectFood = (food: FoodItem) => {
         setSelectedFood(food);
     };
+
+    const filteredFoods = selectedCategory
+    ? Array.isArray(selectedCategory)
+        ? nutritionalInfo.filter(f => selectedCategory.includes(f.category))
+        : nutritionalInfo.filter(f => f.category === selectedCategory)
+    : nutritionalInfo;
 
     const handleBack = () => {
         setSelectedFood(null);
@@ -29,7 +37,7 @@ export const TutorialPage: React.FC<TutorialPageProps> = ({
 
     return (
         <FoodGrid
-            foods={nutritionalInfo}
+            foods={filteredFoods}
             onSelectFood={handleSelectFood}
             onBackToMenu={onBackToMenu}
             onNextTutorial={onNextTutorial}
