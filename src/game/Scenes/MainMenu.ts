@@ -128,12 +128,6 @@ export class MainMenu extends Phaser.Scene {
                 this.scene.start('TutorialScene')
             }
         })
-
-
-        this.scale.on('resize', (gameSize: Phaser.Structs.Size) => {
-            const { width, height } = gameSize
-            this.cameras.main.setSize(width, height)
-        })
     }
 
 
