@@ -1,20 +1,47 @@
 import type { FoodItem } from '../../../data/nutritionalInfo';
+import { categoryColors } from '../../../config/categoryColors';
+import { categoryConfig } from '../../../config/categoryConfig';
 
 interface FoodGridProps {
     foods: FoodItem[];
     onSelectFood: (food: FoodItem) => void;
     onBackToMenu: () => void;
     onNextTutorial: () => void;
+    title?: string;
+    selectedCategory?: string | string[] | null;
 }
 
 export const FoodGrid: React.FC<FoodGridProps> = ({
     foods,
     onSelectFood,
     onBackToMenu,
-    onNextTutorial
+    onNextTutorial,
+    title = "Grupo 1: Frutas y Verduras",
+    selectedCategory = null
 }) => {
-    const vegetables = foods.filter(f => f.category === 'vegetable');
-    const fruits = foods.filter(f => f.category === 'fruit');
+    const groupedFoods = foods.reduce((groups, food) => {
+        if (!groups[food.category]) {
+            groups[food.category] = [];
+        }
+        groups[food.category].push(food);
+        return groups;
+    }, {} as Record<string, FoodItem[]>);
+
+    const displayedFoods = selectedCategory
+        ? Array.isArray(selectedCategory)
+            ? foods.filter(f => selectedCategory.includes(f.category))
+            : foods.filter(f => f.category === selectedCategory)
+        : foods;
+
+    const displayedGroupedFoods = selectedCategory
+        ? displayedFoods.reduce((groups, food) => {
+            if (!groups[food.category]) {
+                groups[food.category] = [];
+            }
+            groups[food.category].push(food);
+            return groups;
+        }, {} as Record<string, FoodItem[]>)
+        : groupedFoods;
 
     return (
         <div className="tutorial-container">
@@ -22,50 +49,57 @@ export const FoodGrid: React.FC<FoodGridProps> = ({
                 ← Volver al menú
             </button>
 
-            <h1 className="tutorial-title">Grupo 1: Frutas y Verduras</h1>
+            <h1 className="tutorial-title">{title}</h1>
             <p className="tutorial-subtitle">
                 Aprende sobre los nutrientes de cada alimento
             </p>
 
-            <div className="food-section">
-                <h2 className="section-title">🥬 Verduras</h2>
-                <div className="food-grid">
-                    {vegetables.map(food => (
-                        <div
-                            key={food.id}
-                            className="food-card"
-                            onClick={() => onSelectFood(food)}
-                        >
-                            <img
-                                src={food.image}
-                                alt={food.nameES}
-                                className="food-image"
-                            />
-                            <span className="food-name">{food.nameES}</span>
-                        </div>
-                    ))}
-                </div>
-            </div>
+            {Object.entries(displayedGroupedFoods).map(([category, items]) => {
+                const config = categoryConfig[category as keyof typeof categoryConfig];
+                const colors = categoryColors[category as keyof typeof categoryColors];
 
-            <div className="food-section">
-                <h2 className="section-title">🍎 Frutas</h2>
-                <div className="food-grid">
-                    {fruits.map(food => (
-                        <div
-                            key={food.id}
-                            className="food-card"
-                            onClick={() => onSelectFood(food)}
+                return (
+                    <div key={category} className="food-section">
+                        <h2
+                            className="section-title"
+                            style={{
+                                color: colors.border,
+                                borderBottom: `3px solid ${colors.border}`
+                            }}
                         >
-                            <img
-                                src={food.image}
-                                alt={food.nameES}
-                                className="food-image"
-                            />
-                            <span className="food-name">{food.nameES}</span>
+                            {config.emoji} {config.label}
+                        </h2>
+
+                        <div
+                            className="food-grid"
+                            style={{
+                                border: `2px solid ${colors.border}`
+                            }}
+                        >
+                            {items.map(food => (
+                                <div
+                                    key={food.id}
+                                    className="food-card"
+                                    onClick={() => onSelectFood(food)}
+                                    style={{
+                                        background: colors.card,
+                                        borderColor: colors.border
+                                    }}
+                                >
+                                    <img
+                                        src={food.image}
+                                        alt={food.nameES}
+                                        className="food-image"
+                                    />
+                                    <span className="food-name">
+                                        {food.nameES}
+                                    </span>
+                                </div>
+                            ))}
                         </div>
-                    ))}
-                </div>
-            </div>
+                    </div>
+                );
+            })}
 
             <button className="btn-next" onClick={onNextTutorial}>
                 Siguiente tutorial →
@@ -87,7 +121,6 @@ export const FoodGrid: React.FC<FoodGridProps> = ({
                     overflow-x: hidden;
                 }
 
-                /* Scrollbar personalizada */
                 .tutorial-container::-webkit-scrollbar {
                     width: 14px;
                 }
@@ -104,7 +137,6 @@ export const FoodGrid: React.FC<FoodGridProps> = ({
                     background: #8fbc8f;
                 }
 
-                /* Firefox scrollbar */
                 @supports (scrollbar-width: auto) {
                     .tutorial-container {
                         scrollbar-width: auto;

@@ -1,5 +1,6 @@
 import * as Phaser from "phaser";
 import { DialogueSystem } from "../systems/dialog/DialogueSystem";
+import { hoverScale } from "../../componentes/HoverScale";
 
 export class TutorialScene extends Phaser.Scene {
   private dialog!: DialogueSystem;
@@ -9,13 +10,11 @@ export class TutorialScene extends Phaser.Scene {
   private plato!: Phaser.GameObjects.Image;
   private fondo_cocina!: Phaser.GameObjects.Image;
 
-  // Estados interactivos
   private isExpanded = false;
   private activeSection: string | null = null;
   private expandedSprites: Phaser.GameObjects.Sprite[] = [];
   private btnVolver!: Phaser.GameObjects.Text;
 
-  // Audios
   private hoverSound!: Phaser.Sound.BaseSound;
   private clickSound!: Phaser.Sound.BaseSound;
 
@@ -31,14 +30,12 @@ export class TutorialScene extends Phaser.Scene {
 
     this.load.image("plato", "/assets/plato.png");
     this.load.image("Fondo-cocina", "/assets/Fondo_Cocina.png")
-
-    // Cargar spritesheet de partes del plato
+    this.load.image("btn-Volver", "/assets/Buttons/BotonVolver.png");
     this.load.spritesheet("partes_plato", "/Partes_plato.png", {
       frameWidth: 512,
       frameHeight: 512
     });
 
-    // Cargar sonidos
     this.load.audio("Hover", "/Sound/hiverSound.mp3");
     this.load.audio("Click", "/Sound/Click.mp3");
   }
@@ -46,11 +43,9 @@ export class TutorialScene extends Phaser.Scene {
   create() {
     const { width, height } = this.scale;
 
-    // 🔊 Inicializar sonidos
     this.hoverSound = this.sound.add("Hover", { volume: 0.2 });
     this.clickSound = this.sound.add("Click", { volume: 0.3 });
 
-    // 🎨 Fondo
     this.fondo_cocina = this.add.image(
       width / 2,
       height / 2,
@@ -58,21 +53,19 @@ export class TutorialScene extends Phaser.Scene {
     ).setScale(0.5).setDisplaySize(width, height);
     void this.fondo_cocina;
 
-    // 🍽️ Plato (centrado a la derecha)
     this.plato = this.add.image(
       width * 0.65,
       height / 2,
       "plato"
     ).setScale(0.3);
+    void this.plato;
 
-    // 🧍 Platón (lado izquierdo)
     this.platon = this.add.sprite(
       width * 0.15,
       height * 0.65,
       "platon"
     ).setScale(1.3);
 
-    // Animación de saludo
     this.anims.create({
       key: "wave",
       frames: this.anims.generateFrameNumbers("platon", { start: 0, end: 15 }),
@@ -81,7 +74,6 @@ export class TutorialScene extends Phaser.Scene {
     });
     this.platon.play("wave");
 
-    // 💬 Sistema de diálogo
     this.dialog = new DialogueSystem({
       scene: this,
       x: 50,
@@ -89,13 +81,9 @@ export class TutorialScene extends Phaser.Scene {
       width: width - 850,
     });
 
-    // ▶️ Iniciar tutorial base
     this.showStep();
 
-    // 🖱️ Input principal para avanzar el diálogo
-    // Solo permitimos avanzar el diálogo si NO estamos en el modo expandido interactivo
     this.input.on("pointerdown", () => {
-      // Si el tutorial ya terminó sus pasos iniciales, evitamos que avance para poder jugar con el plato
       if (this.isExpanded || this.step >= 5) return;
 
       this.dialog.next(() => {
@@ -104,151 +92,67 @@ export class TutorialScene extends Phaser.Scene {
       });
     });
 
-    // 🔧 CREAR ZONAS INTERACTIVAS SOBRE EL PLATO
     this.createInteractiveZones();
 
-    // 🔙 BOTÓN REGRESAR (oculto por defecto)
-    this.btnVolver = this.add.text(50, 50, "⬅ Volver al Plato", {
-      fontSize: "32px",
-      fontFamily: "Arial",
-      color: "#ffffff",
-      backgroundColor: "#d9534f",
-      padding: { x: 20, y: 10 }
-    })
-      .setInteractive({ useHandCursor: true })
+    const btnVolver = this.add.image(width * 0.15, height * 0.25, 'btn-Volver')
+      .setInteractive()
+      .setScale(1.3)
       .setAlpha(0)
-      .setDepth(100)
-      .on("pointerdown", () => this.restorePlate());
 
-    // 🏠 BOTÓN IR AL MENÚ PRINCIPAL
-    this.add.text(width - 50, 50, "Menú Principal", {
-      fontSize: "32px",
-      fontFamily: "Arial",
-      color: "#ffffff",
-      backgroundColor: "#4CAF50", // Verde para destacar
-      padding: { x: 20, y: 10 }
+    hoverScale(this, btnVolver, {
+      scaleOver: 1.2,
+      duration: 150,
+      hoverSound: this.hoverSound
     })
-      .setOrigin(1, 0) // Alineado a la derecha
-      .setInteractive({ useHandCursor: true })
-      .setDepth(100)
-      .on("pointerover", function (this: Phaser.GameObjects.Text) { this.setTint(0xdddddd); })
-      .on("pointerout", function (this: Phaser.GameObjects.Text) { this.clearTint(); })
-      .on("pointerdown", () => {
-        this.clickSound.play();
-        this.scene.start("MainMenu");
-      });
 
-      // Botón transparente para tutorial de Frutas y Verduras
-      const btnTutorialFV = this.add.text(
-        width - 180,
-        40,
-        "Frutas y Verduras",
-        {
-          fontFamily: 'Arial',
-          fontSize: '1px',  // Texto minuscule para que casi no se vea
-          color: '#00000000'  // Transparente
-        }
-      )
-        .setInteractive({ useHandCursor: true })
-        .setAlpha(0.01)  // Casi invisible
-        .setDepth(99)
-        .setName("btn-tutorial-fv");
-
-      btnTutorialFV.on("pointerdown", () => {
-        this.clickSound.play();
-        const showTutorial = (window as any).showTutorial;
-        if (showTutorial) {
-          showTutorial();
-        }
-      });
+    btnVolver.on("pointerdown", () => {
+      this.clickSound.play();
+      this.restorePlate();
+    });
   }
 
-  /**
-   * Crea zonas geométricas transparentes sobre la imagen del plato.
-   */
   private createInteractiveZones() {
-    // El centro de la imagen escalada
     const px = this.plato.x;
     const py = this.plato.y;
 
-    // 🔧 AJUSTE DEL CENTRO REAL DEL PLATO
-    // Como el círculo del plato no está perfectamente centrado en la imagen, aplicamos un offset (en píxeles escalados).
-    // Valores negativos en Y mueven las zonas hacia ARRIBA.
-    const offsetX = 0;
-    const offsetY = -40; // <-- Ajusta este valor si las zonas siguen muy arriba o muy abajo
+    const pw = 2963 * 0.3;
+    const ph = 1828 * 0.3;
 
-    const centerX = px + offsetX;
-    const centerY = py + offsetY;
-
-    // Medidas EXACTAS del plato dadas
-    const radioOriginal = 560;
-
-    // Escala usada al crear la imagen
-    const scale = 0.3;
-    const rBase = radioOriginal * scale;
-
-    // Multiplicamos por valores diferentes para arriba y abajo para ajustar al dibujo
-    const rTop = rBase * 1.45;    // ~10% menos para que Frutas y Verduras no se salgan
-    const rBottom = rBase * 1.6;  // 1.6 quedó perfecto para la parte de abajo
-
-    // Modo debug: Cambia a true para ver las zonas de colores y ajustarlas perfectamente
-    const DEBUG_ZONES = false;
-
-    // Dividimos el plato sin superposiciones (overlap) usando los radios ajustados:
-    // Nota: El frame 2 está vacío, así que Cereales es 3, Leguminosas es 4, Animal es 5.
     const zonesConfig = [
-      // Top half (2 columnas). Recortamos el alto un 10% de abajo hacia arriba para no invadir la mitad inferior.
-      { id: "verduras", ox: -rTop / 2, oy: -rTop * 0.55, w: rTop, h: rTop * 0.9, frame: 0, msg: "¡Aprende sobre frutas y verduras!", color: 0x00ff00 },
-      { id: "frutas", ox: rTop / 2, oy: -rTop * 0.55, w: rTop, h: rTop * 0.9, frame: 1, msg: "¡Aprende sobre frutas y verduras!", color: 0xff0000 },
-
-      // Bottom half (3 zonas). Ajustado para que Leguminosas no invada Cereales a la izquierda
-      { id: "cereales", ox: -rBottom * 0.55, oy: rBottom / 2, w: rBottom * 0.9, h: rBottom, frame: 3, msg: "¡Conoce los cereales y tubérculos!", color: 0xffff00 },
-      { id: "leguminosas", ox: rBottom * 0.05, oy: rBottom / 2, w: rBottom * 0.3, h: rBottom, frame: 4, msg: "¡Descubre las leguminosas!", color: 0xffa500 },
-      { id: "animal", ox: rBottom * 0.6, oy: rBottom / 2, w: rBottom * 0.8, h: rBottom, frame: 5, msg: "¡Conoce los alimentos de origen animal!", color: 0x8b4513 }
+      { id: "verduras", ox: -pw / 4, oy: -ph / 4, w: pw / 2, h: ph / 2, frame: 0, msg: "¡Aprende sobre frutas y verduras!" },
+      { id: "frutas", ox: pw / 4, oy: -ph / 4, w: pw / 2, h: ph / 2, frame: 1, msg: "¡Aprende sobre frutas y verduras!" },
+      { id: "cereales", ox: -pw / 3, oy: ph / 4, w: pw / 3, h: ph / 2, frame: 3, msg: "¡Conoce los cereales y tubérculos!" },
+      { id: "leguminosas", ox: 0, oy: ph / 4, w: pw / 3, h: ph / 2, frame: 4, msg: "¡Descubre las leguminosas!" },
+      { id: "animal", ox: pw / 3, oy: ph / 4, w: pw / 3, h: ph / 2, frame: 5, msg: "¡Conoce los alimentos de origen animal!" }
     ];
 
     zonesConfig.forEach(z => {
-      const zoneX = centerX + z.ox;
-      const zoneY = centerY + z.oy;
-
-      const zone = this.add.zone(zoneX, zoneY, z.w, z.h)
+      const zone = this.add.zone(px + z.ox, py + z.oy, z.w, z.h)
         .setInteractive({ useHandCursor: true });
 
-      // Si el modo debug está activo, dibuja un rectángulo visible para calibrar
-      if (DEBUG_ZONES) {
-        this.add.rectangle(zoneX, zoneY, z.w, z.h, z.color, 0.3).setDepth(200);
-      }
-
-      // LÓGICA DE HOVER (ENTER)
       zone.on("pointerover", () => {
         if (this.isExpanded) return;
 
         this.activeSection = z.id;
         this.hoverSound.play();
 
-        // Efecto visual: Glow (tintado) y escala
         this.plato.setTint(0xddffdd);
         this.tweens.add({
           targets: this.plato,
-          scale: 0.33, // Ligeramente mayor que 0.3
+          scale: 0.33,
           duration: 150,
           ease: "Power1"
         });
 
-        // Actualizar texto del globo dinámicamente
-        // Si quieres que el texto aparezca letra por letra, usa show(). 
-        // Para inmediatez, usamos show con speed 0 o mostramos el texto completo.
         this.dialog.show(z.msg, 0);
       });
 
-      // LÓGICA DE HOVER (EXIT)
       zone.on("pointerout", () => {
         if (this.isExpanded) return;
         if (this.activeSection === z.id) {
           this.activeSection = null;
         }
 
-        // Restaurar plato
         this.plato.clearTint();
         this.tweens.add({
           targets: this.plato,
@@ -257,11 +161,9 @@ export class TutorialScene extends Phaser.Scene {
           ease: "Power1"
         });
 
-        // Volver a texto por defecto
         this.dialog.show("Haz clic en una sección del plato para explorarla más a fondo.", 0);
       });
 
-      // LÓGICA DE CLICK
       zone.on("pointerdown", () => {
         if (this.isExpanded) return;
         this.clickSound.play();
@@ -270,13 +172,9 @@ export class TutorialScene extends Phaser.Scene {
     });
   }
 
-  /**
-   * Expande la sección clickeada mostrando los módulos grandes
-   */
-  private expandSection(sectionId: string, frameId: number) {
+  private expandSection(sectionId: string, _frameId: number) {
     this.isExpanded = true;
 
-    // Ocultar plato original (fade out y scale down)
     this.tweens.add({
       targets: this.plato,
       alpha: 0,
@@ -288,68 +186,101 @@ export class TutorialScene extends Phaser.Scene {
     const { width, height } = this.scale;
     const centerY = height / 2;
 
-    // Caso Verduras / Frutas
     if (sectionId === "verduras" || sectionId === "frutas") {
-      // Verduras a la izquierda (solo visual)
-      const verduraSprite = this.add.sprite(-200, centerY, "partes_plato", 0).setScale(0.8);
-      // Frutas a la derecha (clickeable para abrir tutorial)
-      const frutaSprite = this.add.sprite(width + 200, centerY, "partes_plato", 1).setScale(0.8)
-        .setInteractive({ useHandCursor: true });
+      const verduraSprite = this.add.sprite(-200, centerY, "partes_plato", 0).setScale(0.8).setInteractive({ useHandCursor: true });
+      const frutaSprite = this.add.sprite(width + 200, centerY, "partes_plato", 1).setScale(0.8).setInteractive({ useHandCursor: true });
 
       this.expandedSprites.push(verduraSprite, frutaSprite);
 
-      // Click en frutas -> abre tutorial de frutas y verduras
-      frutaSprite.on("pointerdown", () => {
-        this.clickSound.play();
-        const showTutorial = (window as any).showTutorial;
-        if (showTutorial) {
-          showTutorial();
-        }
-      });
-
-      // Hover effect para frutas
-      frutaSprite.on("pointerover", () => {
-        this.hoverSound.play();
-        frutaSprite.setTint(0xdddddd);
-      });
-      frutaSprite.on("pointerout", () => {
-        frutaSprite.clearTint();
-      });
-
-      // Animación de entrada
       this.tweens.add({
         targets: verduraSprite,
-        x: width * 0.35,
+        x: width * 0.62,
         duration: 500,
         ease: "Back.easeOut"
       });
 
       this.tweens.add({
         targets: frutaSprite,
-        x: width * 0.75,
+        x: width * 0.78,
         duration: 500,
         ease: "Back.easeOut"
       });
-    }
-    // Caso Cereales, Leguminosas, Animal
-    else {
-      // Mostrar módulo centrado
-      const sprite = this.add.sprite(width * 0.65, centerY, "partes_plato", frameId)
-        .setScale(0)
-        .setAlpha(0);
 
-      this.expandedSprites.push(sprite);
+      verduraSprite.on('pointerdown', () => {
+        const showTutorial = (window as any).showTutorial;
+        if (showTutorial) {
+          showTutorial(['vegetable', 'fruit'])
+        }
+      })
+
+      frutaSprite.on('pointerdown', () => {
+        const showTutorial = (window as any).showTutorial;
+        if (showTutorial) {
+          showTutorial(['fruit', 'vegetable'])
+        }
+      })
+    }
+    else if (sectionId === "cereales") {
+      const cerealSprite = this.add.sprite(width * 0.65, centerY, "partes_plato", 3).setScale(0.8).setInteractive({ useHandCursor: true });
+
+      this.expandedSprites.push(cerealSprite);
 
       this.tweens.add({
-        targets: sprite,
+        targets: cerealSprite,
         scale: 0.9,
         alpha: 1,
         duration: 500,
         ease: "Back.easeOut"
       });
+
+      cerealSprite.on('pointerdown', () => {
+        const showTutorial = (window as any).showTutorial;
+        if (showTutorial) {
+          showTutorial('cereal')
+        }
+      })
+    }
+    else if (sectionId === "animal") {
+      const animalSprite = this.add.sprite(width * 0.65, centerY, "partes_plato", 5).setScale(0.8).setInteractive({ useHandCursor: true });
+
+      this.expandedSprites.push(animalSprite);
+
+      this.tweens.add({
+        targets: animalSprite,
+        scale: 0.9,
+        alpha: 1,
+        duration: 500,
+        ease: "Back.easeOut"
+      });
+
+      animalSprite.on('pointerdown', () => {
+        const showTutorial = (window as any).showTutorial;
+        if (showTutorial) {
+          showTutorial('animal')
+        }
+      })
+    }
+    else {
+      const legumeSprite = this.add.sprite(width * 0.65, centerY, "partes_plato", 4).setScale(0.8).setInteractive({ useHandCursor: true });
+
+      this.expandedSprites.push(legumeSprite);
+
+      this.tweens.add({
+        targets: legumeSprite,
+        scale: 0.9,
+        alpha: 1,
+        duration: 500,
+        ease: "Back.easeOut"
+      });
+
+      legumeSprite.on('pointerdown', () => {
+        const showTutorial = (window as any).showTutorial;
+        if (showTutorial) {
+          showTutorial('legume')
+        }
+      })
     }
 
-    // Mostrar botón de volver
     this.tweens.add({
       targets: this.btnVolver,
       alpha: 1,
@@ -357,11 +288,13 @@ export class TutorialScene extends Phaser.Scene {
     });
   }
 
-  /**
-   * Restaura el plato a su estado inicial
-   */
   private restorePlate() {
     this.clickSound.play();
+
+    // Ocultar botón de volver
+    if (this.btnVolver) {
+        this.btnVolver.setAlpha(0);
+    }
 
     // Destruir sprites expandidos
     this.expandedSprites.forEach(sprite => {
@@ -374,13 +307,6 @@ export class TutorialScene extends Phaser.Scene {
       });
     });
     this.expandedSprites = [];
-
-    // Ocultar botón de volver
-    this.tweens.add({
-      targets: this.btnVolver,
-      alpha: 0,
-      duration: 300
-    });
 
     // Restaurar plato principal
     this.plato.clearTint();
@@ -411,9 +337,6 @@ export class TutorialScene extends Phaser.Scene {
 
     if (this.step < steps.length) {
       this.dialog.show(steps[this.step], 500);
-    } else {
-      // Cuando termina el tutorial introductorio, dejamos que el usuario interactúe
-      // El paso 4 es el último y da la instrucción de interactuar.
     }
   }
 }

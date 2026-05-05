@@ -1,8 +1,10 @@
+export type FoodCategory = 'fruit' | 'vegetable' | 'legume' | 'cereal' | 'animal';
+
 export interface FoodItem {
     id: string;
     name: string;
     nameES: string;
-    category: 'fruit' | 'vegetable';
+    category: FoodCategory;
     image: string;
     description: string;
 }
@@ -14,7 +16,7 @@ export const nutritionalInfo: FoodItem[] = [
         name: 'Artichoke',
         nameES: 'Alcachofa',
         category: 'vegetable',
-        image: '/verduras/artichoke.svg',
+        image: '/verduras/artichoke.png',
         description: 'Rica en fibra, magnesio y vitamina C. Contiene compuestos antioxidantes que ayudan a proteger el hígado y mejorar la digestión.'
     },
     {
@@ -22,7 +24,7 @@ export const nutritionalInfo: FoodItem[] = [
         name: 'Bok Choy',
         nameES: 'Bok Choy',
         category: 'vegetable',
-        image: '/verduras/bok_choy.svg',
+        image: '/verduras/pakchoi.png',
         description: 'Vegetal de hoja verde con alto contenido de vitaminas A, C y K. Excelente fuente de calcio y antioxidantes para fortalecer huesos y sistema inmune.'
     },
     {
@@ -30,7 +32,7 @@ export const nutritionalInfo: FoodItem[] = [
         name: 'Broccoli',
         nameES: 'Brócoli',
         category: 'vegetable',
-        image: '/verduras/broccoli.svg',
+        image: '/verduras/broccoli.png',
         description: 'Una porción aporta el 135% de vitamina C y 245% de vitamina K diaria. Es excelente fuente de fibra, folato y compuestos antiinflamatorios que protegen el corazón.'
     },
     {
@@ -38,7 +40,7 @@ export const nutritionalInfo: FoodItem[] = [
         name: 'Cabbage',
         nameES: 'Col',
         category: 'vegetable',
-        image: '/verduras/cabbage.svg',
+        image: '/verduras/cabbage.png',
         description: 'Bajo en calorías y rico en vitamina C, K y antioxidantes. Su alto contenido de fibra promueve la salud digestiva y ayuda a reducir la inflamación.'
     },
     {
@@ -46,7 +48,7 @@ export const nutritionalInfo: FoodItem[] = [
         name: 'Carrot',
         nameES: 'Zanahoria',
         category: 'vegetable',
-        image: '/verduras/carrot.svg',
+        image: '/verduras/carrot.png',
         description: 'Rica en beta-caroteno que el cuerpo convierte en vitamina A para la salud visual. Una porción mediana aporta el 93% de la vitamina A diaria necesaria.'
     },
     {
@@ -54,7 +56,7 @@ export const nutritionalInfo: FoodItem[] = [
         name: 'Cucumber',
         nameES: 'Pepino',
         category: 'vegetable',
-        image: '/verduras/cucumber.svg',
+        image: '/verduras/cucumber.png',
         description: 'Compuesto por 95% de agua, ideal para mantener la hidratación. Contiene vitamina K, C y potasio con muy pocas calorías (16 por taza).'
     },
     {
@@ -62,7 +64,7 @@ export const nutritionalInfo: FoodItem[] = [
         name: 'Daikon',
         nameES: 'Daikon',
         category: 'vegetable',
-        image: '/verduras/daikon.svg',
+        image: '/verduras/daikon.png',
         description: 'Rábano japonés bajo en calorías y rico en vitamina C y enzimas digestivas. Contiene compuestos que ayudan a desintoxicar el cuerpo y mejorar la salud intestinal.'
     },
     {
@@ -70,7 +72,7 @@ export const nutritionalInfo: FoodItem[] = [
         name: 'Ginger',
         nameES: 'Jengibre',
         category: 'vegetable',
-        image: '/verduras/ginger.svg',
+        image: '/verduras/ginger.png',
         description: 'Posee propiedades antiinflamatorias y antioxidantes potentes. Ayuda a reducir náuseas, mejorar la digestión y fortalecer el sistema inmune.'
     },
     {
@@ -78,7 +80,7 @@ export const nutritionalInfo: FoodItem[] = [
         name: 'Green Bean',
         nameES: 'Judías Verdes',
         category: 'vegetable',
-        image: '/verduras/green_bean.svg',
+        image: '/verduras/greenbean.png',
         description: 'Buena fuente de fibra, vitamina C, K y folato. Bajas en calorías y ricas en antioxidantes que protegen la salud celular.'
     },
     {
@@ -86,7 +88,7 @@ export const nutritionalInfo: FoodItem[] = [
         name: 'Lettuce',
         nameES: 'Lechuga',
         category: 'vegetable',
-        image: '/verduras/lettuce.svg',
+        image: '/verduras/lettuce.png',
         description: 'Compuesta por 95% de agua, aporta vitamina A (23% DV) y K (47% DV). Ayuda a mantener la hidratación y aporta pocas calorías por porción.'
     },
     {
@@ -94,15 +96,15 @@ export const nutritionalInfo: FoodItem[] = [
         name: 'Onion',
         nameES: 'Cebolla',
         category: 'vegetable',
-        image: '/verduras/onion_01.svg',
-        description: 'Rica en antioxidantes como la quercetina que reduce la inflamación. Contiene compuestos azufrados que benefician la salud cardíaca y la respuesta inmune.'
+        image: '/verduras/onion.png',
+        description: 'Rica en antioxidantes como la quercetina que reduce la inflamación. Contains compuestos azufrados que benefソコン la salud cardíaca y la respuesta inmune.'
     },
     {
         id: 'parsnip',
         name: 'Parsnip',
         nameES: 'Chirivía',
         category: 'vegetable',
-        image: '/verduras/parsnip.svg',
+        image: '/verduras/parsnip.png',
         description: 'Raíz rica en fibra, vitamina C, folato y potasio. Su contenido de antioxidantes ayuda a reducir la inflamación y apoya la salud digestiva.'
     },
     {
@@ -110,7 +112,7 @@ export const nutritionalInfo: FoodItem[] = [
         name: 'Peas',
         nameES: 'Guisantes',
         category: 'vegetable',
-        image: '/verduras/peas.svg',
+        image: '/verduras/peas.png',
         description: 'Buena fuente de proteína vegetal, fibra y vitamina K. Ricos en micronutrientes como manganeso, tiamina y folato para la salud celular.'
     },
     {
@@ -118,7 +120,7 @@ export const nutritionalInfo: FoodItem[] = [
         name: 'Bell Pepper',
         nameES: 'Pimiento',
         category: 'vegetable',
-        image: '/verduras/pepper_bell_01.svg',
+        image: '/verduras/bell-pepper.png',
         description: 'Extremadamente rico en vitamina C (más que una naranja). Contiene antioxidantes carotenoides que protegen la salud ocular y reducen la inflamación.'
     },
     {
@@ -126,23 +128,23 @@ export const nutritionalInfo: FoodItem[] = [
         name: 'Chili Pepper',
         nameES: 'Chile',
         category: 'vegetable',
-        image: '/verduras/pepper_chili.svg',
-        description: 'Contiene capsaicina que acelera el metabolismo y reduce el apetito. Rico en vitamina C y compuestos antiinflamatorios que benefician el corazón.'
+        image: '/verduras/chili.png',
+        description: 'Contiene capsaicina que acelera el metabolismo y reduce el apetito. Rico en vitamina C y compuestos antiinflamatorios que protects el corazón.'
     },
     {
         id: 'potato',
         name: 'Potato',
         nameES: 'Papa',
-        category: 'vegetable',
-        image: '/verduras/potato.svg',
-        description: 'Buena fuente de potasio, vitamina C y vitamina B6. Al cocinarse con cáscara aporta fibra y antioxidantes que benefician la salud digestiva.'
+        category: 'cereal',
+        image: '/cereales/potato.png',
+        description: 'Buena fuente de potasio, vitamina C y vitamina B6. Al cocinarse con cáscara aporta fibra y antioxidantes que mejoran la salud digestiva.'
     },
     {
         id: 'radish',
         name: 'Radish',
         nameES: 'Rábano',
         category: 'vegetable',
-        image: '/verduras/radish.svg',
+        image: '/verduras/radish.png',
         description: 'Bajo en calorías y rico en vitamina C, potasio y antioxidantes. Contiene compuestos que apoyan la salud hepática y la digestión saludable.'
     },
     {
@@ -150,7 +152,7 @@ export const nutritionalInfo: FoodItem[] = [
         name: 'Yam',
         nameES: 'Ñame',
         category: 'vegetable',
-        image: '/verduras/yam.svg',
+        image: '/verduras/yam.png',
         description: 'Rica en potasio, manganeso y vitamina B6 para la salud neuromuscular. Su alto contenido de fibra ayuda a regular los niveles de azúcar en sangre.'
     },
     {
@@ -158,7 +160,7 @@ export const nutritionalInfo: FoodItem[] = [
         name: 'Zucchini',
         nameES: 'Calabacín',
         category: 'vegetable',
-        image: '/verduras/zucchini.svg',
+        image: '/verduras/zucchini_green.png',
         description: 'Baja en calorías y rica en vitamina A, C y manganeso. Contiene antioxidantes que protegen el corazón y apoyan la salud digestiva.'
     },
     // FRUTAS
@@ -167,7 +169,7 @@ export const nutritionalInfo: FoodItem[] = [
         name: 'Banana',
         nameES: 'Plátano',
         category: 'fruit',
-        image: '/frutas/banana.png',
+        image: '/frutas/bananas.png',
         description: 'Rica en potasio (422mg por unidad) que regula la presión arterial y función cardíaca. También aporta vitamina B6, vitamina C y fibra para la salud digestiva.'
     },
     {
@@ -175,7 +177,7 @@ export const nutritionalInfo: FoodItem[] = [
         name: 'Blackberry',
         nameES: 'Mora',
         category: 'fruit',
-        image: '/frutas/black-berry-dark.png',
+        image: '/frutas/blackberry.png',
         description: 'Rica en antioxidantes, vitamina C y fibra (8g por taza). Sus antocianinas ayudan a reducir la inflamación y proteger la salud cerebral.'
     },
     {
@@ -183,7 +185,7 @@ export const nutritionalInfo: FoodItem[] = [
         name: 'Blueberry',
         nameES: 'Arándano',
         category: 'fruit',
-        image: '/frutas/blueberries.svg',
+        image: '/frutas/blueberry.png',
         description: 'Una de las frutas más ricas en antioxidantes que protegen el corazón. Aporta vitamina C, K y fibra para mejorar la memoria y salud cognitiva.'
     },
     {
@@ -191,7 +193,7 @@ export const nutritionalInfo: FoodItem[] = [
         name: 'Cherry',
         nameES: 'Cereza',
         category: 'fruit',
-        image: '/frutas/red-cherry.png',
+        image: '/frutas/cherry.png',
         description: 'Rica en antocianinas y antioxidantes antiinflamatorios. Ayuda a reducir el dolor muscular, mejora la calidad del sueño y protege la salud cardíaca.'
     },
     {
@@ -199,7 +201,7 @@ export const nutritionalInfo: FoodItem[] = [
         name: 'Coconut',
         nameES: 'Coco',
         category: 'fruit',
-        image: '/frutas/coconut.png',
+        image: '/frutas/half-coconut.png',
         description: 'Rica en grasas saludables de cadena media (ácido láurico) que apoyan la función cerebral. Aporta fibra, manganeso y energía rápida para el organismo.'
     },
     {
@@ -207,7 +209,7 @@ export const nutritionalInfo: FoodItem[] = [
         name: 'Eggplant',
         nameES: 'Berenjena',
         category: 'fruit',
-        image: '/frutas/eggplant.svg',
+        image: '/frutas/eggplant.png',
         description: 'Baja en calorías y rica en fibra, potasio y antioxidantes (nasunina). Beneficia la salud cardíaca y ayuda a regular los niveles de azúcar.'
     },
     {
@@ -215,7 +217,7 @@ export const nutritionalInfo: FoodItem[] = [
         name: 'Apple',
         nameES: 'Manzana',
         category: 'fruit',
-        image: '/frutas/red-apple.png',
+        image: '/frutas/apple.png',
         description: 'Rica en fibra pectina y antioxidantes como la quercetina. Estudios sugieren que reduce el colesterol LDL y ayuda a regular los niveles de azúcar.'
     },
     {
@@ -223,7 +225,7 @@ export const nutritionalInfo: FoodItem[] = [
         name: 'Grape',
         nameES: 'Uva',
         category: 'fruit',
-        image: '/frutas/red-grape.png',
+        image: '/frutas/grapes.png',
         description: 'Rica en antioxidantes resveratrol que protegen el corazón y reducen la inflamación. Sus polifenoles apoyan la salud cerebral y la función cognitiva.'
     },
     {
@@ -231,7 +233,7 @@ export const nutritionalInfo: FoodItem[] = [
         name: 'Kiwi',
         nameES: 'Kiwi',
         category: 'fruit',
-        image: '/frutas/kiwi.svg',
+        image: '/frutas/kiwi.png',
         description: 'Extremadamente rica en vitamina C (más que una naranja). Contiene fibra, potasio y antioxidantes que apoyan la salud digestiva e inmune.'
     },
     {
@@ -255,7 +257,7 @@ export const nutritionalInfo: FoodItem[] = [
         name: 'Olive',
         nameES: 'Aceituna',
         category: 'fruit',
-        image: '/frutas/olive.svg',
+        image: '/frutas/olive.png',
         description: 'Rica en grasas monoinsaturadas saludables para el corazón. Contiene vitamina E y polifenoles antioxidantes que reducen la inflamación crónica.'
     },
     {
@@ -287,7 +289,7 @@ export const nutritionalInfo: FoodItem[] = [
         name: 'Pineapple',
         nameES: 'Piña',
         category: 'fruit',
-        image: '/frutas/pineapple_01.svg',
+        image: '/frutas/pineapple.png',
         description: 'Rica en bromelina, una enzima que ayuda a la digestión y reduce la inflamación. Aporta vitamina C, manganeso y compuestos antiinflamatorios.'
     },
     {
@@ -311,7 +313,7 @@ export const nutritionalInfo: FoodItem[] = [
         name: 'Star Fruit',
         nameES: 'Carambola',
         category: 'fruit',
-        image: '/frutas/star-fruit.png',
+        image: '/frutas/starfruit.png',
         description: 'Baja en calorías y rica en vitamina C, fibra y antioxidantes. Contiene compuestos que apoyan la salud metabólica y ayudan a regular el azúcar.'
     },
     {
@@ -327,7 +329,7 @@ export const nutritionalInfo: FoodItem[] = [
         name: 'Tomato',
         nameES: 'Tomate',
         category: 'fruit',
-        image: '/frutas/tomato.svg',
+        image: '/frutas/tomato.png',
         description: 'Rico en licopeno, antioxidante que protege contra el cáncer y enfermedades cardíacas. Aporta vitamina C, K y potasio para la salud general.'
     },
     {
@@ -337,5 +339,80 @@ export const nutritionalInfo: FoodItem[] = [
         category: 'fruit',
         image: '/frutas/watermelon.png',
         description: 'Rica en licopeno y vitamina C para la salud cardíaca. Su alto contenido de agua (92%) ayuda a mantener la hidratación óptima.'
+    },
+    // LEGUMINOSAS
+    {
+        id: 'frijol',
+        name: 'Bean',
+        nameES: 'Frijol',
+        category: 'legume',
+        image: '/legumes/frijol.png',
+        description: 'Rico en proteína vegetal y fibra. Ayuda a controlar el azúcar en sangre y reduce el colesterol.'
+    },
+    {
+        id: 'lenteja',
+        name: 'Lentil',
+        nameES: 'Lenteja',
+        category: 'legume',
+        image: '/legumes/lentils.png',
+        description: 'Excelente fuente de hierro y folato. Rica en proteína y fibra para la salud digestiva.'
+    },
+    {
+        id: 'garbanzo',
+        name: 'Chickpea',
+        nameES: 'Garbanzo',
+        category: 'legume',
+        image: '/legumes/garbanzo.png',
+        description: 'Rico en proteína y fibra. Contiene minerales como hierro, magnesio y zinc para la salud ósea.'
+    },
+    // CEREALES
+    {
+        id: 'arroz',
+        name: 'Rice',
+        nameES: 'Arroz',
+        category: 'cereal',
+        image: '/cereales/rice.png',
+        description: 'Fuente de energía rica en carbohidratos complejos. Aporta vitaminas del complejo B y minerales.'
+    },
+    {
+        id: 'trigo',
+        name: 'Wheat',
+        nameES: 'Trigo',
+        category: 'cereal',
+        image: '/cereales/wheat.png',
+        description: 'Rico en fibra y carbohidratos. Base de muchos alimentos y fuente de energía.'
+    },
+    {
+        id: 'avena',
+        name: 'Oat',
+        nameES: 'Avena',
+        category: 'cereal',
+        image: '/cereales/oat.png',
+        description: 'Excelente fuente de fibra soluble que reduce el colesterol. Aporta vitaminas del complejo B y minerales.'
+    },
+    // ORIGEN ANIMAL
+    {
+        id: 'huevo',
+        name: 'Egg',
+        nameES: 'Huevo',
+        category: 'animal',
+        image: '/origenAnimal/egg.png',
+        description: 'Completo en proteínas y minerales. Contiene-Colina esencial para el cerebro.'
+    },
+    {
+        id: 'leche',
+        name: 'Milk',
+        nameES: 'Leche',
+        category: 'animal',
+        image: '/origenAnimal/milk.png',
+        description: 'Rica en calcio y proteína. Aporta vitamina D y minerales para huesos fuertes.'
+    },
+    {
+        id: 'pollo',
+        name: 'Chicken',
+        nameES: 'Pollo',
+        category: 'animal',
+        image: '/origenAnimal/chicken.png',
+        description: 'Magro y rico en proteína de alta calidad. Bajo en grasas saturadas.'
     }
 ];
