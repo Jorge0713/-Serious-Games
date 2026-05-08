@@ -34,7 +34,7 @@ export class TutorialScene extends Phaser.Scene {
     this.load.image("Fondo-cocina", "/assets/Fondo_Cocina.png")
     // Si tienes "btn-Volver" como un spritesheet de 2 frames, debes cargarlo así (reemplaza los valores de frameWidth y frameHeight):
     // this.load.spritesheet("btn-Volver", "/assets/Buttons/volver.webp", { frameWidth: 100, frameHeight: 50 });
-    this.load.image("btn-Volver", "/assets/Buttons/BtnVolverAzul.webp");
+    this.load.image("btn-Volver", "/assets/Buttons/BtnVolverCafe.webp");
 
     // Cargar spritesheet de partes del plato
     this.load.spritesheet("partes_plato", "/Partes_plato.png", {
@@ -117,13 +117,13 @@ export class TutorialScene extends Phaser.Scene {
 
     // 🔙 BOTÓN REGRESAR (oculto por defecto)
 
-    this.btnVolver = this.add.sprite(width * 0.15, height * 0.25, 'btn-Volver')
+    this.btnVolver = this.add.sprite(width * 0.10, height * 0.15, 'btn-Volver')
       .setInteractive()
-      .setScale(0.8)
+      .setScale(0.4)
       .setAlpha(1);
 
     hoverScale(this, this.btnVolver, {
-      scaleOver: 1.2,
+      scaleOver: 0.45,
       duration: 150,
       hoverSound: this.hoverSound
     });
