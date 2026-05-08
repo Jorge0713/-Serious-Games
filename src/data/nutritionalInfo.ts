@@ -10,7 +10,9 @@ export interface FoodItem {
 }
 
 export const nutritionalInfo: FoodItem[] = [
-    // VERDURAS
+    // ==========================================
+    // Vegetales (vegetable)
+    // ==========================================    
     {
         id: 'artichoke',
         name: 'Artichoke',
@@ -108,14 +110,6 @@ export const nutritionalInfo: FoodItem[] = [
         description: 'Raíz rica en fibra, vitamina C, folato y potasio. Su contenido de antioxidantes ayuda a reducir la inflamación y apoya la salud digestiva.'
     },
     {
-        id: 'peas',
-        name: 'Peas',
-        nameES: 'Guisantes',
-        category: 'vegetable',
-        image: '/verduras/peas.png',
-        description: 'Buena fuente de proteína vegetal, fibra y vitamina K. Ricos en micronutrientes como manganeso, tiamina y folato para la salud celular.'
-    },
-    {
         id: 'pepper_bell',
         name: 'Bell Pepper',
         nameES: 'Pimiento',
@@ -130,14 +124,6 @@ export const nutritionalInfo: FoodItem[] = [
         category: 'vegetable',
         image: '/verduras/chili.png',
         description: 'Contiene capsaicina que acelera el metabolismo y reduce el apetito. Rico en vitamina C y compuestos antiinflamatorios que benefician el corazón.'
-    },
-    {
-        id: 'potato',
-        name: 'Potato',
-        nameES: 'Papa',
-        category: 'cereal',
-        image: '/cereales/potato.png',
-        description: 'Buena fuente de potasio, vitamina C y vitamina B6. Al cocinarse con cáscara aporta fibra y antioxidantes que benefician la salud digestiva.'
     },
     {
         id: 'radish',
@@ -163,7 +149,9 @@ export const nutritionalInfo: FoodItem[] = [
         image: '/verduras/zucchini_green.png',
         description: 'Baja en calorías y rica en vitamina A, C y manganeso. Contiene antioxidantes que protegen el corazón y apoyan la salud digestiva.'
     },
-    // FRUTAS
+    // ==========================================
+    // Frutas (fruit)
+    // ==========================================
     {
         id: 'banana',
         name: 'Banana',
@@ -340,44 +328,303 @@ export const nutritionalInfo: FoodItem[] = [
         image: '/frutas/watermelon.png',
         description: 'Rica en licopeno y vitamina C para la salud cardíaca. Su alto contenido de agua (92%) ayuda a mantener la hidratación óptima.'
     },
+    // ==========================================
+    // LEGUMINOSAS (legume)
+    // ==========================================
     {
-        id: 'arroz',
+        id: 'beans',
+        name: 'Beans',
+        nameES: 'Frijoles',
+        category: 'legume',
+        image: '/leguminosas/beans.png',
+        description: 'Excelente fuente de proteína vegetal, fibra y hierro. Ayudan a mantener estables los niveles de azúcar en la sangre y benefician enormemente la microbiota intestinal.'
+    },
+    {
+        id: 'lentils',
+        name: 'Lentils',
+        nameES: 'Lentejas',
+        category: 'legume',
+        image: '/leguminosas/lentils.png',
+        description: 'Ricas en ácido fólico, hierro, potasio y magnesio. Su alto contenido de fibra promueve la saciedad duradera y favorece la salud del sistema digestivo.'
+    },
+    {
+        id: 'chickpeas',
+        name: 'Chickpeas',
+        nameES: 'Garbanzos',
+        category: 'legume',
+        image: '/leguminosas/chickpeas.png',
+        description: 'Aportan una gran cantidad de vitaminas, minerales y fibra. Son excelentes para la digestión, el control del peso y como fuente de energía sostenida.'
+    },
+    {
+        id: 'peas',
+        name: 'Peas',
+        nameES: 'Chícharos',
+        category: 'legume',
+        image: '/leguminosas/peas.png',
+        description: 'Llenos de antioxidantes y fitonutrientes antiinflamatorios. Son una buena fuente de vitamina C, zinc y proteínas que ayudan a fortalecer el sistema inmunológico.'
+    },
+    {
+        id: 'soybeans',
+        name: 'Soybeans',
+        nameES: 'Soya',
+        category: 'legume',
+        image: '/leguminosas/soybeans.png',
+        description: 'Una de las pocas fuentes vegetales que aporta proteína completa. Contiene isoflavonas que pueden reducir el riesgo de enfermedades cardíacas y mejorar la salud ósea.'
+    },
+    {
+        id: 'fava_beans',
+        name: 'Fava Beans',
+        nameES: 'Habas',
+        category: 'legume',
+        image: '/leguminosas/fava_beans.png',
+        description: 'Ricas en fibra, proteínas y ácido fólico. Ayudan a reducir el colesterol y mejorar la salud del corazón, además de aportar L-dopa, beneficiosa para el sistema nervioso.'
+    },
+    {
+        id: 'peanuts',
+        name: 'Peanuts',
+        nameES: 'Cacahuates',
+        category: 'legume',
+        image: '/leguminosas/peanuts.png',
+        description: 'Aunque a menudo se confunden con nueces, son leguminosas ricas en grasas saludables, proteínas y biotina. Son excelentes para la salud del cerebro y la piel.'
+    },
+    {
+        id: 'edamame',
+        name: 'Edamame',
+        nameES: 'Edamame',
+        category: 'legume',
+        image: '/leguminosas/edamame.png',
+        description: 'Vainas de soya tiernas llenas de proteína vegetal, fibra y vitaminas K y folato. Un excelente snack que promueve la saciedad y la recuperación muscular.'
+    },
+    {
+        id: 'mung_beans',
+        name: 'Mung Beans',
+        nameES: 'Frijol Mungo',
+        category: 'legume',
+        image: '/leguminosas/mung_beans.png',
+        description: 'Destacan por su fácil digestión y alto contenido de antioxidantes. Ricos en potasio y magnesio, son ideales para ayudar a controlar la presión arterial.'
+    },
+    {
+        id: 'lima_beans',
+        name: 'Lima Beans',
+        nameES: 'Frijol Lima',
+        category: 'legume',
+        image: '/leguminosas/lima_beans.png',
+        description: 'Aportan una gran cantidad de manganeso, hierro y fibra. Ayudan a estabilizar los niveles de azúcar en la sangre y proporcionan energía de manera constante.'
+    },
+
+    // ==========================================
+    // CEREALES Y TUBÉRCULOS (cereal)
+    // ==========================================
+    {
+        id: 'oats',
+        name: 'Oats',
+        nameES: 'Avena',
+        category: 'cereal',
+        image: '/cereales/oats.png',
+        description: 'Cereal de grano entero excepcionalmente nutritivo. Contiene beta-glucano, una fibra soluble que ayuda a reducir el colesterol y estabilizar el azúcar en la sangre.'
+    },
+    {
+        id: 'rice',
         name: 'Rice',
         nameES: 'Arroz',
         category: 'cereal',
         image: '/cereales/rice.png',
-        description: 'Fuente de energía rica en carbohidratos.'
+        description: 'Fuente principal de energía gracias a sus carbohidratos. El arroz integral, en particular, conserva su fibra y nutrientes esenciales que favorecen una buena digestión.'
     },
     {
-        id: 'arroz',
-        name: 'Rice',
-        nameES: 'Arroz',
+        id: 'corn',
+        name: 'Corn',
+        nameES: 'Maíz',
+        category: 'cereal',
+        image: '/cereales/corn.png',
+        description: 'Rico en vitaminas del grupo B y minerales esenciales. Su fibra dietética ayuda al tracto digestivo y sus antioxidantes (luteína) protegen la salud ocular.'
+    },
+    {
+        id: 'wheat',
+        name: 'Wheat',
+        nameES: 'Trigo',
+        category: 'cereal',
+        image: '/cereales/wheat.png',
+        description: 'Base de muchos alimentos cotidianos. Su versión integral es vital porque aporta fibra, hierro y vitaminas del complejo B, fundamentales para el metabolismo energético.'
+    },
+    {
+        id: 'potato',
+        name: 'Potato',
+        nameES: 'Papa',
+        category: 'cereal',
+        image: '/cereales/potato.png',
+        description: 'Tubérculo rico en vitamina C, potasio y vitamina B6. Si se consume cocida y con piel (sin freír), es una excelente y saludable fuente de energía y fibra.'
+    },
+    {
+        id: 'quinoa',
+        name: 'Quinoa',
+        nameES: 'Quinoa',
+        category: 'cereal',
+        image: '/cereales/quinoa.png',
+        description: 'Un pseudocereal que aporta proteína completa (todos los aminoácidos esenciales). Libre de gluten de forma natural, es rica en magnesio, hierro y fibra.'
+    },
+    {
+        id: 'sweet_potato',
+        name: 'Sweet Potato',
+        nameES: 'Camote',
+        category: 'cereal',
+        image: '/cereales/sweet_potato.png',
+        description: 'Tubérculo con un índice glucémico moderado. Destaca por su enorme aporte de betacarotenos (vitamina A), que son vitales para la salud de la vista y la piel.'
+    },
+    {
+        id: 'cassava',
+        name: 'Cassava',
+        nameES: 'Yuca',
+        category: 'cereal',
+        image: '/cereales/cassava.png',
+        description: 'Excelente fuente de carbohidratos complejos y energía. Contiene vitamina C y almidón resistente que actúa como prebiótico para la flora intestinal.'
+    },
+    {
+        id: 'barley',
+        name: 'Barley',
+        nameES: 'Cebada',
+        category: 'cereal',
+        image: '/cereales/barley.png',
+        description: 'Destaca por su alta concentración de beta-glucanos, una fibra que ayuda a controlar el colesterol y el azúcar en la sangre. Es muy saciante y nutritiva.'
+    },
+    {
+        id: 'amaranth',
+        name: 'Amaranth',
+        nameES: 'Amaranto',
+        category: 'cereal',
+        image: '/cereales/amaranth.png',
+        description: 'Grano ancestral excepcionalmente rico en calcio, hierro y proteínas. No contiene gluten y aporta escualeno, un antioxidante que reduce la inflamación.'
+    },
+    {
+        id: 'rye',
+        name: 'Rye',
+        nameES: 'Centeno',
+        category: 'cereal',
+        image: '/cereales/rye.png',
+        description: 'Grano oscuro que aporta más fibra y micronutrientes que el trigo refinado. Ayuda a mantener la saciedad por mucho más tiempo y regula el tránsito intestinal.'
+    },
+    {
+        id: 'whole_wheat_pasta',
+        name: 'Whole Wheat Pasta',
+        nameES: 'Pasta Integral',
+        category: 'cereal',
+        image: '/cereales/whole_wheat_pasta.png',
+        description: 'Elaborada con trigo entero, mantiene el salvado y el germen. Proporciona carbohidratos de absorción lenta para una energía sostenida a lo largo del día.'
+    },
+
+    // ==========================================
+    // PRODUCTOS DE ORIGEN ANIMAL (animal)
+    // ==========================================
+    {
+        id: 'egg',
+        name: 'Egg',
+        nameES: 'Huevo',
         category: 'animal',
-        image: '/cereales/rice.png',
-        description: 'Fuente de energía rica en carbohidratos.'
+        image: '/animal/egg.png',
+        description: 'Alimento muy completo con proteína de la más alta biodisponibilidad. La yema contiene colina, esencial para el cerebro, y luteína para la salud ocular.'
     },
     {
-        id: 'arroz',
-        name: 'Rice',
-        nameES: 'Arroz',
-        category: 'legume',
-        image: '/cereales/rice.png',
-        description: 'Fuente de energía rica en carbohidratos.'
+        id: 'chicken',
+        name: 'Chicken',
+        nameES: 'Pollo',
+        category: 'animal',
+        image: '/animal/chicken.png',
+        description: 'Carne magra que aporta proteínas de alto valor biológico, necesarias para la reparación muscular. Es excelente fuente de vitaminas del complejo B.'
+    },
+    {
+        id: 'fish',
+        name: 'Fish',
+        nameES: 'Pescado',
+        category: 'animal',
+        image: '/animal/fish.png',
+        description: 'Destaca por su aporte de ácidos grasos Omega-3, fundamentales para la salud cardiovascular y cerebral. También provee vitamina D y proteínas ligeras.'
+    },
+    {
+        id: 'milk',
+        name: 'Milk',
+        nameES: 'Leche',
+        category: 'animal',
+        image: '/animal/milk-carton.png',
+        description: 'Excelente fuente de calcio asimilable y vitamina D, esenciales para el desarrollo y mantenimiento de los huesos y dientes. Aporta proteínas e hidratación.'
+    },
+    {
+        id: 'beef',
+        name: 'Beef',
+        nameES: 'Carne de Res',
+        category: 'animal',
+        image: '/animal/beef.png',
+        description: 'Importante fuente de hierro hemo, fácilmente absorbible por el cuerpo para prevenir la anemia. Contiene zinc y vitamina B12, clave para el sistema nervioso.'
+    },
+    {
+        id: 'cheese',
+        name: 'Cheese',
+        nameES: 'Queso',
+        category: 'animal',
+        image: '/animal/cheese.png',
+        description: 'Concentrado de los nutrientes de la leche. Ofrece un alto contenido de calcio, proteínas de calidad y grasas, ayudando a mantener la salud ósea y muscular.'
     },
     {
         id: 'tocino',
         name: 'Bacon',
         nameES: 'Tocino',
         category: 'animal',
-        image: '/origenAnimal/bacon.png',
+        image: '/animal/bacon.png',
         description: 'Rica en proteínas y grasas saturadas. Aporta sabor y textura a los platos.'
     },
     {
-        id: 'queso',
-        name: 'Cheese',
-        nameES: 'Queso',
+        id: 'turkey',
+        name: 'Turkey',
+        nameES: 'Pavo',
         category: 'animal',
-        image: '/origenAnimal/cheese.png',
-        description: 'Rica en proteínas y calcio. Aporta sabor y textura a los platos.'
+        image: '/animal/turkey.png',
+        description: 'Carne blanca muy magra y alta en proteínas. Rica en vitaminas del complejo B y selenio, apoyando el metabolismo y la función tiroidea sin aportar mucha grasa.'
+    },
+    {
+        id: 'pork_loin',
+        name: 'Pork Loin',
+        nameES: 'Lomo de Cerdo',
+        category: 'animal',
+        image: '/animal/pork_loin.png',
+        description: 'Corte magro que es una gran fuente de proteínas de alta calidad, tiamina (vitamina B1), zinc y hierro, fundamentales para la producción de energía celular.'
+    },
+    {
+        id: 'yogurt',
+        name: 'Yogurt',
+        nameES: 'Yogur',
+        category: 'animal',
+        image: '/animal/yogurt.png',
+        description: 'Producto lácteo fermentado que además de calcio y proteínas, aporta probióticos vivos esenciales para mantener una flora intestinal saludable y una buena digestión.'
+    },
+    {
+        id: 'salmon',
+        name: 'Salmon',
+        nameES: 'Salmón',
+        category: 'animal',
+        image: '/animal/salmon.png',
+        description: 'Pescado graso famoso por sus altos niveles de ácidos grasos Omega-3 (EPA y DHA). Crucial para reducir la inflamación, y proteger la salud del corazón y el cerebro.'
+    },
+    {
+        id: 'tuna',
+        name: 'Tuna',
+        nameES: 'Atún',
+        category: 'animal',
+        image: '/animal/tuna.png',
+        description: 'Una de las fuentes más prácticas de proteína magra y Omega-3. Contiene altos niveles de vitamina D y selenio, elementos clave para fortalecer el sistema inmunológico.'
+    },
+    {
+        id: 'shrimp',
+        name: 'Shrimp',
+        nameES: 'Camarón',
+        category: 'animal',
+        image: '/animal/shrimp.png',
+        description: 'Bajos en calorías pero ricos en proteínas, yodo y antioxidantes potentes como la astaxantina. Apoyan la salud de la glándula tiroides y el cerebro.'
+    },
+    {
+        id: 'sardines',
+        name: 'Sardines',
+        nameES: 'Sardinas',
+        category: 'animal',
+        image: '/animal/sardines.png',
+        description: 'Pequeños pescados que aportan dosis enormes de calcio, vitamina D y Omega-3. Son excelentes protectores cardiovasculares y benefician la salud de los huesos.'
     }
 ];
