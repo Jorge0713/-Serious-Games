@@ -4,10 +4,7 @@ import * as Phaser from 'phaser'
 import { hoverScale } from "../../componentes/HoverScale";
 export class MainMenu extends Phaser.Scene {
 
-    // ─── PROPIEDADES ────────────────────────────────────────────
-    // Analogía Java: atributos de instancia privados
-    // private titleText!: Phaser.GameObjects.Text  // Descomentar cuando se use
-    // private playButton!: Phaser.GameObjects.Text  // Descomentar cuando se use
+
     private music!: Phaser.Sound.BaseSound
     private sounds!: Phaser.Sound.BaseSound
     private soundd!: Phaser.Sound.BaseSound

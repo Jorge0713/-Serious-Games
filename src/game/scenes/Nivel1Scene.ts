@@ -1,6 +1,39 @@
 import * as Phaser from 'phaser';
 
 export class Nivel1Scene extends Phaser.Scene {
+    private fondo_cocina!: Phaser.GameObjects.Image;
+    private platon!: Phaser.GameObjects.Image;
+    private aciertos: number = 0;
+
+    // --- LISTA DE ALIMENTOS (8 verduras, 8 frutas, 4 sebos) ---
+    private alimentos = [
+        // VERDURAS (8)
+        { id: "v1", ruta: "/verduras/carrot.png", nombre: "Zanahoria" },
+        { id: "v2", ruta: "/verduras/broccoli.png", nombre: "Brócoli" },
+        { id: "v3", ruta: "/verduras/cabbage.png", nombre: "Col" },
+        { id: "v4", ruta: "/verduras/onion.png", nombre: "Cebolla" },
+        { id: "v5", ruta: "/verduras/gourd.png", nombre: "Calabaza" },
+        { id: "v6", ruta: "/verduras/lettuce.png", nombre: "Lechuga" },
+        { id: "v7", ruta: "/verduras/tomato.png", nombre: "Tomate" },
+        { id: "v8", ruta: "/verduras/green-bell-pepper.png", nombre: "Pimiento" },
+
+        // FRUTAS (8)
+        { id: "f1", ruta: "/frutas/apple.png", nombre: "Manzana" },
+        { id: "f2", ruta: "/frutas/pear.png", nombre: "Pera" },
+        { id: "f3", ruta: "/frutas/grapes.png", nombre: "Uvas" },
+        { id: "f4", ruta: "/frutas/orange.png", nombre: "Naranja" },
+        { id: "f5", ruta: "/frutas/raspberry.png", nombre: "Frambuesa" },
+        { id: "f6", ruta: "/frutas/strawberry.png", nombre: "Fresa" },
+        { id: "f7", ruta: "/frutas/bananas.png", nombre: "Plátano" },
+        { id: "f8", ruta: "/frutas/lime.png", nombre: "Limón" },
+
+        // SEBOS / DISTRACTORES (4)
+        { id: "s1", ruta: "/cereales/corn.png", nombre: "Maíz" },
+        { id: "s2", ruta: "/cereales/potato.png", nombre: "Papa" },
+        { id: "s3", ruta: "/origenAnimal/mojarra.png", nombre: "Pescado" },
+        { id: "s4", ruta: "/origenAnimal/carne-cruda.png", nombre: "Carne" }
+    ];
+
     constructor() {
         super('Nivel1Scene');
     }
