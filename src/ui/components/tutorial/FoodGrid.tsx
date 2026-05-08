@@ -7,13 +7,15 @@ interface FoodGridProps {
     onSelectFood: (food: FoodItem) => void;
     onBackToMenu: () => void;
     onNextTutorial: () => void;
+    isLastSection?: boolean;
 }
 
 export const FoodGrid: React.FC<FoodGridProps> = ({
     foods,
     onSelectFood,
     onBackToMenu,
-    onNextTutorial
+    onNextTutorial,
+    isLastSection
 }) => {
     const groupedFoods = foods.reduce((groups, food) => {
         if (!groups[food.category]) {
@@ -82,7 +84,7 @@ export const FoodGrid: React.FC<FoodGridProps> = ({
             })}
 
             <button className="btn-next" onClick={onNextTutorial}>
-                Siguiente tutorial →
+                {isLastSection ? "Acceder al Nivel 1 →" : "Siguiente tutorial →"}
             </button>
 
             <style>{`
