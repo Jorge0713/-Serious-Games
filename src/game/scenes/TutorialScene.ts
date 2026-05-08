@@ -14,7 +14,7 @@ export class TutorialScene extends Phaser.Scene {
   private isExpanded = false;
   private activeSection: string | null = null;
   private expandedSprites: Phaser.GameObjects.Sprite[] = [];
-  private btnVolver!: Phaser.GameObjects.Text;
+  private btnVolver!: Phaser.GameObjects.Image;
 
   // Audios
   private hoverSound!: Phaser.Sound.BaseSound;
@@ -32,7 +32,10 @@ export class TutorialScene extends Phaser.Scene {
 
     this.load.image("plato", "/assets/plato.png");
     this.load.image("Fondo-cocina", "/assets/Fondo_Cocina.png")
-    this.load.image("btn-Volver", "/assets/Buttons/BotonVolver.png");
+    // Si tienes "btn-Volver" como un spritesheet de 2 frames, debes cargarlo así (reemplaza los valores de frameWidth y frameHeight):
+    // this.load.spritesheet("btn-Volver", "/assets/Buttons/volver.webp", { frameWidth: 100, frameHeight: 50 });
+    this.load.image("btn-Volver", "/assets/Buttons/BtnVolverAzul.webp");
+
     // Cargar spritesheet de partes del plato
     this.load.spritesheet("partes_plato", "/Partes_plato.png", {
       frameWidth: 512,
@@ -114,19 +117,28 @@ export class TutorialScene extends Phaser.Scene {
 
     // 🔙 BOTÓN REGRESAR (oculto por defecto)
 
-    const btnVolver = this.add.image(width * 0.15, height * 0.25, 'btn-Volver')
+    this.btnVolver = this.add.sprite(width * 0.15, height * 0.25, 'btn-Volver')
       .setInteractive()
-      .setScale(1.3)
+      .setScale(0.8)
+      .setAlpha(1);
 
-    hoverScale(this, btnVolver, {
+    hoverScale(this, this.btnVolver, {
       scaleOver: 1.2,
       duration: 150,
       hoverSound: this.hoverSound
-    })
+    });
 
-    btnVolver.on("pointerdown", () => {
+    this.btnVolver.on("pointerdown", () => {
       this.clickSound.play();
-      this.scene.start('TutorialScene');
+    });
+
+    this.btnVolver.on("pointerup", () => {
+      // Lógica de navegación:
+      if (this.isExpanded || this.activeSection) {
+        this.restorePlate();
+      } else {
+        this.scene.start('MainMenu');
+      }
     });
   }
   /**
@@ -400,7 +412,8 @@ export class TutorialScene extends Phaser.Scene {
     this.tweens.add({
       targets: this.btnVolver,
       alpha: 1,
-      duration: 300
+      duration: 300,
+      ease: "Back.easeOut"
     });
   }
 
@@ -423,8 +436,12 @@ export class TutorialScene extends Phaser.Scene {
     this.expandedSprites = [];
 
     // Ocultar botón de volver
-
-
+    this.tweens.add({
+      targets: this.btnVolver,
+      alpha: 1,
+      duration: 300,
+      ease: "Power2"
+    });
     // Restaurar plato principal
     this.plato.clearTint();
     this.tweens.add({
