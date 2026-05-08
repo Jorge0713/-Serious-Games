@@ -7,13 +7,15 @@ interface FoodGridProps {
     onSelectFood: (food: FoodItem) => void;
     onBackToMenu: () => void;
     onNextTutorial: () => void;
+    title?: string;
 }
 
 export const FoodGrid: React.FC<FoodGridProps> = ({
     foods,
     onSelectFood,
     onBackToMenu,
-    onNextTutorial
+    onNextTutorial,
+    title = "Grupo 1: Frutas y Verduras"
 }) => {
     const groupedFoods = foods.reduce((groups, food) => {
         if (!groups[food.category]) {
@@ -29,7 +31,7 @@ export const FoodGrid: React.FC<FoodGridProps> = ({
                 ← Volver al menú
             </button>
 
-            <h1 className="tutorial-title">Grupo 1: Frutas y Verduras</h1>
+            <h1 className="tutorial-title">{title}</h1>
             <p className="tutorial-subtitle">
                 Aprende sobre los nutrientes de cada alimento
             </p>
