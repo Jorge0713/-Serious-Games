@@ -101,10 +101,12 @@ export class MainMenu extends Phaser.Scene {
         .setOrigin(0.5)
         .setInteractive({ useHandCursor: true });
 
-        hoverScale(this, btnNivel1, {
-            scaleOver: 1.1,
-            duration: 150,
-            hoverSound: this.soundd
+        btnNivel1.on('pointerover', () => {
+            this.soundd.play();
+            btnNivel1.setScale(1.1);
+        });
+        btnNivel1.on('pointerout', () => {
+            btnNivel1.setScale(1);
         });
 
         btnNivel1.on('pointerdown', () => {
@@ -112,6 +114,30 @@ export class MainMenu extends Phaser.Scene {
             // Detener la música del menú al cambiar de escena (opcional)
             this.music.stop(); 
             this.scene.start('Nivel1Scene');
+        });
+
+        // --- BOTÓN TEMPORAL PARA IR AL NIVEL 2 ---
+        const btnNivel2 = this.add.text(width / 2, height * 0.87, '🎮 IR AL NIVEL 2 (Cereales y Leguminosas)', {
+            fontSize: '28px',
+            color: '#fff',
+            backgroundColor: '#ff6600',
+            padding: { x: 20, y: 10 }
+        })
+        .setOrigin(0.5)
+        .setInteractive({ useHandCursor: true });
+
+        btnNivel2.on('pointerover', () => {
+            this.soundd.play();
+            btnNivel2.setScale(1.1);
+        });
+        btnNivel2.on('pointerout', () => {
+            btnNivel2.setScale(1);
+        });
+
+        btnNivel2.on('pointerdown', () => {
+            this.sounds.play();
+            this.music.stop();
+            this.scene.start('Nivel2Scene');
         });
     }
 
