@@ -12,8 +12,8 @@ export class TutorialScene extends Phaser.Scene {
 
   private isExpanded = false;
   private activeSection: string | null = null;
-  private expandedSprites: Phaser.GameObjects.Sprite[] = [];
-  private btnVolver!: Phaser.GameObjects.Text;
+private expandedSprites: Phaser.GameObjects.Sprite[] = [];
+  private btnVolver!: Phaser.GameObjects.Image;
 
   private hoverSound!: Phaser.Sound.BaseSound;
   private clickSound!: Phaser.Sound.BaseSound;
@@ -94,18 +94,18 @@ export class TutorialScene extends Phaser.Scene {
 
     this.createInteractiveZones();
 
-    const btnVolver = this.add.image(width * 0.15, height * 0.25, 'btn-Volver')
+    this.btnVolver = this.add.image(width * 0.15, height * 0.25, 'btn-Volver')
       .setInteractive()
       .setScale(1.3)
       .setAlpha(0)
 
-    hoverScale(this, btnVolver, {
+    hoverScale(this, this.btnVolver, {
       scaleOver: 1.2,
       duration: 150,
       hoverSound: this.hoverSound
     })
 
-    btnVolver.on("pointerdown", () => {
+    this.btnVolver.on("pointerdown", () => {
       this.clickSound.play();
       this.scene.start("MainMenu");
     });
@@ -305,43 +305,7 @@ export class TutorialScene extends Phaser.Scene {
     });
   }
 
-  private restorePlate() {
-    this.clickSound.play();
-
-    // Ocultar botón de volver
-    if (this.btnVolver) {
-        this.btnVolver.setAlpha(0);
-    }
-
-    // Destruir sprites expandidos
-    this.expandedSprites.forEach(sprite => {
-      this.tweens.add({
-        targets: sprite,
-        alpha: 0,
-        scale: 0,
-        duration: 300,
-        onComplete: () => sprite.destroy()
-      });
-    });
-    this.expandedSprites = [];
-
-    // Restaurar plato principal
-    this.plato.clearTint();
-    this.tweens.add({
-      targets: this.plato,
-      alpha: 1,
-      scale: 0.3,
-      duration: 500,
-      ease: "Back.easeOut",
-      onComplete: () => {
-        this.isExpanded = false;
-        this.activeSection = null;
-      }
-    });
-
-    // Restaurar texto
-    this.dialog.show("¡Explora otra sección del plato!", 0);
-  }
+  
 
   private showStep() {
     const steps = [
