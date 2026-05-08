@@ -90,6 +90,29 @@ export class MainMenu extends Phaser.Scene {
             this.sounds.play()
             this.scene.start('TutorialScene')
         })
+
+        // --- BOTÓN TEMPORAL PARA IR AL NIVEL 1 ---
+        const btnNivel1 = this.add.text(width / 2, height * 0.75, 'IR AL NIVEL 1', {
+            fontSize: '32px',
+            color: '#fff',
+            backgroundColor: '#00cc00',
+            padding: { x: 20, y: 10 }
+        })
+        .setOrigin(0.5)
+        .setInteractive({ useHandCursor: true });
+
+        hoverScale(this, btnNivel1, {
+            scaleOver: 1.1,
+            duration: 150,
+            hoverSound: this.soundd
+        });
+
+        btnNivel1.on('pointerdown', () => {
+            this.sounds.play();
+            // Detener la música del menú al cambiar de escena (opcional)
+            this.music.stop(); 
+            this.scene.start('Nivel1Scene');
+        });
     }
 
 

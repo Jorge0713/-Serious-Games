@@ -158,18 +158,26 @@ export class TutorialScene extends Phaser.Scene {
     // Nota: El frame 2 está vacío, así que Cereales es 3, Leguminosas es 4, Animal es 5.
     const zonesConfig = [
       // Top half (2 columnas)
-      { id: "verduras", ox: -pw / 4, oy: -ph / 4, w: pw / 2, h: ph / 2, frame: 0, msg: "¡Aprende sobre frutas y verduras!" },
-      { id: "frutas", ox: pw / 4, oy: -ph / 4, w: pw / 2, h: ph / 2, frame: 1, msg: "¡Aprende sobre frutas y verduras!" },
+      { id: "verduras", ox: -pw / 4, oy: -ph / 2.9, w: pw / 2.2, h: ph / 2, frame: 0, msg: "¡Aprende sobre frutas y verduras!", color: 0x00ff00 },
+      { id: "frutas", ox: pw / 4, oy: -ph / 3, w: pw / 1.9, h: ph / 2, frame: 1, msg: "¡Aprende sobre frutas y verduras!", color: 0xff0000 },
 
       // Bottom half (3 columnas)
-      { id: "cereales", ox: -pw / 3, oy: ph / 4, w: pw / 3, h: ph / 2, frame: 3, msg: "¡Conoce los cereales y tubérculos!" },
-      { id: "leguminosas", ox: 0, oy: ph / 4, w: pw / 3, h: ph / 2, frame: 4, msg: "¡Descubre las leguminosas!" },
-      { id: "animal", ox: pw / 3, oy: ph / 4, w: pw / 3, h: ph / 2, frame: 5, msg: "¡Conoce los alimentos de origen animal!" }
+      { id: "cereales", ox: -pw / 5, oy: ph / 6, w: pw / 3, h: ph / 2, frame: 3, msg: "¡Conoce los cereales y tubérculos!", color: 0xffff00 },
+      { id: "leguminosas", ox: 20, oy: ph / 6, w: pw / 13, h: ph / 2, frame: 4, msg: "¡Descubre las leguminosas!", color: 0xff8800 },
+      { id: "animal", ox: pw / 4.5, oy: ph / 6, w: pw / 3, h: ph / 2, frame: 5, msg: "¡Conoce los alimentos de origen animal!", color: 0x0000ff }
     ];
+
+    // Añadir gráficos para debug visual
+    // const debugGraphics = this.add.graphics();
+    // NOTA: Para ocultarlos cuando ya no los necesites, simplemente comenta la línea de fillRect o limpia los gráficos.
 
     zonesConfig.forEach(z => {
       const zone = this.add.zone(px + z.ox, py + z.oy, z.w, z.h)
         .setInteractive({ useHandCursor: true });
+
+      // DIBUJAR AREA DE DEBUG
+      //debugGraphics.fillStyle(z.color, 0.4); // Color con 40% de opacidad
+      //debugGraphics.fillRect(zone.x - zone.width / 2, zone.y - zone.height / 2, zone.width, zone.height);
 
       // LÓGICA DE HOVER (ENTER)
       zone.on("pointerover", () => {
