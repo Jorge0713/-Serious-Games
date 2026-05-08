@@ -22,10 +22,10 @@ export const TutorialPage: React.FC<TutorialPageProps> = ({
     };
 
     const filteredFoods = selectedCategory
-    ? Array.isArray(selectedCategory)
-        ? nutritionalInfo.filter(f => selectedCategory.includes(f.category))
-        : nutritionalInfo.filter(f => f.category === selectedCategory)
-    : nutritionalInfo;
+        ? Array.isArray(selectedCategory)
+            ? nutritionalInfo.filter(f => selectedCategory.includes(f.category))
+            : nutritionalInfo.filter(f => f.category === selectedCategory)
+        : nutritionalInfo;
 
     const handleBack = () => {
         setSelectedFood(null);
@@ -41,6 +41,7 @@ export const TutorialPage: React.FC<TutorialPageProps> = ({
             onSelectFood={handleSelectFood}
             onBackToMenu={onBackToMenu}
             onNextTutorial={onNextTutorial}
+            isLastSection={selectedCategory === 'animal'}
         />
     );
 };

@@ -1,7 +1,8 @@
 import * as Phaser from 'phaser'
-import { MainMenu } from './Scenes/MainMenu'
-import { TutorialScene } from './Scenes/TutorialScene'
-import { Nivel1Scene } from './Scenes/Nivel1Scene'
+import { MainMenu } from './scenes/MainMenu'
+import { TutorialScene } from './scenes/TutorialScene'
+import { Nivel1Scene } from './scenes/Nivel1Scene'
+import { Nivel3Scene } from './scenes/Nivel3Scene'
 
 /*
  * Analogía Java: como el main() que instancia tu aplicación
@@ -12,7 +13,7 @@ export const createGame = (parent: HTMLElement): Phaser.Game => {
         type: Phaser.AUTO,
         parent,
         backgroundColor: '#000000',
-        scene: [MainMenu, TutorialScene, Nivel1Scene],
+        scene: [MainMenu, TutorialScene, Nivel1Scene, Nivel3Scene],
         scale: {
             mode: Phaser.Scale.ENVELOP,
             autoCenter: Phaser.Scale.CENTER_BOTH,
