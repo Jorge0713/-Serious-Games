@@ -109,6 +109,23 @@ export class TutorialScene extends Phaser.Scene {
       this.clickSound.play();
       this.restorePlate();
     });
+
+    this.add.text(width - 50, 50, "Menú Principal", {
+      fontSize: "32px",
+      fontFamily: "Arial",
+      color: "#ffffff",
+      backgroundColor: "#4CAF50",
+      padding: { x: 20, y: 10 }
+    })
+      .setOrigin(1, 0)
+      .setInteractive({ useHandCursor: true })
+      .setDepth(100)
+      .on("pointerover", function (this: Phaser.GameObjects.Text) { this.setTint(0xdddddd); })
+      .on("pointerout", function (this: Phaser.GameObjects.Text) { this.clearTint(); })
+      .on("pointerdown", () => {
+        this.clickSound.play();
+        this.scene.start("MainMenu");
+      });
   }
 
   private createInteractiveZones() {
