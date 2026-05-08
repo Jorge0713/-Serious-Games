@@ -311,7 +311,7 @@ export class Nivel1Scene extends Phaser.Scene {
         // Botón para salir
         const btnSalir = this.add.rectangle(width / 2, height / 2 + 130, 250, 60, 0x4CAF50, 1)
             .setInteractive({ useHandCursor: true });
-        
+
         const txtSalir = this.add.text(width / 2, height / 2 + 130, 'Volver al Menú', {
             fontSize: '24px',
             color: '#fff',
@@ -322,17 +322,17 @@ export class Nivel1Scene extends Phaser.Scene {
         btnSalir.on('pointerover', () => btnSalir.setFillStyle(0x45a049));
         btnSalir.on('pointerout', () => btnSalir.setFillStyle(0x4CAF50));
         btnSalir.on('pointerdown', () => {
-            try { this.sound.play("sonido-click"); } catch(e) {}
+            try { this.sound.play("sonido-click"); } catch (e) { }
             this.scene.start('MainMenu');
         });
-        
+
         // Animación de entrada de todos los elementos
         const elements = [overlay, panel, titulo, mensaje, btnSalir, txtSalir];
         elements.forEach(el => el.setAlpha(0));
-        
+
         // Desactivamos el arrastre de los "sebos" restantes
-        this.input.enabled = false; 
-        
+        this.input.enabled = false;
+
         this.tweens.add({
             targets: elements,
             alpha: 1,
