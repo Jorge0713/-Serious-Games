@@ -107,7 +107,7 @@ export class TutorialScene extends Phaser.Scene {
 
     btnVolver.on("pointerdown", () => {
       this.clickSound.play();
-      this.restorePlate();
+      this.scene.start("MainMenu");
     });
 
     this.add.text(width - 50, 50, "Menú Principal", {
