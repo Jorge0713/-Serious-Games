@@ -468,5 +468,71 @@ be31de6 Sprites completos del tutorial frutas y verduras
 
 ---
 
-*Documentación actualizada: Mayo 2026*
+## Niveles Interactivos
+
+### Nivel 1: Frutas y Verduras
+- **Archivo:** `src/game/scenes/Nivel1Scene.ts`
+- **Descripción:** Juego de arrastrar y soltar donde el usuario debe colocar frutas y verduras en sus respectivos segmentos del Plato del Bien Comer
+- **Categorías:** 8 verduras + 8 frutas + 4 sebos (distractores)
+- **Sprites de segmentos:** `verduras_misma_escala.png` y `frutas_misma_escala.png`
+- **Sonidos:** `correcto.mp3` (acierto) e `incorrecto.mp3` (error)
+- **Feedback visual:** Platón cambia a `platon_feliz.png` o `platon_triste.png` según la respuesta
+
+### Nivel 2: Cereales y Leguminosas
+- **Archivo:** `src/game/scenes/Nivel2Scene.ts`
+- **Descripción:** Similar al Nivel 1 pero con cereales y leguminosas
+- **Categorías:** 8 cereales + 8 leguminosas + 4 sebos (de origen animal)
+- **Sprites de segmentos:** `cereales_misma_escala.png` y `legumbres_misma_escala.png`
+- **Navegación:** Al completar, muestra pantalla de felicitación con opción de volver al menú
+
+---
+
+## Navegación de Tutoriales
+
+### Sistema Cíclico
+El sistema de tutoriales permite navegar en círculo entre los diferentes grupos de alimentos:
+
+| Orden | Página | Título del Tutorial | Categoría |
+|-------|--------|---------------------|------------|
+| 1 | `tutorial` | Grupo 1: Frutas y Verduras | vegetable, fruit |
+| 2 | `cereal` | Grupo 2: Cereales | cereal |
+| 3 | `legume` | Grupo 3: Leguminosas | legume |
+| 4 | `animal` | Grupo 4: Origen Animal | animal |
+
+### Implementación
+- **Archivo:** `src/App.tsx`
+- **Función:** `getNextPage()` calcula la siguiente página usando índice cíclico `(idx + 1) % length`
+- **Títulos dinámicos:** Objeto `tutorialTitles` mapea cada página a su título correspondiente
+- **Callback Phaser-React:** `window.showTutorial(categories)` comunica desde Phaser para abrir el tutorial correcto
+
+### Botón "Siguiente Plato"
+- En el tutorial de Frutas y Verduras (primer tutorial), el botón superior dice "Siguiente plato →" en lugar de "Volver al menú"
+- Al hacer clic, navega al siguiente tutorial (Cereales)
+- El título cambia a "¡Excelente trabajo!, vamos a la siguiente prueba"
+
+---
+
+## Botones de Desarrollo
+
+### Botón Temporal "Probar siguiente"
+- **Ubicación:** Esquina inferior izquierda del tutorial
+- **Color:** Rojo (#c0392b)
+- **Texto:** "Probar siguiente"
+- **Función:** Navega directamente al Nivel 2 para pruebas rápidas sin completar el Nivel 1
+- **Implementación:** Usa `window.goToNivel2()` definido en `src/App.tsx`
+- **Uso:** Solo para desarrolladores, remover en producción
+
+---
+
+## Cambios Recientes (Junio 2026)
+
+1. **Nivel 2 agregado:** Nuevo nivel interactivo para Cereales y Leguminosas
+2. **Navegación cíclica:** Botón "Siguiente tutorial" ahora navega en círculo
+3. **Títulos dinámicos:** Cada tutorial muestra su título correspondiente
+4. **Primer tutorial modificado:** Botón "Siguiente plato" en lugar de "Volver al menú"
+5. **Sprites actualizados:** Cereales y Leguminosas ahora usan sprites recoloreados específicos
+
+---
+
+*Documentación actualizada: Junio 2026*
 *Proyecto: Serious Games - Alimentación Saludable*

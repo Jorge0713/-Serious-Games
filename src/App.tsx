@@ -70,6 +70,12 @@ function App() {
       }
       setShowTutorialUI(true);
     };
+
+    (window as any).goToNivel2 = () => {
+      setShowTutorialUI(false);
+      setSelectedCategory(null);
+      setCurrentPage('home');
+    };
   }, []);
 
   const currentTitle = tutorialTitles[currentPage];
@@ -79,6 +85,7 @@ function App() {
       <TutorialPage
         selectedCategory={selectedCategory}
         title={currentTitle}
+        isFirstTutorial={currentPage === 'tutorial'}
         onBackToMenu={handleBackToMenu}
         onNextTutorial={handleNextTutorial}
       />
@@ -89,6 +96,7 @@ function App() {
     return (
       <TutorialPage
         title={currentTitle}
+        isFirstTutorial={true}
         onBackToMenu={handleBackToMenu}
         onNextTutorial={handleNextTutorial}
       />

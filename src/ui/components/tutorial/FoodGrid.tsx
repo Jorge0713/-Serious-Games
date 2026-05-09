@@ -8,6 +8,7 @@ interface FoodGridProps {
     onBackToMenu: () => void;
     onNextTutorial: () => void;
     title?: string;
+    isFirstTutorial?: boolean;
 }
 
 export const FoodGrid: React.FC<FoodGridProps> = ({
@@ -15,7 +16,8 @@ export const FoodGrid: React.FC<FoodGridProps> = ({
     onSelectFood,
     onBackToMenu,
     onNextTutorial,
-    title = "Grupo 1: Frutas y Verduras"
+    title = "Grupo 1: Frutas y Verduras",
+    isFirstTutorial = false
 }) => {
     const groupedFoods = foods.reduce((groups, food) => {
         if (!groups[food.category]) {
@@ -27,14 +29,26 @@ export const FoodGrid: React.FC<FoodGridProps> = ({
 
     return (
         <div className="tutorial-container">
-            <button className="btn-back" onClick={onBackToMenu}>
-                ← Volver al menú
+            <button className="btn-back" onClick={isFirstTutorial ? onNextTutorial : onBackToMenu}>
+                {isFirstTutorial ? "Siguiente plato →" : "← Volver al menú"}
             </button>
 
-            <h1 className="tutorial-title">{title}</h1>
+            <h1 className="tutorial-title">
+                {isFirstTutorial ? "¡Excelente trabajo!, vamos a la siguiente prueba" : title}
+            </h1>
             <p className="tutorial-subtitle">
-                Aprende sobre los nutrientes de cada alimento
+                {isFirstTutorial 
+                    ? "Has completado el tutorial de frutas y verduras" 
+                    : "Aprende sobre los nutrientes de cada alimento"}
             </p>
+
+            {/* Botón temporal para desarrolladores - abajo a la izquierda */}
+            <button 
+                className="btn-probar-siguiente" 
+                onClick={() => (window as any).goToNivel2?.()}
+            >
+                Probar siguiente
+            </button>
 
             {Object.entries(groupedFoods).map(([category, items]) => {
                 const config = categoryConfig[category as keyof typeof categoryConfig];
@@ -242,6 +256,30 @@ export const FoodGrid: React.FC<FoodGridProps> = ({
                 .btn-next:hover {
                     transform: scale(1.05);
                     box-shadow: 0 8px 12px rgba(0,0,0,0.4);
+                }
+
+                /* Botón temporal para desarrolladores - abajo a la izquierda */
+                .btn-probar-siguiente {
+                    position: fixed;
+                    bottom: 20px;
+                    left: 20px;
+                    background: #c0392b;
+                    color: white;
+                    border: none;
+                    padding: 12px 24px;
+                    border-radius: 8px;
+                    cursor: pointer;
+                    font-size: 14px;
+                    font-weight: bold;
+                    box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+                    transition: transform 0.2s, box-shadow 0.2s;
+                    z-index: 1000;
+                }
+
+                .btn-probar-siguiente:hover {
+                    transform: scale(1.05);
+                    box-shadow: 0 6px 8px rgba(0,0,0,0.4);
+                    background: #a93226;
                 }
             `}</style>
         </div>
