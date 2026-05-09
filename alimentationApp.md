@@ -477,6 +477,8 @@ be31de6 Sprites completos del tutorial frutas y verduras
 - **Sprites de segmentos:** `verduras_misma_escala.png` y `frutas_misma_escala.png`
 - **Sonidos:** `correcto.mp3` (acierto) e `incorrecto.mp3` (error)
 - **Feedback visual:** Platón cambia a `platon_feliz.png` o `platon_triste.png` según la respuesta
+- **Pantalla final:** Al completar, muestra título "¡EXCELENTE TRABAJO!" con mensaje "¡Vamos a la siguiente tarea!" y botón "Siguiente plato" que conduce al Nivel 2
+- **Botón temporal:** Botón "Saltar al siguiente" en la parte media izquierda para desarrolladores (saltar directamente al Nivel 2)
 
 ### Nivel 2: Cereales y Leguminosas
 - **Archivo:** `src/game/scenes/Nivel2Scene.ts`
@@ -506,9 +508,9 @@ El sistema de tutoriales permite navegar en círculo entre los diferentes grupos
 - **Callback Phaser-React:** `window.showTutorial(categories)` comunica desde Phaser para abrir el tutorial correcto
 
 ### Botón "Siguiente Plato"
-- En el tutorial de Frutas y Verduras (primer tutorial), el botón superior dice "Siguiente plato →" en lugar de "Volver al menú"
+- En el tutorial de Frutas y Verduras (primer tutorial), el botón superior dice "Siguiente plato" en lugar de "Volver al menú"
 - Al hacer clic, navega al siguiente tutorial (Cereales)
-- El título cambia a "¡Excelente trabajo!, vamos a la siguiente prueba"
+- El título cambia a "¡Excelente trabajo!, vamos a la siguiente tarea"
 
 ---
 
