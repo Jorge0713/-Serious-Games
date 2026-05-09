@@ -30,11 +30,11 @@ export const FoodGrid: React.FC<FoodGridProps> = ({
     return (
         <div className="tutorial-container">
             <button className="btn-back" onClick={isFirstTutorial ? onNextTutorial : onBackToMenu}>
-                {isFirstTutorial ? "Siguiente plato →" : "← Volver al menú"}
+                {isFirstTutorial ? "Siguiente plato" : "← Volver al menú"}
             </button>
 
             <h1 className="tutorial-title">
-                {isFirstTutorial ? "¡Excelente trabajo!, vamos a la siguiente prueba" : title}
+                {isFirstTutorial ? "¡Excelente trabajo!, vamos a la siguiente tarea" : title}
             </h1>
             <p className="tutorial-subtitle">
                 {isFirstTutorial 

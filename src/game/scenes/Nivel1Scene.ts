@@ -79,6 +79,23 @@ export class Nivel1Scene extends Phaser.Scene {
             padding: { x: 20, y: 10 }
         }).setOrigin(0.5);
 
+        // --- BOTÓN TEMPORAL PARA DESARROLLADORES: Saltar al siguiente ---
+        const btnSaltar = this.add.text(150, height / 2, 'Saltar al siguiente', {
+            fontSize: '18px',
+            color: '#fff',
+            backgroundColor: '#666',
+            padding: { x: 15, y: 10 }
+        })
+        .setOrigin(0.5)
+        .setInteractive({ useHandCursor: true });
+
+        btnSaltar.on('pointerover', () => btnSaltar.setStyle({ backgroundColor: '#888' }));
+        btnSaltar.on('pointerout', () => btnSaltar.setStyle({ backgroundColor: '#666' }));
+        btnSaltar.on('pointerdown', () => {
+            try { this.sound.play("sonido-click"); } catch(e) {}
+            this.scene.start('Nivel2Scene');
+        });
+
         // --- PASO 2: CREAR SEGMENTOS (DROP ZONES) ---
         // Si una imagen es más grande que otra (por tener más espacio transparente), 
         // puedes darles escalas independientes aquí:
@@ -295,36 +312,36 @@ export class Nivel1Scene extends Phaser.Scene {
             .setStrokeStyle(6, 0x4CAF50);
 
         // Título
-        const titulo = this.add.text(width / 2, height / 2 - 100, '¡FELICIDADES!', {
+        const titulo = this.add.text(width / 2, height / 2 - 100, '¡EXCELENTE TRABAJO!', {
             fontSize: '56px',
             color: '#4CAF50',
             fontStyle: 'bold'
         }).setOrigin(0.5);
 
         // Mensaje
-        const mensaje = this.add.text(width / 2, height / 2 + 10, 'Pusiste todos los alimentos en su segmento correcto.\n¡Estás listo en el conocimiento de frutas y verduras!', {
+        const mensaje = this.add.text(width / 2, height / 2 + 10, 'Pusiste todos los alimentos en su segmento correcto.\n¡Vamos a la siguiente tarea!', {
             fontSize: '28px',
             color: '#000',
             align: 'center',
             wordWrap: { width: 800 }
         }).setOrigin(0.5);
 
-        // Botón para salir
-        const btnSalir = this.add.rectangle(width / 2, height / 2 + 130, 250, 60, 0x4CAF50, 1)
+        // Botón para ir al nivel 2
+        const btnSalir = this.add.rectangle(width / 2, height / 2 + 130, 300, 60, 0xFF6600, 1)
             .setInteractive({ useHandCursor: true });
         
-        const txtSalir = this.add.text(width / 2, height / 2 + 130, 'Volver al Menú', {
+        const txtSalir = this.add.text(width / 2, height / 2 + 130, 'Siguiente plato', {
             fontSize: '24px',
             color: '#fff',
             fontStyle: 'bold'
         }).setOrigin(0.5);
 
         // Efectos del botón
-        btnSalir.on('pointerover', () => btnSalir.setFillStyle(0x45a049));
-        btnSalir.on('pointerout', () => btnSalir.setFillStyle(0x4CAF50));
+        btnSalir.on('pointerover', () => btnSalir.setFillStyle(0xe65c00));
+        btnSalir.on('pointerout', () => btnSalir.setFillStyle(0xFF6600));
         btnSalir.on('pointerdown', () => {
             try { this.sound.play("sonido-click"); } catch(e) {}
-            this.scene.start('MainMenu');
+            this.scene.start('Nivel2Scene');
         });
         
         // Animación de entrada de todos los elementos
