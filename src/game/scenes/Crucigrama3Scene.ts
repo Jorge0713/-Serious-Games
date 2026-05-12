@@ -130,26 +130,54 @@ export class Crucigrama3Scene extends Phaser.Scene {
     }
 
     private escribirLetra(letra: string): void {
+        // Verificar si VERTICAL (FRUTA) ya está completa para bloquear celda compartida
+        const verticalCompleta = this.celdasVertical.map(t => t.text).join('') === 'FRUTA';
+        // Verificar si HORIZONTAL (VERDURA) ya está completa para bloquear celda compartida
+        const horizontalCompleta = this.celdasHorizontal.map(t => t.text).join('') === 'VERDURA';
+        
         if (this.modoActual === 'horizontal') {
+            // Si estamos en la celda compartida (índice 4) y FRUTA ya está completa, saltar esa celda
+            if (this.indiceHorizontal === 4 && verticalCompleta) {
+                this.indiceHorizontal++;
+                if (this.indiceHorizontal >= 7) {
+                    this.indiceHorizontal = 0;
+                }
+            }
+            
             this.celdasHorizontal[this.indiceHorizontal].setText(letra);
             this.sounds.play();
-            this.indiceHorizontal++;
-            if (this.indiceHorizontal >= 7) {
-                this.indiceHorizontal = 0;
+            
+            // Verificar si se completó la palabra
+            const palabraActual = this.celdasHorizontal.map(t => t.text).join('');
+            if (palabraActual === 'VERDURA' && !verticalCompleta) {
+                // Cambiar automáticamente a la otra palabra
+                this.modoActual = 'vertical';
+                this.indiceVertical = 0;
+            } else {
+                this.indiceHorizontal++;
+                if (this.indiceHorizontal >= 7) {
+                    this.indiceHorizontal = 0;
+                }
             }
         } else {
-            // Para vertical, si es la celda compartida (índice 2), no mover el índice
-            if (this.indiceVertical === 2) {
-                // Escribir en la celda compartida
-                this.celdasVertical[this.indiceVertical].setText(letra);
-                this.sounds.play();
+            // Si estamos en la celda compartida (índice 2) y VERDURA ya está completa, saltar esa celda
+            if (this.indiceVertical === 2 && horizontalCompleta) {
                 this.indiceVertical++;
                 if (this.indiceVertical >= 5) {
                     this.indiceVertical = 0;
                 }
+            }
+            
+            this.celdasVertical[this.indiceVertical].setText(letra);
+            this.sounds.play();
+            
+            // Verificar si se completó la palabra
+            const palabraActual = this.celdasVertical.map(t => t.text).join('');
+            if (palabraActual === 'FRUTA' && !horizontalCompleta) {
+                // Cambiar automáticamente a la otra palabra
+                this.modoActual = 'horizontal';
+                this.indiceHorizontal = 0;
             } else {
-                this.celdasVertical[this.indiceVertical].setText(letra);
-                this.sounds.play();
                 this.indiceVertical++;
                 if (this.indiceVertical >= 5) {
                     this.indiceVertical = 0;
