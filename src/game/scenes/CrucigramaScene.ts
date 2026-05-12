@@ -212,7 +212,7 @@ export class CrucigramaScene extends Phaser.Scene {
         btnSiguiente.on('pointerout', () => btnSiguiente.setFillStyle(0x4CAF50));
         btnSiguiente.on('pointerdown', () => {
             this.sounds.play();
-            this.scene.start('Crucigrama2Scene');
+            this.scene.start('Crucigrama3Scene');
         });
     }
 

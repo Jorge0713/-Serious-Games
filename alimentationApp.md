@@ -536,5 +536,76 @@ El sistema de tutoriales permite navegar en círculo entre los diferentes grupos
 
 ---
 
-*Documentación actualizada: Junio 2026*
+## Sistema de Crucigramas
+
+### Implementación Actual (Crucigrama3Scene.ts)
+
+El sistema de crucigramas permite crear grids de palabras cruzadas con las siguientes características:
+
+### Estructura de Celdas
+
+- **Celdas horizontales**: Arrays separados para cada dirección (horizontal/vertical)
+- **Celdas compartidas**: La misma posición en el array puede pertenecer a ambas palabras (ej: la letra U en VERDURA y FRUTA)
+- **Índices**: Las palabras horizontales usan índices 0-6, las verticales 7-11 (la celda compartida es índice 4 en horizontal y 2 en vertical)
+
+### Cómo Crear un Crucigrama
+
+1. **Definir las palabras**: Establecer las palabras horizontal y vertical en el código
+2. **Crear el grid**: Usar `crearGrid()` para posicionar las celdas
+3. **Señalar la celda compartida**: Añadir la misma referencia de texto a ambos arrays en la posición donde se cruzan
+4. **Coordenadas de cruzamiento**: Calcular `xU` basándose en la posición de la letra compartida en la palabra horizontal
+
+### Lógica de Bloqueo
+
+El sistema implementa las siguientes reglas:
+
+1. **Detección de completitud**: Al escribir cada letra, se verifica si la palabra está completa comparando con la palabra objetivo
+2. **Cambio automático de modo**: Al completar una palabra, el sistema cambia automáticamente al modo de la otra palabra
+3. **Bloqueo de celda compartida**: Si una palabra está completa pero la otra no, la celda compartida se bloquea para la palabra completada
+4. **Salto automático**: Cuando la celda compartida está bloqueada, el sistema salta automáticamente a la siguiente celda
+
+### Código Básico para Crucigrama
+
+```typescript
+private crearGrid(centerX: number, startY: number): void {
+    const tamañoCelda = 45;
+    const palabraHorizontal = "PALABRA1"; // 7 letras
+    const palabraVertical = "PALABRA2";  // 5 letras
+    
+    const inicioX = centerX - (palabraHorizontal.length * tamañoCelda) / 2;
+    const inicioY = startY + (tamañoCelda * 2);
+    
+    // Horizontal
+    for (let i = 0; i < palabraHorizontal.length; i++) {
+        const rect = this.add.rectangle(inicioX + i * tamañoCelda, inicioY, 45, 45, 0xffffff, 0.7)
+            .setInteractive({ useHandCursor: true });
+        const texto = this.add.text(inicioX + i * tamañoCelda, inicioY, '', {...}).setOrigin(0.5);
+        this.celdasHorizontal.push(texto);
+        // Asignar eventos...
+    }
+    
+    // Vertical - se cruza en posición X de horizontal
+    const posicionCruce = 4; // posición de la letra compartida
+    const xU = inicioX + posicionCruce * tamañoCelda;
+    const inicioVertical = inicioY - 2 * tamañoCelda;
+    
+    for (let i = 0; i < palabraVertical.length; i++) {
+        if (i === 2) { // posición de la letra compartida en vertical
+            this.celdasVertical.push(this.celdasHorizontal[posicionCruce]);
+        } else {
+            // Crear nueva celda...
+        }
+    }
+}
+```
+
+### Funciones Principales
+
+- `crearGrid()`: Genera el layout visual del crucigrama
+- `escribirLetra()`: Maneja la escritura de letras con lógica de bloqueo
+- `verificarVictoria()`: Detecta cuando ambas palabras están completas
+
+---
+
+*Documentación actualizada: Mayo 2026*
 *Proyecto: Serious Games - Alimentación Saludable*

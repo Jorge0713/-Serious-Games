@@ -138,29 +138,6 @@ export class MainMenu extends Phaser.Scene {
             this.music.stop();
             this.scene.start('CrucigramaScene');
         });
-
-        const btnCrucigrama3 = this.add.text(width / 2, height * 0.20, 'Probar crucigrama 3', {
-            fontSize: '24px',
-            color: '#fff',
-            backgroundColor: '#ff6600',
-            padding: { x: 15, y: 8 }
-        })
-        .setOrigin(0.5)
-        .setInteractive({ useHandCursor: true });
-
-        btnCrucigrama3.on('pointerover', () => {
-            this.soundd.play();
-            btnCrucigrama3.setScale(1.1);
-        });
-        btnCrucigrama3.on('pointerout', () => {
-            btnCrucigrama3.setScale(1);
-        });
-
-        btnCrucigrama3.on('pointerdown', () => {
-            this.sounds.play();
-            this.music.stop();
-            this.scene.start('Crucigrama3Scene');
-        });
     }
 
 
