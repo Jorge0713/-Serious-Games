@@ -138,6 +138,29 @@ export class MainMenu extends Phaser.Scene {
             this.music.stop();
             this.scene.start('CrucigramaScene');
         });
+
+        const btnNivel3 = this.add.text(width / 2, height * 0.20, 'IR AL NIVEL 3', {
+            fontSize: '28px',
+            color: '#fff',
+            backgroundColor: '#ff6600',
+            padding: { x: 20, y: 10 }
+        })
+        .setOrigin(0.5)
+        .setInteractive({ useHandCursor: true });
+
+        btnNivel3.on('pointerover', () => {
+            this.soundd.play();
+            btnNivel3.setScale(1.1);
+        });
+        btnNivel3.on('pointerout', () => {
+            btnNivel3.setScale(1);
+        });
+
+        btnNivel3.on('pointerdown', () => {
+            this.sounds.play();
+            this.music.stop();
+            this.scene.start('Nivel3Scene');
+        });
     }
 
 
