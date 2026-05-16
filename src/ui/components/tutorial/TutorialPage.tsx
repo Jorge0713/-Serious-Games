@@ -8,12 +8,14 @@ interface TutorialPageProps {
     onBackToMenu: () => void;
     onNextTutorial: () => void;
     selectedCategory?: string | string[] | null;
+    title?: string;
 }
 
 export const TutorialPage: React.FC<TutorialPageProps> = ({
     onBackToMenu,
     onNextTutorial,
-    selectedCategory = null
+    selectedCategory = null,
+    title = "Grupo 1: Frutas y Verduras"
 }) => {
     const [selectedFood, setSelectedFood] = useState<FoodItem | null>(null);
 
@@ -42,6 +44,7 @@ export const TutorialPage: React.FC<TutorialPageProps> = ({
             onBackToMenu={onBackToMenu}
             onNextTutorial={onNextTutorial}
             isLastSection={selectedCategory === 'animal'}
+            title={title}
         />
     );
 };
