@@ -233,7 +233,7 @@ export class TutorialScene extends Phaser.Scene {
   /**
    * Expande la sección clickeada mostrando los módulos grandes
    */
-  private expandSection(sectionId: string, frameId: number) {
+  private expandSection(sectionId: string, _frameId: number) {
     this.isExpanded = true;
 
     // Ocultar plato original (fade out y scale down)

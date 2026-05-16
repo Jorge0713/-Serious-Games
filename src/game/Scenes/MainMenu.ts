@@ -4,7 +4,10 @@ import * as Phaser from 'phaser'
 import { hoverScale } from "../../componentes/HoverScale";
 export class MainMenu extends Phaser.Scene {
 
-
+    // ─── PROPIEDADES ────────────────────────────────────────────
+    // Analogía Java: atributos de instancia privados
+    // private titleText!: Phaser.GameObjects.Text  // Descomentar cuando se use
+    // private playButton!: Phaser.GameObjects.Text  // Descomentar cuando se use
     private music!: Phaser.Sound.BaseSound
     private sounds!: Phaser.Sound.BaseSound
     private soundd!: Phaser.Sound.BaseSound
@@ -87,6 +90,77 @@ export class MainMenu extends Phaser.Scene {
             this.sounds.play()
             this.scene.start('TutorialScene')
         })
+
+        // --- BOTÓN TEMPORAL PARA IR AL NIVEL 1 ---
+        const btnNivel1 = this.add.text(width / 2, height * 0.75, 'IR AL NIVEL 1', {
+            fontSize: '32px',
+            color: '#fff',
+            backgroundColor: '#00cc00',
+            padding: { x: 20, y: 10 }
+        })
+        .setOrigin(0.5)
+        .setInteractive({ useHandCursor: true });
+
+        btnNivel1.on('pointerover', () => {
+            this.soundd.play();
+            btnNivel1.setScale(1.1);
+        });
+        btnNivel1.on('pointerout', () => {
+            btnNivel1.setScale(1);
+        });
+
+        btnNivel1.on('pointerdown', () => {
+            this.sounds.play();
+            // Detener la música del menú al cambiar de escena (opcional)
+            this.music.stop(); 
+            this.scene.start('Nivel1Scene');
+        });
+
+        const btnCrucigrama = this.add.text(width / 2, height * 0.87, 'Probar crucigrama', {
+            fontSize: '32px',
+            color: '#fff',
+            backgroundColor: '#6a0dad',
+            padding: { x: 20, y: 10 }
+        })
+        .setOrigin(0.5)
+        .setInteractive({ useHandCursor: true });
+
+        btnCrucigrama.on('pointerover', () => {
+            this.soundd.play();
+            btnCrucigrama.setScale(1.1);
+        });
+        btnCrucigrama.on('pointerout', () => {
+            btnCrucigrama.setScale(1);
+        });
+
+        btnCrucigrama.on('pointerdown', () => {
+            this.sounds.play();
+            this.music.stop();
+            this.scene.start('CrucigramaScene');
+        });
+
+        const btnNivel3 = this.add.text(width / 2, height * 0.20, 'IR AL NIVEL 3', {
+            fontSize: '28px',
+            color: '#fff',
+            backgroundColor: '#ff6600',
+            padding: { x: 20, y: 10 }
+        })
+        .setOrigin(0.5)
+        .setInteractive({ useHandCursor: true });
+
+        btnNivel3.on('pointerover', () => {
+            this.soundd.play();
+            btnNivel3.setScale(1.1);
+        });
+        btnNivel3.on('pointerout', () => {
+            btnNivel3.setScale(1);
+        });
+
+        btnNivel3.on('pointerdown', () => {
+            this.sounds.play();
+            this.music.stop();
+            this.scene.start('Nivel3Scene');
+        });
     }
 
 
