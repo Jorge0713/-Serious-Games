@@ -36,7 +36,7 @@ export class Crucigrama3Scene extends Phaser.Scene {
     }
 
     preload(): void {
-        this.load.image('Fondo-cocina', '/assets/Fondo_Cocina.png');
+        this.load.image('Fondo-cocina', '/assets/Backgrounds/Fondo_Cocina.png');
         this.load.image('btn-Volver', '/assets/Buttons/BtnVolverCafe.webp');
         this.load.spritesheet("platon", "/assets/Platon/platon.png", { frameWidth: 291, frameHeight: 256 });
         this.load.image("platon-feliz", "/assets/Platon/platon_feliz.png");

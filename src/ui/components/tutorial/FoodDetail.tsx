@@ -53,7 +53,7 @@ export const FoodDetail: React.FC<FoodDetailProps> = ({ food, onBack }) => {
                     padding-bottom: 60px;
                     box-sizing: border-box;
                     background: linear-gradient(180deg, #1a3d1a 0%, #2d5a27 50%, #4a7c3a 100%);
-                    background-image: url('/assets/Fondo_Cocina.png');
+                    background-image: url('/assets/Backgrounds/Fondo_Cocina.png');
                     background-size: cover;
                     background-position: center;
                     background-blend-mode: overlay;

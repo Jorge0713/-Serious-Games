@@ -38,11 +38,11 @@ const nutrientMatches = [
 ];
 
 const fallbackImages: Record<FoodCategory, string> = {
-    fruit: '/iconsFood/frutas/apple.png',
-    vegetable: '/iconsFood/verduras/carrot.png',
-    legume: '/iconsFood/leguminosas/beans.png',
-    cereal: '/iconsFood/cereales/rice.png',
-    animal: '/iconsFood/animal/chicken.png'
+    fruit: '/frutas/apple.png',
+    vegetable: '/verduras/carrot.png',
+    legume: '/assets/Plato/legumbres_misma_escala.png',
+    cereal: '/assets/Plato/cereales_misma_escala.png',
+    animal: '/animal/chicken.png'
 };
 
 const categoryDescriptions: Record<FoodCategory, string> = {
@@ -302,7 +302,7 @@ export const FoodGrid: React.FC<FoodGridProps> = ({
                     color: var(--wood-dark);
                     background:
                         linear-gradient(180deg, rgba(var(--cream-rgb), 0.98), rgba(var(--cream-rgb), 0.94)),
-                        url('/assets/Fondo_Cocina.png');
+                        url('/assets/Backgrounds/Fondo_Cocina.png');
                     background-size: cover;
                     background-position: center;
                     overflow-y: auto;
