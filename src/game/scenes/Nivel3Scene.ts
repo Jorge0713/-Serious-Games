@@ -13,6 +13,8 @@ interface DraggableImage extends Phaser.GameObjects.Image {
     foodCategory: 'animal' | 'junk';
     localHomeX: number;
     localHomeY: number;
+    lastValidX: number;
+    lastValidY: number;
     baseScale: number;
     placed: boolean;
 }
@@ -79,6 +81,7 @@ export class Nivel3Scene extends Phaser.Scene {
     private scoreText!: Phaser.GameObjects.Text;
     private totalAnimal = 0;
     private placedAnimal = 0;
+    private placedFoods: DraggableImage[] = [];
 
     constructor() { super('Nivel3Scene'); }
 
@@ -92,6 +95,9 @@ export class Nivel3Scene extends Phaser.Scene {
 
     create() {
         const { width, height } = this.scale;
+        this.score = 0;
+        this.placedAnimal = 0;
+        this.placedFoods = [];
 
         this.add.image(width / 2, height / 2, 'fondo_cocina3').setDisplaySize(width, height);
         this.add.rectangle(width / 2, height / 2, width, height, 0x000000, 0.48);
@@ -208,6 +214,8 @@ export class Nivel3Scene extends Phaser.Scene {
             img.foodCategory = cfg.category;
             img.localHomeX = lx;
             img.localHomeY = ly;
+            img.lastValidX = lx;
+            img.lastValidY = ly;
             img.baseScale = bScale;
             img.placed = false;
 
@@ -251,34 +259,42 @@ export class Nivel3Scene extends Phaser.Scene {
     }
 
     private setupDragEvents() {
-        this.input.on('dragstart', (_ptr: Phaser.Input.Pointer, obj: DraggableImage) => {
+        this.input.on('dragstart', (ptr: Phaser.Input.Pointer, obj: DraggableImage) => {
             if (obj.placed) return;
-            const worldX = this.foodContainer.x + obj.localHomeX;
-            const worldY = this.foodContainer.y + obj.localHomeY;
             this.foodContainer.remove(obj, false);
             this.add.existing(obj);
             obj.clearMask();
-            obj.x = worldX;
-            obj.y = worldY;
+            obj.x = ptr.worldX;
+            obj.y = ptr.worldY;
             obj.setDepth(30);
         });
 
         this.input.on('drag', (ptr: Phaser.Input.Pointer, obj: DraggableImage) => {
             if (obj.placed) return;
-            obj.x = ptr.x;
-            obj.y = ptr.y;
+            obj.x = ptr.worldX;
+            obj.y = ptr.worldY;
         });
 
         this.input.on('drop', (ptr: Phaser.Input.Pointer, obj: DraggableImage) => {
             if (obj.placed) return;
 
             if (obj.foodCategory === 'animal') {
+                obj.x = ptr.worldX;
+                obj.y = ptr.worldY;
+
+                if (this.hasPlacedFoodOverlap(obj)) {
+                    this.returnToContainer(obj);
+                    this.showFeedback('Ese espacio ya estÃ¡ ocupado', '#e74c3c');
+                    return;
+                }
+
                 obj.placed = true;
                 obj.disableInteractive();
-                obj.x = ptr.x;
-                obj.y = ptr.y;
+                obj.lastValidX = obj.x;
+                obj.lastValidY = obj.y;
                 obj.setAlpha(0.92);
                 obj.setDepth(6);
+                this.placedFoods.push(obj);
                 
                 this.sound.play('object_win');
 
@@ -324,6 +340,15 @@ export class Nivel3Scene extends Phaser.Scene {
         });
     }
 
+    private hasPlacedFoodOverlap(obj: DraggableImage) {
+        const bounds = obj.getBounds();
+
+        return this.placedFoods.some(placedFood => (
+            placedFood !== obj &&
+            Phaser.Geom.Intersects.RectangleToRectangle(bounds, placedFood.getBounds())
+        ));
+    }
+
     private showFeedback(msg: string, color: string) {
         this.feedbackText.setText(msg).setColor(color).setAlpha(1);
         if (this.feedbackTimer) this.feedbackTimer.remove();
@@ -335,10 +360,10 @@ export class Nivel3Scene extends Phaser.Scene {
     private showWin() {
         showLevelCompleteOverlay(this, {
             title: '\u00A1NIVEL COMPLETADO!',
-            message: 'Identificaste los alimentos de origen animal y terminaste todos los retos del plato.',
+            message: 'Identificaste los alimentos de origen animal. Ahora repasaremos conceptos clave antes del siguiente reto.',
             scoreText: `Puntos: ${this.score}`,
-            buttonLabel: 'Ir al menu',
-            nextScene: 'MainMenu',
+            buttonLabel: 'Ver conceptos',
+            nextScene: 'PreTutorialConceptosScene',
             soundKey: 'level_win',
         });
     }

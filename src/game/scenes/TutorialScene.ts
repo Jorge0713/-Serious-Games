@@ -31,8 +31,9 @@ export class TutorialScene extends Phaser.Scene {
         });
 
         this.load.image("plato", "/assets/Plato/plato.png");
-        this.load.image("Fondo-cocina", "/assets/Backgrounds/Fondo_Cocina.png")
+        this.load.image("Fondo-cocina", "/assets/Fondo_Cocina.png")
         // Si tienes "btn-Volver" como un spritesheet de 2 frames, debes cargarlo así (reemplaza los valores de frameWidth y frameHeight):
+        // this.load.spritesheet("btn-Volver", "/assets/Buttons/volver.webp", { frameWidth: 100, frameHeight: 50 });
         this.load.image("btn-Volver", "/assets/Buttons/BtnVolverCafe.webp");
 
         // Cargar spritesheet de partes del plato
@@ -224,7 +225,7 @@ export class TutorialScene extends Phaser.Scene {
             zone.on("pointerdown", () => {
                 if (this.isExpanded) return;
                 this.clickSound.play();
-                this.expandSection(z.id, z.frame);
+                this.expandSection(z.id);
             });
         });
     }
@@ -232,8 +233,7 @@ export class TutorialScene extends Phaser.Scene {
     /**
      * Expande la sección clickeada mostrando los módulos grandes
      */
-    private expandSection(sectionId: string, _frameId: number) {
-        void _frameId;
+    private expandSection(sectionId: string) {
         this.isExpanded = true;
 
         // Ocultar plato original (fade out y scale down)
@@ -277,18 +277,18 @@ export class TutorialScene extends Phaser.Scene {
             })
 
             verduraSprite.on('pointerout', () => {
-                this.hoverSound.stop();
+                this.hoverSound.play();
             })
 
             verduraSprite.on('pointerdown', () => {
-                this.clickSound.play();
+                this.hoverSound.play();
                 // Llamar al callback global para mostrar el tutorial de React
                 const showTutorial = window.showTutorial
                 if (showTutorial) {
                     showTutorial(['vegetable', 'fruit'])
                 } else {
                     // Si no está disponible, ir a la escena de tutorial existente
-                    this.dialog.show("No pude abrir las tarjetas de alimentos en este momento. Intenta de nuevo.", 0)
+                    this.scene.start('TutorialScene')
                 }
             })
 
@@ -297,18 +297,18 @@ export class TutorialScene extends Phaser.Scene {
             })
 
             frutaSprite.on('pointerout', () => {
-                this.hoverSound.stop();
+                this.hoverSound.play();
             })
 
             frutaSprite.on('pointerdown', () => {
-                this.clickSound.play();
+                this.hoverSound.play();
                 // Llamar al callback global para mostrar el tutorial de React
                 const showTutorial = window.showTutorial
                 if (showTutorial) {
                     showTutorial(['fruit', 'vegetable'])
                 } else {
                     // Si no está disponible, ir a la escena de tutorial existente
-                    this.dialog.show("No pude abrir las tarjetas de alimentos en este momento. Intenta de nuevo.", 0)
+                    this.scene.start('TutorialScene')
                 }
             })
         }
@@ -331,18 +331,18 @@ export class TutorialScene extends Phaser.Scene {
             })
 
             cerealSprite.on('pointerout', () => {
-                this.hoverSound.stop();
+                this.hoverSound.play();
             })
 
             cerealSprite.on('pointerdown', () => {
-                this.clickSound.play();
+                this.hoverSound.play();
                 // Llamar al callback global para mostrar el tutorial de React
                 const showTutorial = window.showTutorial
                 if (showTutorial) {
                     showTutorial('cereal')
                 } else {
                     // Si no está disponible, ir a la escena de tutorial existente
-                    this.dialog.show("No pude abrir las tarjetas de alimentos en este momento. Intenta de nuevo.", 0)
+                    this.scene.start('TutorialScene')
                 }
             })
         }
@@ -365,18 +365,18 @@ export class TutorialScene extends Phaser.Scene {
             })
 
             animalSprite.on('pointerout', () => {
-                this.hoverSound.stop();
+                this.hoverSound.play();
             })
 
             animalSprite.on('pointerdown', () => {
-                this.clickSound.play();
+                this.hoverSound.play();
                 // Llamar al callback global para mostrar el tutorial de React
                 const showTutorial = window.showTutorial
                 if (showTutorial) {
                     showTutorial('animal')
                 } else {
                     // Si no está disponible, ir a la escena de tutorial existente
-                    this.dialog.show("No pude abrir las tarjetas de alimentos en este momento. Intenta de nuevo.", 0)
+                    this.scene.start('TutorialScene')
                 }
             })
         }
@@ -400,18 +400,18 @@ export class TutorialScene extends Phaser.Scene {
             })
 
             legumeSprite.on('pointerout', () => {
-                this.hoverSound.stop();
+                this.hoverSound.play();
             })
 
             legumeSprite.on('pointerdown', () => {
-                this.clickSound.play();
+                this.hoverSound.play();
                 // Llamar al callback global para mostrar el tutorial de React
                 const showTutorial = window.showTutorial
                 if (showTutorial) {
                     showTutorial('legume')
                 } else {
                     // Si no está disponible, ir a la escena de tutorial existente
-                    this.dialog.show("No pude abrir las tarjetas de alimentos en este momento. Intenta de nuevo.", 0)
+                    this.scene.start('TutorialScene')
                 }
             })
         }

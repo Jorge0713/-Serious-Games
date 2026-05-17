@@ -21,7 +21,10 @@ export const TutorialPage: React.FC<TutorialPageProps> = ({
     onNextSection,
     onFinishTutorial
 }) => {
-    const filteredFoods = nutritionalInfo.filter(food => categories.includes(food.category));
+    const categoryOrder = new Map(categories.map((category, index) => [category, index]));
+    const filteredFoods = nutritionalInfo
+        .filter(food => categories.includes(food.category))
+        .sort((a, b) => (categoryOrder.get(a.category) ?? 0) - (categoryOrder.get(b.category) ?? 0));
 
     return (
         <FoodGrid

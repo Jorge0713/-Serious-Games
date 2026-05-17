@@ -16,6 +16,7 @@ export class Nivel2Scene extends Phaser.Scene {
     private isFoodScrolling = false;
     private foodViewportX = 0;
     private foodViewportW = 0;
+    private placedFoods: Phaser.GameObjects.Image[] = [];
 
     // --- LISTA DE ALIMENTOS (8 cereales, 8 leguminosas, 4 sebos) ---
     private alimentos = [
@@ -75,6 +76,7 @@ export class Nivel2Scene extends Phaser.Scene {
 
     create() {
         this.aciertos = 0;
+        this.placedFoods = [];
         const { width, height } = this.scale;
 
         // 1. DIBUJAR FONDO
@@ -99,15 +101,27 @@ export class Nivel2Scene extends Phaser.Scene {
 
         // Cereales (izquierda)
         const segmentoCereales = this.add.image(width / 2 - 300, height - 483, "segmento-cereales")
-            .setScale(escalaCereales)
-            .setInteractive({ dropZone: true, pixelPerfect: true });
-        segmentoCereales.setData("categoria", "cereal");
+            .setScale(escalaCereales);
+
+        const zonaCereales = this.add.zone(
+            segmentoCereales.x,
+            segmentoCereales.y,
+            segmentoCereales.displayWidth * 0.86,
+            segmentoCereales.displayHeight * 0.86
+        ).setRectangleDropZone(segmentoCereales.displayWidth * 0.86, segmentoCereales.displayHeight * 0.86);
+        zonaCereales.setData("categoria", "cereal");
 
         // Leguminosas (derecha)  
         const segmentoLeguminosas = this.add.image(width / 2 + 300, height - 500, "segmento-leguminosas")
-            .setScale(escalaLeguminosas)
-            .setInteractive({ dropZone: true, pixelPerfect: true });
-        segmentoLeguminosas.setData("categoria", "leguminosa");
+            .setScale(escalaLeguminosas);
+
+        const zonaLeguminosas = this.add.zone(
+            segmentoLeguminosas.x,
+            segmentoLeguminosas.y,
+            segmentoLeguminosas.displayWidth * 0.86,
+            segmentoLeguminosas.displayHeight * 0.86
+        ).setRectangleDropZone(segmentoLeguminosas.displayWidth * 0.86, segmentoLeguminosas.displayHeight * 0.86);
+        zonaLeguminosas.setData("categoria", "leguminosa");
 
         // --- PLATÓN ---
         this.platon = this.add.image(width - 200, height - 200, "platon-feliz")
@@ -117,26 +131,21 @@ export class Nivel2Scene extends Phaser.Scene {
         this.buildFoodBar(width);
 
         // --- LÓGICA DE DRAG & DROP ---
-        this.input.on('dragstart', (_pointer: Phaser.Input.Pointer, gameObject: Phaser.GameObjects.Image) => {
+        this.input.on('dragstart', (pointer: Phaser.Input.Pointer, gameObject: Phaser.GameObjects.Image) => {
             const texto = gameObject.getData("texto") as Phaser.GameObjects.Text | undefined;
 
             if (gameObject.getData("fromFoodBar")) {
-                const localHomeX = gameObject.getData("localHomeX") as number;
-                const localHomeY = gameObject.getData("localHomeY") as number;
-                const worldX = this.foodContainer.x + localHomeX;
-                const worldY = this.foodContainer.y + localHomeY;
-
                 this.foodContainer.remove(gameObject, false);
                 this.add.existing(gameObject);
-                gameObject.x = worldX;
-                gameObject.y = worldY;
+                gameObject.x = pointer.worldX;
+                gameObject.y = pointer.worldY;
                 gameObject.setAlpha(1).setVisible(true);
 
                 if (texto) {
                     this.foodContainer.remove(texto, false);
                     this.add.existing(texto);
-                    texto.x = worldX;
-                    texto.y = worldY + FOOD_LABEL_OFFSET;
+                    texto.x = pointer.worldX;
+                    texto.y = pointer.worldY + FOOD_LABEL_OFFSET;
                     texto.setDepth(31).setAlpha(1).setVisible(true);
                 }
             }
@@ -146,25 +155,35 @@ export class Nivel2Scene extends Phaser.Scene {
             gameObject.setTint(0xdddddd);
         });
 
-        this.input.on('drag', (_pointer: Phaser.Input.Pointer, gameObject: Phaser.GameObjects.Image, dragX: number, dragY: number) => {
-            gameObject.x = dragX;
-            gameObject.y = dragY;
+        this.input.on('drag', (pointer: Phaser.Input.Pointer, gameObject: Phaser.GameObjects.Image) => {
+            gameObject.x = pointer.worldX;
+            gameObject.y = pointer.worldY;
             const texto = gameObject.getData("texto");
             if (texto) {
-                texto.x = dragX;
-                texto.y = dragY + FOOD_LABEL_OFFSET;
+                texto.x = pointer.worldX;
+                texto.y = pointer.worldY + FOOD_LABEL_OFFSET;
             }
         });
 
-        this.input.on('drop', (_pointer: Phaser.Input.Pointer, gameObject: Phaser.GameObjects.Image, dropZone: Phaser.GameObjects.Image) => {
+        this.input.on('drop', (_pointer: Phaser.Input.Pointer, gameObject: Phaser.GameObjects.Image, dropZone: Phaser.GameObjects.Zone) => {
             const categoriaItem = gameObject.getData("categoria");
             const categoriaZona = dropZone.getData("categoria");
             if (categoriaItem === categoriaZona) {
+                if (this.hasPlacedFoodOverlap(gameObject)) {
+                    gameObject.clearTint();
+                    try { this.sound.play("sonido-error"); } catch { void 0; }
+                    this.returnToFoodBar(gameObject);
+                    return;
+                }
+
                 // ✅ ACIERTO
                 gameObject.clearTint();
                 this.input.setDraggable(gameObject, false);
                 gameObject.disableInteractive();
                 gameObject.setData("placed", true);
+                gameObject.setData("lastValidX", gameObject.x);
+                gameObject.setData("lastValidY", gameObject.y);
+                this.placedFoods.push(gameObject);
 
                 try { this.sound.play("object_win"); } catch { void 0; }
                 try { this.mostrarPlaton(true); } catch { void 0; }
@@ -266,6 +285,10 @@ export class Nivel2Scene extends Phaser.Scene {
             sprite.setData("categoria", categoria);
             sprite.setData("localHomeX", localX);
             sprite.setData("localHomeY", localY);
+            sprite.setData("originalX", localX);
+            sprite.setData("originalY", localY);
+            sprite.setData("lastValidX", localX);
+            sprite.setData("lastValidY", localY);
             sprite.setData("fromFoodBar", true);
             sprite.setData("texto", texto);
 
@@ -339,6 +362,15 @@ export class Nivel2Scene extends Phaser.Scene {
                 this.updateFoodBarVisibility();
             }
         });
+    }
+
+    private hasPlacedFoodOverlap(gameObject: Phaser.GameObjects.Image) {
+        const bounds = gameObject.getBounds();
+
+        return this.placedFoods.some(placedFood => (
+            placedFood !== gameObject &&
+            Phaser.Geom.Intersects.RectangleToRectangle(bounds, placedFood.getBounds())
+        ));
     }
 
     private updateFoodBarVisibility() {
