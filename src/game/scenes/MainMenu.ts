@@ -43,8 +43,15 @@ export class MainMenu extends Phaser.Scene {
             .setDisplaySize(width * 1, height * 1)
 
 
-        this.music = this.sound.add('ambient_track', { volume: 0.3, loop: true })
-        this.music.play()
+        const tracks = this.sound.getAll('ambient_track');
+        const isPlaying = tracks.some(t => t.isPlaying);
+
+        if (!isPlaying) {
+            this.music = this.sound.add('ambient_track', { volume: 0.3, loop: true })
+            this.music.play()
+        } else {
+            this.music = tracks.find(t => t.isPlaying) as Phaser.Sound.BaseSound;
+        }
 
         this.sounds = this.sound.add('Click', { volume: 0.1, loop: false })
         this.soundd = this.sound.add('Hover', { volume: 0.1, loop: false })
