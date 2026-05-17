@@ -38,11 +38,11 @@ const nutrientMatches = [
 ];
 
 const fallbackImages: Record<FoodCategory, string> = {
-    fruit: '/frutas/apple.png',
-    vegetable: '/verduras/carrot.png',
-    legume: '/assets/Plato/legumbres_misma_escala.png',
-    cereal: '/assets/Plato/cereales_misma_escala.png',
-    animal: '/animal/chicken.png'
+    fruit: '/iconsFood/frutas/apple.png',
+    vegetable: '/iconsFood/verduras/carrot.png',
+    legume: '/iconsFood/leguminosas/beans.png',
+    cereal: '/iconsFood/cereales/rice.png',
+    animal: '/iconsFood/animal/chicken.png'
 };
 
 const categoryDescriptions: Record<FoodCategory, string> = {
@@ -89,10 +89,14 @@ const getFoodFacts = (food: FoodItem) => {
 };
 
 const FoodSectionExplorer: React.FC<FoodSectionExplorerProps> = ({ category, items }) => {
-    const [activeFood, setActiveFood] = useState<FoodItem>(items[0]);
+    const [activeFoodId, setActiveFoodId] = useState<string | null>(items[0]?.id ?? null);
     const trackRef = useRef<HTMLDivElement>(null);
     const config = categoryConfig[category];
-    const facts = useMemo(() => getFoodFacts(activeFood), [activeFood]);
+    const activeFood = useMemo(
+        () => items.find(food => food.id === activeFoodId) ?? items[0] ?? null,
+        [activeFoodId, items]
+    );
+    const facts = useMemo(() => activeFood ? getFoodFacts(activeFood) : null, [activeFood]);
 
     const scrollFoods = (direction: -1 | 1) => {
         trackRef.current?.scrollBy({
@@ -111,7 +115,8 @@ const FoodSectionExplorer: React.FC<FoodSectionExplorerProps> = ({ category, ite
                 </div>
             </div>
 
-            <div className="food-explorer">
+            {activeFood && facts ? (
+                <div className="food-explorer">
                 <div className="carousel-zone">
                     <div className="carousel-toolbar">
                         <span className="carousel-label">Colección nutritiva</span>
@@ -144,7 +149,7 @@ const FoodSectionExplorer: React.FC<FoodSectionExplorerProps> = ({ category, ite
                                     type="button"
                                     key={food.id}
                                     className={`food-card ${isActive ? 'is-active' : ''}`}
-                                    onClick={() => setActiveFood(food)}
+                                    onClick={() => setActiveFoodId(food.id)}
                                     aria-pressed={isActive}
                                     style={{ animationDelay: `${Math.min(index * 60, 480)}ms` }}
                                 >
@@ -206,7 +211,12 @@ const FoodSectionExplorer: React.FC<FoodSectionExplorerProps> = ({ category, ite
                         </div>
                     </div>
                 </aside>
-            </div>
+                </div>
+            ) : (
+                <div className="empty-food-state">
+                    No hay alimentos disponibles para esta seccion.
+                </div>
+            )}
         </section>
     );
 };
@@ -527,6 +537,17 @@ export const FoodGrid: React.FC<FoodGridProps> = ({
                     box-shadow:
                         0 22px 44px rgba(var(--wood-dark-rgb), 0.2),
                         inset 0 0 0 2px rgba(var(--cream-rgb), 0.72);
+                }
+
+                .empty-food-state {
+                    padding: 24px;
+                    color: var(--wood-dark);
+                    background: var(--cream);
+                    border: 3px solid rgba(var(--wood-dark-rgb), 0.48);
+                    border-radius: 22px;
+                    box-shadow: 0 14px 28px rgba(var(--wood-dark-rgb), 0.14);
+                    font-size: 24px;
+                    line-height: 1.2;
                 }
 
                 .carousel-zone {

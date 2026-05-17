@@ -52,11 +52,10 @@ export class Nivel1Scene extends Phaser.Scene {
 
     preload() {
         // --- FONDO GENERAL ---
-        this.load.image("Fondo-cocina", "/assets/Fondo_Cocina.png");
+        this.load.image("Fondo-cocina", "/assets/Backgrounds/Fondo_Cocina.png");
 
         // --- PON AQUÍ LAS RUTAS DE LAS IMÁGENES DE LOS SEGMENTOS VACÍOS ---
-        // Ejemplo: this.load.image("segmento-verduras", "/ruta/a/tu/segmento_verduras.png");
-        this.load.image("segmento-verduras", "/assets/verduras_misma_escala.png");
+        this.load.image("segmento-verduras", "/assets/Plato/verduras_misma_escala.png");
         this.load.image("segmento-frutas", "/assets/Plato/frutas_misma_escala.png");
 
         // --- PON AQUÍ LAS RUTAS DE PLATÓN ---
@@ -138,26 +137,21 @@ export class Nivel1Scene extends Phaser.Scene {
         // --- PASO 4: LÓGICA DE DRAG & DROP ---
 
         // Al empezar a arrastrar
-        this.input.on('dragstart', (_pointer: Phaser.Input.Pointer, gameObject: Phaser.GameObjects.Image) => {
+        this.input.on('dragstart', (pointer: Phaser.Input.Pointer, gameObject: Phaser.GameObjects.Image) => {
             const texto = gameObject.getData("texto") as Phaser.GameObjects.Text | undefined;
 
             if (gameObject.getData("fromFoodBar")) {
-                const localHomeX = gameObject.getData("localHomeX") as number;
-                const localHomeY = gameObject.getData("localHomeY") as number;
-                const worldX = this.foodContainer.x + localHomeX;
-                const worldY = this.foodContainer.y + localHomeY;
-
                 this.foodContainer.remove(gameObject, false);
                 this.add.existing(gameObject);
-                gameObject.x = worldX;
-                gameObject.y = worldY;
+                gameObject.x = pointer.x;
+                gameObject.y = pointer.y;
                 gameObject.setAlpha(1).setVisible(true);
 
                 if (texto) {
                     this.foodContainer.remove(texto, false);
                     this.add.existing(texto);
-                    texto.x = worldX;
-                    texto.y = worldY + FOOD_LABEL_OFFSET;
+                    texto.x = pointer.x;
+                    texto.y = pointer.y + FOOD_LABEL_OFFSET;
                     texto.setDepth(31).setAlpha(1).setVisible(true);
                 }
             }
@@ -171,15 +165,15 @@ export class Nivel1Scene extends Phaser.Scene {
         });
 
         // Mientras se mueve el mouse
-        this.input.on('drag', (_pointer: Phaser.Input.Pointer, gameObject: Phaser.GameObjects.Image, dragX: number, dragY: number) => {
-            gameObject.x = dragX;
-            gameObject.y = dragY;
+        this.input.on('drag', (pointer: Phaser.Input.Pointer, gameObject: Phaser.GameObjects.Image) => {
+            gameObject.x = pointer.x;
+            gameObject.y = pointer.y;
 
             // Que el texto siga a la imagen
             const texto = gameObject.getData("texto");
             if (texto) {
-                texto.x = dragX;
-                texto.y = dragY + FOOD_LABEL_OFFSET;
+                texto.x = pointer.x;
+                texto.y = pointer.y + FOOD_LABEL_OFFSET;
             }
         });
 

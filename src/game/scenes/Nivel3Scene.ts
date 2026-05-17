@@ -83,7 +83,7 @@ export class Nivel3Scene extends Phaser.Scene {
     constructor() { super('Nivel3Scene'); }
 
     preload() {
-        this.load.image('fondo_cocina3',   '/assets/Fondo_Cocina.png');
+        this.load.image('fondo_cocina3',   '/assets/Backgrounds/Fondo_Cocina.png');
         this.load.image('animal_section',  '/assets/Plato/AnlimalSection.png');
         this.load.audio('object_win',      '/Sound/ObjectWIN.mp3');
         this.load.audio('level_win',       '/Sound/win.mp3');

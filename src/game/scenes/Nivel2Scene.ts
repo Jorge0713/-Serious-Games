@@ -52,12 +52,12 @@ export class Nivel2Scene extends Phaser.Scene {
 
     preload() {
         // --- FONDO GENERAL ---
-        this.load.image("Fondo-cocina", "/assets/Fondo_Cocina.png");
+        this.load.image("Fondo-cocina", "/assets/Backgrounds/Fondo_Cocina.png");
 
         // --- IMÁGENES DE LOS SEGMENTOS ---
         // Cereales y Leguminosas con sprites recoloreados
-        this.load.image("segmento-cereales", "/assets/cereales_misma_escala.png");
-        this.load.image("segmento-leguminosas", "/assets/legumbres_misma_escala.png");
+        this.load.image("segmento-cereales", "/assets/Plato/cereales_misma_escala.png");
+        this.load.image("segmento-leguminosas", "/assets/Plato/legumbres_misma_escala.png");
 
         // --- PLATÓN ---
         this.load.image("platon-feliz", "/assets/Platon/platon_feliz.png");
