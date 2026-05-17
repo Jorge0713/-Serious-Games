@@ -272,7 +272,7 @@ export class Nivel2Scene extends Phaser.Scene {
         const btnSalir = this.add.rectangle(width / 2, height / 2 + 130, 250, 60, 0x4CAF50, 1)
             .setInteractive({ useHandCursor: true });
         
-        const txtSalir = this.add.text(width / 2, height / 2 + 130, 'Volver al Menú', {
+        const txtSalir = this.add.text(width / 2, height / 2 + 130, 'Siguiente Nivel', {
             fontSize: '24px',
             color: '#fff',
             fontStyle: 'bold'
@@ -282,7 +282,7 @@ export class Nivel2Scene extends Phaser.Scene {
         btnSalir.on('pointerout', () => btnSalir.setFillStyle(0x4CAF50));
         btnSalir.on('pointerdown', () => {
             try { this.sound.play("sonido-click"); } catch(e) {}
-            this.scene.start('MainMenu');
+            this.scene.start('Nivel3Scene');
         });
         
         const elements = [overlay, panel, titulo, mensaje, btnSalir, txtSalir];

@@ -343,14 +343,14 @@ export class Nivel1Scene extends Phaser.Scene {
             try { this.sound.play("sonido-click"); } catch(e) {}
             this.scene.start('Nivel2Scene');
         });
-        
+
         // Animación de entrada de todos los elementos
         const elements = [overlay, panel, titulo, mensaje, btnSalir, txtSalir];
         elements.forEach(el => el.setAlpha(0));
-        
+
         // Desactivamos el arrastre de los "sebos" restantes
-        this.input.enabled = false; 
-        
+        this.input.enabled = false;
+
         this.tweens.add({
             targets: elements,
             alpha: 1,

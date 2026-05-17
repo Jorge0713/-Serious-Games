@@ -4,10 +4,7 @@ import * as Phaser from 'phaser'
 import { hoverScale } from "../../componentes/HoverScale";
 export class MainMenu extends Phaser.Scene {
 
-    // ─── PROPIEDADES ────────────────────────────────────────────
-    // Analogía Java: atributos de instancia privados
-    // private titleText!: Phaser.GameObjects.Text  // Descomentar cuando se use
-    // private playButton!: Phaser.GameObjects.Text  // Descomentar cuando se use
+
     private music!: Phaser.Sound.BaseSound
     private sounds!: Phaser.Sound.BaseSound
     private soundd!: Phaser.Sound.BaseSound
@@ -19,17 +16,17 @@ export class MainMenu extends Phaser.Scene {
 
 
     preload(): void {
-        this.load.image('Mainmenu', '/assets/Main.png')
-        this.load.image('full', '/assets/fullscreen.png')
-        this.load.image('Logo', '/assets/LogoApp.png')
-        this.load.image('btn-CrearPlatoInactivo', '/assets/Buttons/BotonCrearPlatoInactivo.png')
-        this.load.image('btn-CrearPlatoActivo', '/assets/Buttons/BotonCrearPlatoActivo.png')
-        this.load.image('btn-tutorial', '/assets/Buttons/BotonTutorial.png')
-        this.load.image('marco', '/assets/Marco.png')
-        this.load.audio('ambient_track', '/Sound/ambient_track.mp3')
-        this.load.audio('Click', '/Sound/Click.mp3')
-        this.load.audio('Hover', '/Sound/hiverSound.mp3')
-        this.load.image('Banner', '/assets/BannerMain.png')
+        this.load.image('Mainmenu', './assets/Main.png')
+        this.load.image('full', './assets/Backgrounds/fullscreen.png')
+        this.load.image('Logo', './assets/Backgrounds/LogoApp.png')
+        this.load.image('btn-CrearPlatoInactivo', './assets/Buttons/BotonCrearPlatoInactivo.png')
+        this.load.image('btn-CrearPlatoActivo', './assets/Buttons/BotonCrearPlatoActivo.png')
+        this.load.image('btn-tutorial', './assets/Buttons/BotonTutorial.png')
+        this.load.image('marco', './assets/Backgrounds/Marco.png')
+        this.load.audio('ambient_track', './Sound/xtremefreddy-game-music-loop-6-144641.mp3')
+        this.load.audio('Click', './Sound/Click.mp3')
+        this.load.audio('Hover', './Sound/hiverSound.mp3')
+        this.load.image('Banner', './assets/BannerMain.png')
 
     }
 

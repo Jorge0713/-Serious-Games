@@ -1,5 +1,5 @@
 import * as Phaser from 'phaser'
-import { MainMenu } from './Scenes/MainMenu'
+import { MainMenu } from './scenes/MainMenu'
 import { TutorialScene } from './scenes/TutorialScene'
 import { Nivel1Scene } from './scenes/Nivel1Scene'
 import { Nivel2Scene } from './scenes/Nivel2Scene'
