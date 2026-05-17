@@ -1,109 +1,132 @@
-import { useState, useEffect } from 'react';
-import HomePage from "./ui/pages/HomePage";
-import { TutorialPage } from "./ui/components/tutorial";
+import { useCallback, useEffect, useState } from 'react';
+import type * as Phaser from 'phaser';
+import HomePage from './ui/pages/HomePage';
+import { TutorialPage } from './ui/components/tutorial';
+import type { FoodCategory } from './data/nutritionalInfo';
 
-type Page = 'home' | 'tutorial' | 'cereal' | 'legume' | 'animal';
+interface TutorialSection {
+  id: string;
+  title: string;
+  categories: FoodCategory[];
+}
 
-const tutorialOrder: Page[] = ['tutorial', 'cereal', 'legume', 'animal'];
+declare global {
+  interface Window {
+    __phaserGame?: Phaser.Game;
+    showTutorial?: (categories: FoodCategory | FoodCategory[]) => void;
+    goToNivel1?: () => void;
+    goToNivel2?: () => void;
+    goToNivel3?: () => void;
+  }
+}
 
-const tutorialTitles: Record<Page, string> = {
-  'home': 'Menú Principal',
-  'tutorial': 'Grupo 1: Frutas y Verduras',
-  'cereal': 'Grupo 2: Cereales',
-  'legume': 'Grupo 3: Leguminosas',
-  'animal': 'Grupo 4: Origen Animal'
+const tutorialSections: TutorialSection[] = [
+  {
+    id: 'frutasVerduras',
+    title: 'Frutas y verduras',
+    categories: ['vegetable', 'fruit']
+  },
+  {
+    id: 'cereales',
+    title: 'Cereales',
+    categories: ['cereal']
+  },
+  {
+    id: 'origenAnimalLeguminosas',
+    title: 'Origen animal y leguminosas',
+    categories: ['animal', 'legume']
+  }
+];
+
+const getSectionIndexFromCategories = (categories: FoodCategory | FoodCategory[]) => {
+  const selectedCategories = Array.isArray(categories) ? categories : [categories];
+
+  if (selectedCategories.some(category => category === 'animal' || category === 'legume')) {
+    return 2;
+  }
+
+  if (selectedCategories.includes('cereal')) {
+    return 1;
+  }
+
+  return 0;
 };
 
-const categoryFromPage: Record<Page, string | string[] | null> = {
-  'home': null,
-  'tutorial': ['vegetable', 'fruit'],
-  'cereal': 'cereal',
-  'legume': 'legume',
-  'animal': 'animal'
-};
+type PhaserSceneKey = 'Nivel1Scene' | 'Nivel2Scene' | 'Nivel3Scene';
 
 function App() {
-  const [currentPage, setCurrentPage] = useState<Page>('home');
   const [showTutorialUI, setShowTutorialUI] = useState(false);
-  const [selectedCategory, setSelectedCategory] = useState<string | string[] | null>(null);
+  const [currentSectionIndex, setCurrentSectionIndex] = useState(0);
 
-  const handleBackToMenu = () => {
+  const currentSection = tutorialSections[currentSectionIndex];
+
+  const startPhaserScene = useCallback((sceneKey: PhaserSceneKey) => {
     setShowTutorialUI(false);
-    setSelectedCategory(null);
-    setCurrentPage('home');
+
+    const game = window.__phaserGame;
+    if (!game) return;
+
+    game.scene.stop('TutorialScene');
+    game.scene.start(sceneKey);
+  }, []);
+
+  const startNivel1 = useCallback(() => {
+    startPhaserScene('Nivel1Scene');
+  }, [startPhaserScene]);
+
+  const startNivel2 = useCallback(() => {
+    startPhaserScene('Nivel2Scene');
+  }, [startPhaserScene]);
+
+  const startNivel3 = useCallback(() => {
+    startPhaserScene('Nivel3Scene');
+  }, [startPhaserScene]);
+
+  const handlePreviousSection = () => {
+    setCurrentSectionIndex(index => Math.max(0, index - 1));
   };
 
-  const getNextPage = (current: Page): Page => {
-    const idx = tutorialOrder.indexOf(current);
-    if (idx === -1) return 'tutorial';
-    return tutorialOrder[(idx + 1) % tutorialOrder.length];
-  };
-
-  const handleNextTutorial = () => {
-    const nextPage = getNextPage(currentPage);
-    setCurrentPage(nextPage);
-    setSelectedCategory(categoryFromPage[nextPage]);
+  const handleNextSection = () => {
+    setCurrentSectionIndex(index => Math.min(tutorialSections.length - 1, index + 1));
   };
 
   useEffect(() => {
-    (window as any).showTutorial = (categories: string | string[]) => {
-      setShowTutorialUI(false);
-      if (Array.isArray(categories)) {
-        setSelectedCategory(categories);
-        if (categories.includes('vegetable') && categories.includes('fruit')) {
-          setCurrentPage('tutorial');
-        } else if (categories.includes('cereal')) {
-          setCurrentPage('cereal');
-        } else if (categories.includes('legume')) {
-          setCurrentPage('legume');
-        } else if (categories.includes('animal')) {
-          setCurrentPage('animal');
-        }
-      } else if (categories === 'fruit' || categories === 'vegetable') {
-        setSelectedCategory(['vegetable', 'fruit']);
-        setCurrentPage('tutorial');
-      } else {
-        setSelectedCategory(categories);
-        if (categories === 'cereal') setCurrentPage('cereal');
-        else if (categories === 'legume') setCurrentPage('legume');
-        else if (categories === 'animal') setCurrentPage('animal');
-      }
+    window.showTutorial = (categories: FoodCategory | FoodCategory[]) => {
+      setCurrentSectionIndex(getSectionIndexFromCategories(categories));
       setShowTutorialUI(true);
     };
 
-    (window as any).goToNivel2 = () => {
-      setShowTutorialUI(false);
-      setSelectedCategory(null);
-      setCurrentPage('home');
-    };
-  }, []);
+    window.goToNivel1 = startNivel1;
+    window.goToNivel2 = startNivel2;
+    window.goToNivel3 = startNivel3;
+  }, [startNivel1, startNivel2, startNivel3]);
 
-  const currentTitle = tutorialTitles[currentPage];
+  return (
+    <>
+      <HomePage />
+      {showTutorialUI && (
+        <div className="tutorial-overlay">
+          <TutorialPage
+            categories={currentSection.categories}
+            title={currentSection.title}
+            currentSectionIndex={currentSectionIndex}
+            totalSections={tutorialSections.length}
+            onPreviousSection={handlePreviousSection}
+            onNextSection={handleNextSection}
+            onFinishTutorial={startNivel1}
+          />
+        </div>
+      )}
 
-  if (showTutorialUI) {
-    return (
-      <TutorialPage
-        selectedCategory={selectedCategory}
-        title={currentTitle}
-        isFirstTutorial={currentPage === 'tutorial'}
-        onBackToMenu={handleBackToMenu}
-        onNextTutorial={handleNextTutorial}
-      />
-    );
-  }
-
-  if (currentPage === 'tutorial') {
-    return (
-      <TutorialPage
-        title={currentTitle}
-        isFirstTutorial={true}
-        onBackToMenu={handleBackToMenu}
-        onNextTutorial={handleNextTutorial}
-      />
-    );
-  }
-
-  return <HomePage />;
+      <style>{`
+        .tutorial-overlay {
+          position: fixed;
+          inset: 0;
+          z-index: 1000;
+        }
+      `}</style>
+    </>
+  );
 }
 
 export default App;

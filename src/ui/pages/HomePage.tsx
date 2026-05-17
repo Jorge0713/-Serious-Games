@@ -6,11 +6,19 @@ function HomePage() {
 
     useEffect(() => {
         if (!divRef.current) return
-        // Guardar instancia del juego globalmente para que React pueda comunicarse con ella
-        if (!(window as any).__phaserGame) {
-            const game = createGame(divRef.current)
-            ;(window as any).__phaserGame = game
+
+        if (window.__phaserGame) {
+            const canvas = window.__phaserGame.canvas
+
+            if (canvas.parentElement !== divRef.current) {
+                divRef.current.appendChild(canvas)
+            }
+
+            return
         }
+
+        const game = createGame(divRef.current)
+        window.__phaserGame = game
 
         return () => {
             // No destruimos el juego al desmontar para que sobreviva al overlay de React

@@ -1,52 +1,37 @@
-import { useState } from 'react';
 import { FoodGrid } from './FoodGrid';
-import { FoodDetail } from './FoodDetail';
 import { nutritionalInfo } from '../../../data/nutritionalInfo';
-import type { FoodItem } from '../../../data/nutritionalInfo';
+import type { FoodCategory } from '../../../data/nutritionalInfo';
 
 interface TutorialPageProps {
-    onBackToMenu: () => void;
-    onNextTutorial: () => void;
-    selectedCategory?: string | string[] | null;
-    title?: string;
-    isFirstTutorial?: boolean;
+    categories: FoodCategory[];
+    title: string;
+    currentSectionIndex: number;
+    totalSections: number;
+    onPreviousSection: () => void;
+    onNextSection: () => void;
+    onFinishTutorial: () => void;
 }
 
 export const TutorialPage: React.FC<TutorialPageProps> = ({
-    onBackToMenu,
-    onNextTutorial,
-    selectedCategory = null,
-    title = "Grupo 1: Frutas y Verduras",
-    isFirstTutorial = false
+    categories,
+    title,
+    currentSectionIndex,
+    totalSections,
+    onPreviousSection,
+    onNextSection,
+    onFinishTutorial
 }) => {
-    const [selectedFood, setSelectedFood] = useState<FoodItem | null>(null);
-
-    const handleSelectFood = (food: FoodItem) => {
-        setSelectedFood(food);
-    };
-
-    const filteredFoods = selectedCategory
-        ? Array.isArray(selectedCategory)
-            ? nutritionalInfo.filter(f => selectedCategory.includes(f.category))
-            : nutritionalInfo.filter(f => f.category === selectedCategory)
-        : nutritionalInfo;
-
-    const handleBack = () => {
-        setSelectedFood(null);
-    };
-
-    if (selectedFood) {
-        return <FoodDetail food={selectedFood} onBack={handleBack} />;
-    }
+    const filteredFoods = nutritionalInfo.filter(food => categories.includes(food.category));
 
     return (
         <FoodGrid
             foods={filteredFoods}
-            onSelectFood={handleSelectFood}
-            onBackToMenu={onBackToMenu}
-            onNextTutorial={onNextTutorial}
             title={title}
-            isFirstTutorial={isFirstTutorial}
+            currentSectionIndex={currentSectionIndex}
+            totalSections={totalSections}
+            onPreviousSection={onPreviousSection}
+            onNextSection={onNextSection}
+            onFinishTutorial={onFinishTutorial}
         />
     );
 };

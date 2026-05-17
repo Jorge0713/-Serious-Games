@@ -1,4 +1,5 @@
 import * as Phaser from 'phaser';
+import { showLevelCompleteOverlay } from '../systems/LevelCompleteOverlay';
 
 // ─── Tipos ────────────────────────────────────────────────────────────────────
 interface FoodConfig {
@@ -110,7 +111,7 @@ export class Nivel3Scene extends Phaser.Scene {
             stroke: '#000', strokeThickness: 3,
         }).setOrigin(1, 0).setDepth(10);
 
-        this.buildScrollStrip(width, height);
+        this.buildScrollStrip(width);
 
         this.sectionX = width / 2;
         this.sectionY = height * 0.73;
@@ -146,7 +147,7 @@ export class Nivel3Scene extends Phaser.Scene {
         btnVolver.on('pointerdown', () => this.scene.start('MainMenu'));
     }
 
-    private buildScrollStrip(width: number, _height: number) {
+    private buildScrollStrip(width: number) {
         const BAR_W = Math.round(width * 0.70);
         const ARROW_W = 48;
         const barLeft = (width - BAR_W) / 2;
@@ -250,7 +251,7 @@ export class Nivel3Scene extends Phaser.Scene {
     }
 
     private setupDragEvents() {
-        this.input.on('dragstart', (_ptr: any, obj: DraggableImage) => {
+        this.input.on('dragstart', (_ptr: Phaser.Input.Pointer, obj: DraggableImage) => {
             if (obj.placed) return;
             const worldX = this.foodContainer.x + obj.localHomeX;
             const worldY = this.foodContainer.y + obj.localHomeY;
@@ -294,7 +295,7 @@ export class Nivel3Scene extends Phaser.Scene {
             }
         });
 
-        this.input.on('dragend', (_ptr: any, obj: DraggableImage, dropped: boolean) => {
+        this.input.on('dragend', (_ptr: Phaser.Input.Pointer, obj: DraggableImage, dropped: boolean) => {
             if (obj.placed) return;
             if (!dropped) {
                 this.returnToContainer(obj);
@@ -332,25 +333,14 @@ export class Nivel3Scene extends Phaser.Scene {
     }
 
     private showWin() {
-        this.sound.play('level_win');
-
-        const { width, height } = this.scale;
-        this.add.rectangle(width / 2, height / 2, width, height, 0x000000, 0.72).setDepth(40);
-        this.add.text(width / 2, height / 2 - 70, '🎉 ¡Nivel Completado!', {
-            fontSize: '54px', color: '#f1c40f', fontFamily: 'Arial',
-            fontStyle: 'bold', stroke: '#000', strokeThickness: 5,
-        }).setOrigin(0.5).setDepth(41);
-        this.add.text(width / 2, height / 2, `Puntuación final: ${this.score} puntos`, {
-            fontSize: '30px', color: '#ecf0f1', fontFamily: 'Arial',
-            stroke: '#000', strokeThickness: 4,
-        }).setOrigin(0.5).setDepth(41);
-        const btnMenu = this.add.text(width / 2, height / 2 + 90, 'Ir al Menú Principal', {
-            fontSize: '26px', color: '#fff', backgroundColor: '#2980b9',
-            padding: { x: 24, y: 12 }, fontFamily: 'Arial',
-        }).setOrigin(0.5).setDepth(41).setInteractive({ useHandCursor: true });
-        btnMenu.on('pointerover', () => btnMenu.setStyle({ backgroundColor: '#1a5276' }));
-        btnMenu.on('pointerout',  () => btnMenu.setStyle({ backgroundColor: '#2980b9' }));
-        btnMenu.on('pointerdown', () => this.scene.start('MainMenu'));
+        showLevelCompleteOverlay(this, {
+            title: '\u00A1NIVEL COMPLETADO!',
+            message: 'Identificaste los alimentos de origen animal y terminaste todos los retos del plato.',
+            scoreText: `Puntos: ${this.score}`,
+            buttonLabel: 'Ir al menu',
+            nextScene: 'MainMenu',
+            soundKey: 'level_win',
+        });
     }
 
     update() {
@@ -359,20 +349,21 @@ export class Nivel3Scene extends Phaser.Scene {
         const left = this.viewportX;
         const right = this.viewportX + this.viewportW;
         
-        this.foodContainer.list.forEach((child: any) => {
-            const worldX = this.foodContainer.x + child.x;
+        this.foodContainer.list.forEach((child) => {
+            const item = child as Phaser.GameObjects.Image | Phaser.GameObjects.Text;
+            const worldX = this.foodContainer.x + item.x;
             
             if (worldX < left - 50 || worldX > right + 50) {
-                child.setVisible(false);
+                item.setVisible(false);
             } else {
-                child.setVisible(true);
+                item.setVisible(true);
                 
                 if (worldX < left + 30) {
-                    child.setAlpha(Math.max(0, (worldX - (left - 50)) / 80));
+                    item.setAlpha(Math.max(0, (worldX - (left - 50)) / 80));
                 } else if (worldX > right - 30) {
-                    child.setAlpha(Math.max(0, ((right + 50) - worldX) / 80));
+                    item.setAlpha(Math.max(0, ((right + 50) - worldX) / 80));
                 } else {
-                    child.setAlpha(1);
+                    item.setAlpha(1);
                 }
             }
         });
