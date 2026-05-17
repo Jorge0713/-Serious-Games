@@ -1,4 +1,5 @@
 import * as Phaser from 'phaser';
+import { showLevelCompleteOverlay } from '../systems/LevelCompleteOverlay';
 
 // ─── Tipos ────────────────────────────────────────────────────────────────────
 interface FoodConfig {
@@ -118,7 +119,6 @@ export class Nivel3Scene extends Phaser.Scene {
             stroke: '#000', strokeThickness: 3,
         }).setOrigin(1, 0).setDepth(10);
 
-        // ── Strip de alimentos con scroll ──
         this.buildScrollStrip(width);
 
         // ── Zona de drop centrada (imagen AnimalSection) ──
@@ -157,15 +157,13 @@ export class Nivel3Scene extends Phaser.Scene {
         btnVolver.on('pointerdown', () => this.scene.start('MainMenu'));
     }
 
-    // ── Construye el strip scrollable ─────────────────────────────────────────
     private buildScrollStrip(width: number) {
-        // Barra centrada al 70% del ancho de pantalla
-        const BAR_W      = Math.round(width * 0.70);
-        const ARROW_W    = 48;
-        const barLeft    = (width - BAR_W) / 2;         // x de inicio de la barra
-        const viewportX  = barLeft + ARROW_W;           // x donde empieza el viewport
-        const viewportW  = BAR_W - ARROW_W * 2;         // ancho visible sin flechas
-        const stripTop   = 108;
+        const BAR_W = Math.round(width * 0.70);
+        const ARROW_W = 48;
+        const barLeft = (width - BAR_W) / 2;
+        const viewportX = barLeft + ARROW_W;
+        const viewportW = BAR_W - ARROW_W * 2;
+        const stripTop = 108;
         const stripHeight = ITEM_SPACEY * 2 + 40;
 
         // Fondo semitransparente solo sobre la barra
@@ -273,8 +271,7 @@ export class Nivel3Scene extends Phaser.Scene {
 
     // ── Eventos globales de drag ───────────────────────────────────────────────
     private setupDragEvents() {
-        // Cuando inicia el arrastre: sacar del container para que no sea cortado por la máscara
-        this.input.on('dragstart', (_ptr: any, obj: DraggableImage) => {
+        this.input.on('dragstart', (_ptr: Phaser.Input.Pointer, obj: DraggableImage) => {
             if (obj.placed) return;
 
             // Convertir posición local del container a coordenadas de mundo
@@ -328,8 +325,7 @@ export class Nivel3Scene extends Phaser.Scene {
             }
         });
 
-        // Drag terminado sin soltar en zona
-        this.input.on('dragend', (_ptr: any, obj: DraggableImage, dropped: boolean) => {
+        this.input.on('dragend', (_ptr: Phaser.Input.Pointer, obj: DraggableImage, dropped: boolean) => {
             if (obj.placed) return;
             if (!dropped) {
                 this.returnToContainer(obj);
@@ -372,26 +368,14 @@ export class Nivel3Scene extends Phaser.Scene {
 
     // ── Pantalla de victoria ──────────────────────────────────────────────────
     private showWin() {
-        // Reproducir sonido de victoria del nivel
-        this.sound.play('level_win');
-
-        const { width, height } = this.scale;
-        this.add.rectangle(width / 2, height / 2, width, height, 0x000000, 0.72).setDepth(40);
-        this.add.text(width / 2, height / 2 - 70, '🎉 ¡Nivel Completado!', {
-            fontSize: '54px', color: '#f1c40f', fontFamily: 'Arial',
-            fontStyle: 'bold', stroke: '#000', strokeThickness: 5,
-        }).setOrigin(0.5).setDepth(41);
-        this.add.text(width / 2, height / 2, `Puntuación final: ${this.score} puntos`, {
-            fontSize: '30px', color: '#ecf0f1', fontFamily: 'Arial',
-            stroke: '#000', strokeThickness: 4,
-        }).setOrigin(0.5).setDepth(41);
-        const btnMenu = this.add.text(width / 2, height / 2 + 90, 'Ir al Menú Principal', {
-            fontSize: '26px', color: '#fff', backgroundColor: '#2980b9',
-            padding: { x: 24, y: 12 }, fontFamily: 'Arial',
-        }).setOrigin(0.5).setDepth(41).setInteractive({ useHandCursor: true });
-        btnMenu.on('pointerover', () => btnMenu.setStyle({ backgroundColor: '#1a5276' }));
-        btnMenu.on('pointerout',  () => btnMenu.setStyle({ backgroundColor: '#2980b9' }));
-        btnMenu.on('pointerdown', () => this.scene.start('MainMenu'));
+        showLevelCompleteOverlay(this, {
+            title: '\u00A1NIVEL COMPLETADO!',
+            message: 'Identificaste los alimentos de origen animal y terminaste todos los retos del plato.',
+            scoreText: `Puntos: ${this.score}`,
+            buttonLabel: 'Ir al menu',
+            nextScene: 'MainMenu',
+            soundKey: 'level_win',
+        });
     }
 
     // ── Update: Recorte manual (Culling) ──────────────────────────────────────
@@ -401,23 +385,23 @@ export class Nivel3Scene extends Phaser.Scene {
         const left = this.viewportX;
         const right = this.viewportX + this.viewportW;
         
-        // Ocultar los elementos que están fuera de la barra visualmente
-        this.foodContainer.list.forEach((child: any) => {
-            const worldX = this.foodContainer.x + child.x;
+        this.foodContainer.list.forEach((child) => {
+            const item = child as Phaser.GameObjects.Image | Phaser.GameObjects.Text;
+            const worldX = this.foodContainer.x + item.x;
             
             // Si el elemento está fuera de los límites de la barra por más de 50px, lo ocultamos
             if (worldX < left - 50 || worldX > right + 50) {
-                child.setVisible(false);
+                item.setVisible(false);
             } else {
-                child.setVisible(true);
+                item.setVisible(true);
                 
                 // Efecto de difuminado (fade) suave en los bordes
                 if (worldX < left + 30) {
-                    child.setAlpha(Math.max(0, (worldX - (left - 50)) / 80));
+                    item.setAlpha(Math.max(0, (worldX - (left - 50)) / 80));
                 } else if (worldX > right - 30) {
-                    child.setAlpha(Math.max(0, ((right + 50) - worldX) / 80));
+                    item.setAlpha(Math.max(0, ((right + 50) - worldX) / 80));
                 } else {
-                    child.setAlpha(1);
+                    item.setAlpha(1);
                 }
             }
         });

@@ -1,151 +1,131 @@
-import { useState, useEffect } from 'react';
-import HomePage from "./ui/pages/HomePage";
-import { TutorialPage } from "./ui/components/tutorial";
+import { useCallback, useEffect, useState } from 'react';
+import type * as Phaser from 'phaser';
+import HomePage from './ui/pages/HomePage';
+import { TutorialPage } from './ui/components/tutorial';
+import type { FoodCategory } from './data/nutritionalInfo';
+
+interface TutorialSection {
+  id: string;
+  title: string;
+  categories: FoodCategory[];
+}
+
+declare global {
+  interface Window {
+    __phaserGame?: Phaser.Game;
+    showTutorial?: (categories: FoodCategory | FoodCategory[]) => void;
+    goToNivel1?: () => void;
+    goToNivel2?: () => void;
+    goToNivel3?: () => void;
+  }
+}
+
+const tutorialSections: TutorialSection[] = [
+  {
+    id: 'frutasVerduras',
+    title: 'Frutas y verduras',
+    categories: ['vegetable', 'fruit']
+  },
+  {
+    id: 'cereales',
+    title: 'Cereales',
+    categories: ['cereal']
+  },
+  {
+    id: 'origenAnimalLeguminosas',
+    title: 'Origen animal y leguminosas',
+    categories: ['animal', 'legume']
+  }
+];
+
+const getSectionIndexFromCategories = (categories: FoodCategory | FoodCategory[]) => {
+  const selectedCategories = Array.isArray(categories) ? categories : [categories];
+
+  if (selectedCategories.some(category => category === 'animal' || category === 'legume')) {
+    return 2;
+  }
+
+  if (selectedCategories.includes('cereal')) {
+    return 1;
+  }
+
+  return 0;
+};
+
+type PhaserSceneKey = 'Nivel1Scene' | 'Nivel2Scene' | 'Nivel3Scene';
 
 function App() {
   const [showTutorialUI, setShowTutorialUI] = useState(false);
-  const [selectedCategory, setSelectedCategory] = useState<string | string[] | null>(null);
-  const [currentPage, setCurrentPage] = useState<string>('home');
+  const [currentSectionIndex, setCurrentSectionIndex] = useState(0);
 
-  const tutorialTitles: Record<string, string> = {
-    tutorial: "Grupo 1: Frutas y Verduras",
-    cereal: "Grupo 2: Cereales y Tubérculos",
-    legume: "Grupo 3: Leguminosas",
-    animal: "Grupo 4: Origen Animal",
-    home: ""
-  };
+  const currentSection = tutorialSections[currentSectionIndex];
 
-  useEffect(() => {
-    // Función que TutorialScene llama para abrir el overlay de React
-    (window as any).showTutorial = (categories: string | string[]) => {
-      setSelectedCategory(categories);
-      setShowTutorialUI(true);
-    };
-
-    // Función que App usa para lanzar Nivel1Scene desde Phaser
-    (window as any).startLevel1 = () => {
-      const game: Phaser.Game | undefined = (window as any).__phaserGame;
-      if (game) {
-        game.scene.start('Nivel3Scene');
-      } else {
-        console.error('El juego de Phaser no está disponible.');
-      }
-    };
-  }, []);
-
-  const handleBackToMenu = () => {
+  const startPhaserScene = useCallback((sceneKey: PhaserSceneKey) => {
     setShowTutorialUI(false);
-    setSelectedCategory(null);
-    setCurrentPage('home');
-    
-    // Si queremos que el plato se restaure en el juego de Phaser:
-    const game: any = (window as any).__phaserGame;
-    if (game) {
-      const scene = game.scene.getScene('TutorialScene');
-      if (scene && typeof scene.restorePlate === 'function') {
-        scene.restorePlate();
-      }
-    }
+
+    const game = window.__phaserGame;
+    if (!game) return;
+
+    game.scene.stop('TutorialScene');
+    game.scene.start(sceneKey);
+  }, []);
+
+  const startNivel1 = useCallback(() => {
+    startPhaserScene('Nivel1Scene');
+  }, [startPhaserScene]);
+
+  const startNivel2 = useCallback(() => {
+    startPhaserScene('Nivel2Scene');
+  }, [startPhaserScene]);
+
+  const startNivel3 = useCallback(() => {
+    startPhaserScene('Nivel3Scene');
+  }, [startPhaserScene]);
+
+  const handlePreviousSection = () => {
+    setCurrentSectionIndex(index => Math.max(0, index - 1));
   };
 
-  const handleNextTutorial = () => {
-    const sequence: any[] = [
-      ['vegetable', 'fruit'],
-      ['fruit', 'vegetable'],
-      'cereal',
-      'legume',
-      'animal',
-    ];
-
-    const currentIndex = sequence.findIndex(item =>
-      JSON.stringify(item) === JSON.stringify(selectedCategory) || item === selectedCategory
-    );
-
-    if (currentIndex >= 0) {
-      if (currentIndex === 0 || currentIndex === 1) {
-        // frutas/verduras → cereal
-        setSelectedCategory('cereal');
-        setCurrentPage('cereal');
-      } else if (currentIndex < sequence.length - 1) {
-        // avanzar al siguiente
-        const nextCat = sequence[currentIndex + 1];
-        setSelectedCategory(nextCat);
-        setCurrentPage(Array.isArray(nextCat) ? 'tutorial' : nextCat);
-      } else {
-        // Última sección: "animal" → cerrar overlay e ir al Nivel 1
-        setShowTutorialUI(false);
-        setSelectedCategory(null);
-        setCurrentPage('home');
-        
-        const game: any = (window as any).__phaserGame;
-        if (game) {
-          const scene = game.scene.getScene('TutorialScene');
-          if (scene && typeof scene.restorePlate === 'function') {
-            scene.restorePlate();
-          }
-          console.log('Iniciando Nivel1Scene...');
-          game.scene.start('Nivel1Scene');
-        }
-      }
-    } else {
-      setShowTutorialUI(false);
-      setSelectedCategory(null);
-      setCurrentPage('home');
-    }
+  const handleNextSection = () => {
+    setCurrentSectionIndex(index => Math.min(tutorialSections.length - 1, index + 1));
   };
 
   useEffect(() => {
-    (window as any).showTutorial = (categories: string | string[]) => {
-      setShowTutorialUI(false);
-      if (Array.isArray(categories)) {
-        setSelectedCategory(categories);
-        if (categories.includes('vegetable') && categories.includes('fruit')) {
-          setCurrentPage('tutorial');
-        } else if (categories.includes('cereal')) {
-          setCurrentPage('cereal');
-        } else if (categories.includes('legume')) {
-          setCurrentPage('legume');
-        } else if (categories.includes('animal')) {
-          setCurrentPage('animal');
-        }
-      } else if (categories === 'fruit' || categories === 'vegetable') {
-        setSelectedCategory(['vegetable', 'fruit']);
-        setCurrentPage('tutorial');
-      } else {
-        setSelectedCategory(categories);
-        if (categories === 'cereal') setCurrentPage('cereal');
-        else if (categories === 'legume') setCurrentPage('legume');
-        else if (categories === 'animal') setCurrentPage('animal');
-      }
+    window.showTutorial = (categories: FoodCategory | FoodCategory[]) => {
+      setCurrentSectionIndex(getSectionIndexFromCategories(categories));
       setShowTutorialUI(true);
     };
 
-    (window as any).goToNivel2 = () => {
-      setShowTutorialUI(false);
-      setSelectedCategory(null);
-      setCurrentPage('home');
-    };
-  }, []);
-
-  const currentTitle = tutorialTitles[currentPage];
+    window.goToNivel1 = startNivel1;
+    window.goToNivel2 = startNivel2;
+    window.goToNivel3 = startNivel3;
+  }, [startNivel1, startNivel2, startNivel3]);
 
   return (
-    <div style={{ width: '100vw', height: '100vh', position: 'relative' }}>
-      {/* Phaser game runs in the background */}
+    <>
       <HomePage />
-
-      {/* React UI overlay renders on top when needed */}
       {showTutorialUI && (
-        <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', zIndex: 100 }}>
+        <div className="tutorial-overlay">
           <TutorialPage
-            selectedCategory={selectedCategory}
-            title={currentTitle}
-            onBackToMenu={handleBackToMenu}
-            onNextTutorial={handleNextTutorial}
+            categories={currentSection.categories}
+            title={currentSection.title}
+            currentSectionIndex={currentSectionIndex}
+            totalSections={tutorialSections.length}
+            onPreviousSection={handlePreviousSection}
+            onNextSection={handleNextSection}
+            onFinishTutorial={startNivel1}
           />
         </div>
       )}
-    </div>
+
+      <style>{`
+        .tutorial-overlay {
+          position: fixed;
+          inset: 0;
+          z-index: 1000;
+        }
+      `}</style>
+    </>
   );
 }
 
