@@ -129,7 +129,7 @@ export class MainMenu extends Phaser.Scene {
 
         btnCrucigrama.on('pointerdown', () => {
             this.sounds.play();
-            this.scene.start('CrucigramaScene');
+            this.scene.start('CrucigramaSaludableScene');
         });
 
         const btnNivel3 = this.add.text(width / 2, height * 0.20, 'IR AL NIVEL 3', {

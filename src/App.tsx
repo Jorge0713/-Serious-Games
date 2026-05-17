@@ -93,7 +93,10 @@ function App() {
 
   useEffect(() => {
     window.showTutorial = (categories: FoodCategory | FoodCategory[]) => {
-      setCurrentSectionIndex(getSectionIndexFromCategories(categories));
+      console.log("ShowTutorial llamado con categorías:", categories);
+      const index = getSectionIndexFromCategories(categories); 
+      console.log('section index: ',index )
+      setCurrentSectionIndex(index);
       setShowTutorialUI(true);
     };
 

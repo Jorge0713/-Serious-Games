@@ -149,7 +149,10 @@ const FoodSectionExplorer: React.FC<FoodSectionExplorerProps> = ({ category, ite
                                     type="button"
                                     key={food.id}
                                     className={`food-card ${isActive ? 'is-active' : ''}`}
-                                    onClick={() => setActiveFoodId(food.id)}
+                                    onClick={() => {
+                                        console.log('Click tarjeta', food);
+                                        setActiveFoodId(food.id);
+                                    }}
                                     aria-pressed={isActive}
                                     style={{ animationDelay: `${Math.min(index * 60, 480)}ms` }}
                                 >
