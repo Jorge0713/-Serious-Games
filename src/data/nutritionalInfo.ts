@@ -1,4 +1,4 @@
-export type FoodCategory ='fruit' | 'vegetable' | 'legume' | 'cereal' | 'animal';
+export type FoodCategory = 'fruit' | 'vegetable' | 'legume' | 'cereal' | 'animal';
 
 export interface FoodItem {
     id: string;
@@ -499,7 +499,7 @@ export const nutritionalInfo: FoodItem[] = [
         name: 'Sweet Potato',
         nameES: 'Camote',
         category: 'cereal',
-        image: 'iconsFood/verduras/camote.png',
+        image: 'iconsFood/cereales/sweet_potato.png',
         description: 'Tubérculo con un índice glucémico moderado. Destaca por su enorme aporte de betacarotenos (vitamina A), que son vitales para la salud de la vista y la piel.'
     },
     {

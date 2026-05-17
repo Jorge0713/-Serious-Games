@@ -9,7 +9,6 @@ interface FoodGridProps {
     onNextTutorial: () => void;
     isLastSection?: boolean;
     title?: string;
-    isFirstTutorial?: boolean;
 }
 
 export const FoodGrid: React.FC<FoodGridProps> = ({
@@ -18,7 +17,7 @@ export const FoodGrid: React.FC<FoodGridProps> = ({
     onBackToMenu,
     onNextTutorial,
     title = "Grupo 1: Frutas y Verduras",
-    isFirstTutorial = false
+    isLastSection = false
 }) => {
     const groupedFoods = foods.reduce((groups, food) => {
         if (!groups[food.category]) {
@@ -30,17 +29,15 @@ export const FoodGrid: React.FC<FoodGridProps> = ({
 
     return (
         <div className="tutorial-container">
-            <button className="btn-back" onClick={isFirstTutorial ? onNextTutorial : onBackToMenu}>
-                {isFirstTutorial ? "Siguiente plato" : "← Volver al menú"}
+            <button className="btn-back" onClick={onBackToMenu}>
+                ← Volver al menú
             </button>
 
             <h1 className="tutorial-title">
-                {isFirstTutorial ? "¡Excelente trabajo!, vamos a la siguiente tarea" : title}
+                {title}
             </h1>
             <p className="tutorial-subtitle">
-                {isFirstTutorial 
-                    ? "Has completado el tutorial de frutas y verduras" 
-                    : "Aprende sobre los nutrientes de cada alimento"}
+                Aprende sobre los nutrientes de cada alimento
             </p>
 
             {/* Botón temporal para desarrolladores - abajo a la izquierda */}

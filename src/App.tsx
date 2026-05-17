@@ -5,6 +5,15 @@ import { TutorialPage } from "./ui/components/tutorial";
 function App() {
   const [showTutorialUI, setShowTutorialUI] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string | string[] | null>(null);
+  const [currentPage, setCurrentPage] = useState<string>('home');
+
+  const tutorialTitles: Record<string, string> = {
+    tutorial: "Grupo 1: Frutas y Verduras",
+    cereal: "Grupo 2: Cereales y Tubérculos",
+    legume: "Grupo 3: Leguminosas",
+    animal: "Grupo 4: Origen Animal",
+    home: ""
+  };
 
   useEffect(() => {
     // Función que TutorialScene llama para abrir el overlay de React
@@ -27,6 +36,16 @@ function App() {
   const handleBackToMenu = () => {
     setShowTutorialUI(false);
     setSelectedCategory(null);
+    setCurrentPage('home');
+    
+    // Si queremos que el plato se restaure en el juego de Phaser:
+    const game: any = (window as any).__phaserGame;
+    if (game) {
+      const scene = game.scene.getScene('TutorialScene');
+      if (scene && typeof scene.restorePlate === 'function') {
+        scene.restorePlate();
+      }
+    }
   };
 
   const handleNextTutorial = () => {
@@ -46,26 +65,32 @@ function App() {
       if (currentIndex === 0 || currentIndex === 1) {
         // frutas/verduras → cereal
         setSelectedCategory('cereal');
+        setCurrentPage('cereal');
       } else if (currentIndex < sequence.length - 1) {
         // avanzar al siguiente
-        setSelectedCategory(sequence[currentIndex + 1]);
+        const nextCat = sequence[currentIndex + 1];
+        setSelectedCategory(nextCat);
+        setCurrentPage(Array.isArray(nextCat) ? 'tutorial' : nextCat);
       } else {
         // Última sección: "animal" → cerrar overlay e ir al Nivel 1
         setShowTutorialUI(false);
         setSelectedCategory(null);
-        setTimeout(() => {
-          const game: any = (window as any).__phaserGame;
-          if (game) {
-            console.log('Iniciando Nivel1Scene...');
-            game.scene.start('Nivel1Scene');
-          } else {
-            console.error('Phaser no disponible.');
+        setCurrentPage('home');
+        
+        const game: any = (window as any).__phaserGame;
+        if (game) {
+          const scene = game.scene.getScene('TutorialScene');
+          if (scene && typeof scene.restorePlate === 'function') {
+            scene.restorePlate();
           }
-        }, 100);
+          console.log('Iniciando Nivel1Scene...');
+          game.scene.start('Nivel1Scene');
+        }
       }
     } else {
       setShowTutorialUI(false);
       setSelectedCategory(null);
+      setCurrentPage('home');
     }
   };
 
@@ -104,30 +129,24 @@ function App() {
 
   const currentTitle = tutorialTitles[currentPage];
 
-  if (showTutorialUI) {
-    return (
-      <TutorialPage
-        selectedCategory={selectedCategory}
-        title={currentTitle}
-        isFirstTutorial={currentPage === 'tutorial'}
-        onBackToMenu={handleBackToMenu}
-        onNextTutorial={handleNextTutorial}
-      />
-    );
-  }
+  return (
+    <div style={{ width: '100vw', height: '100vh', position: 'relative' }}>
+      {/* Phaser game runs in the background */}
+      <HomePage />
 
-  if (currentPage === 'tutorial') {
-    return (
-      <TutorialPage
-        title={currentTitle}
-        isFirstTutorial={true}
-        onBackToMenu={handleBackToMenu}
-        onNextTutorial={handleNextTutorial}
-      />
-    );
-  }
-
-  return <HomePage />;
+      {/* React UI overlay renders on top when needed */}
+      {showTutorialUI && (
+        <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', zIndex: 100 }}>
+          <TutorialPage
+            selectedCategory={selectedCategory}
+            title={currentTitle}
+            onBackToMenu={handleBackToMenu}
+            onNextTutorial={handleNextTutorial}
+          />
+        </div>
+      )}
+    </div>
+  );
 }
 
 export default App;

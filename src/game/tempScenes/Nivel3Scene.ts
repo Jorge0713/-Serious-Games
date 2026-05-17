@@ -55,7 +55,6 @@ const ALL_FOODS: FoodConfig[] = [...ANIMAL_FOODS, ...JUNK_FOODS];
 const ITEM_SIZE   = 90;   // px, cuadrado — más grandes para barra visible
 const ITEM_SPACEX = 130;  // separación horizontal
 const ITEM_SPACEY = 135;  // separación vertical — barra más alta
-const COLS        = 9;    // columnas por fila en el strip
 const SCROLL_STEP = 650;  // px a desplazar por clic de flecha
 
 // ─── Escena ───────────────────────────────────────────────────────────────────
@@ -63,7 +62,6 @@ export class Nivel3Scene extends Phaser.Scene {
 
     // Scroll
     private foodContainer!: Phaser.GameObjects.Container;
-    private scrollMaskShape!: Phaser.GameObjects.Graphics;
     private minScrollX = 0;
     private maxScrollX = 0;
     private isScrolling = false;
@@ -71,8 +69,6 @@ export class Nivel3Scene extends Phaser.Scene {
     private viewportW = 0;
 
     // Drop zone
-    private dropZone!: Phaser.GameObjects.Zone;
-    private gfxZone!: Phaser.GameObjects.Graphics;
     private sectionX = 0;
     private sectionY = 0;
     private sectionW = 420;
@@ -123,7 +119,7 @@ export class Nivel3Scene extends Phaser.Scene {
         }).setOrigin(1, 0).setDepth(10);
 
         // ── Strip de alimentos con scroll ──
-        this.buildScrollStrip(width, height);
+        this.buildScrollStrip(width);
 
         // ── Zona de drop centrada (imagen AnimalSection) ──
         this.sectionX = width / 2;
@@ -134,9 +130,9 @@ export class Nivel3Scene extends Phaser.Scene {
         this.add.image(this.sectionX, this.sectionY, 'animal_section')
             .setDisplaySize(this.sectionW, this.sectionH).setDepth(2);
 
-        this.gfxZone = this.add.graphics().setDepth(3);
+        this.add.graphics().setDepth(3);
 
-        this.dropZone = this.add.zone(
+        this.add.zone(
             this.sectionX, this.sectionY,
             this.sectionW, this.sectionH
         ).setRectangleDropZone(this.sectionW, this.sectionH).setDepth(4);
@@ -162,7 +158,7 @@ export class Nivel3Scene extends Phaser.Scene {
     }
 
     // ── Construye el strip scrollable ─────────────────────────────────────────
-    private buildScrollStrip(width: number, height: number) {
+    private buildScrollStrip(width: number) {
         // Barra centrada al 70% del ancho de pantalla
         const BAR_W      = Math.round(width * 0.70);
         const ARROW_W    = 48;

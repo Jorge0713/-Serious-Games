@@ -49,6 +49,12 @@ export class TutorialScene extends Phaser.Scene {
   }
 
   create() {
+    // Reset state variables in case the scene is restarted
+    this.step = 0;
+    this.isExpanded = false;
+    this.activeSection = null;
+    this.expandedSprites = [];
+
     const { width, height } = this.scale;
 
     // 🔊 Inicializar sonidos
@@ -273,15 +279,15 @@ export class TutorialScene extends Phaser.Scene {
       });
 
       verduraSprite.on('pointerover', () => {
-        this.hoverSound
+        this.hoverSound.play()
       })
 
       verduraSprite.on('pointerout', () => {
-        this.hoverSound
+        // Stop or play sound depending on desired effect, usually nothing or hover sound
       })
 
       verduraSprite.on('pointerdown', () => {
-        this.hoverSound
+        this.clickSound.play()
         // Llamar al callback global para mostrar el tutorial de React
         const showTutorial = (window as any).showTutorial
         if (showTutorial) {
@@ -293,15 +299,14 @@ export class TutorialScene extends Phaser.Scene {
       })
 
       frutaSprite.on('pointerover', () => {
-        this.hoverSound
+        this.hoverSound.play()
       })
 
       frutaSprite.on('pointerout', () => {
-        this.hoverSound
       })
 
       frutaSprite.on('pointerdown', () => {
-        this.hoverSound
+        this.clickSound.play()
         // Llamar al callback global para mostrar el tutorial de React
         const showTutorial = (window as any).showTutorial
         if (showTutorial) {
@@ -327,15 +332,14 @@ export class TutorialScene extends Phaser.Scene {
       });
 
       cerealSprite.on('pointerover', () => {
-        this.hoverSound
+        this.hoverSound.play()
       })
 
       cerealSprite.on('pointerout', () => {
-        this.hoverSound
       })
 
       cerealSprite.on('pointerdown', () => {
-        this.hoverSound
+        this.clickSound.play()
         // Llamar al callback global para mostrar el tutorial de React
         const showTutorial = (window as any).showTutorial
         if (showTutorial) {
@@ -361,15 +365,14 @@ export class TutorialScene extends Phaser.Scene {
       });
 
       animalSprite.on('pointerover', () => {
-        this.hoverSound
+        this.hoverSound.play()
       })
 
       animalSprite.on('pointerout', () => {
-        this.hoverSound
       })
 
       animalSprite.on('pointerdown', () => {
-        this.hoverSound
+        this.clickSound.play()
         // Llamar al callback global para mostrar el tutorial de React
         const showTutorial = (window as any).showTutorial
         if (showTutorial) {
@@ -396,15 +399,14 @@ export class TutorialScene extends Phaser.Scene {
       });
 
       legumeSprite.on('pointerover', () => {
-        this.hoverSound
+        this.hoverSound.play()
       })
 
       legumeSprite.on('pointerout', () => {
-        this.hoverSound
       })
 
       legumeSprite.on('pointerdown', () => {
-        this.hoverSound
+        this.clickSound.play()
         // Llamar al callback global para mostrar el tutorial de React
         const showTutorial = (window as any).showTutorial
         if (showTutorial) {
@@ -428,7 +430,7 @@ export class TutorialScene extends Phaser.Scene {
   /**
    * Restaura el plato a su estado inicial
    */
-  private restorePlate() {
+  public restorePlate() {
     this.clickSound.play();
 
     // Destruir sprites expandidos
