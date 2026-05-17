@@ -197,7 +197,7 @@ export class PreTutorialConceptosScene extends Phaser.Scene {
         }).setOrigin(0, 0);
 
         this.add.rectangle(panelX + 42, panelY + 92, panelW - 84, 3, COLORS.brown, 0.28)
-            .setOrigin(0, 0.5);
+            .setOrigin(0, 0.7);
 
         CONCEPTS.forEach((concept, index) => {
             const y = panelY + 135 + index * 104;
@@ -368,18 +368,20 @@ export class PreTutorialConceptosScene extends Phaser.Scene {
                     fontSize: '32px',
                     color: COLOR_HEX.darkBrown,
                 }).setOrigin(0.5);
-            const label = this.add.text(0, 44, example.label, {
+            const label = this.add.text(0, 38, example.label, {
                 fontFamily: TITLE_FONT,
                 fontSize: '21px',
                 color: COLOR_HEX.darkBrown,
                 align: 'center',
+                fixedWidth: cardW - 30,
             }).setOrigin(0.5, 0);
-            const note = this.add.text(0, 82, example.note, {
+            const note = this.add.text(0, 68, example.note, {
                 fontFamily: BODY_FONT,
-                fontSize: '25px',
+                fontSize: '23px',
                 color: COLOR_HEX.brown,
                 align: 'center',
-                wordWrap: { width: cardW - 26 },
+                fixedWidth: cardW - 30,
+                wordWrap: { width: cardW - 34 },
             }).setOrigin(0.5, 0);
 
             card.add([bg, imageFrame, image, label, note]);

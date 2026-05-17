@@ -1,4 +1,5 @@
 import * as Phaser from 'phaser';
+import { createDebugSkipButton } from '../systems/DebugSkipButton';
 import { showLevelCompleteOverlay } from '../systems/LevelCompleteOverlay';
 
 // ─── Tipos ────────────────────────────────────────────────────────────────────
@@ -151,6 +152,13 @@ export class Nivel3Scene extends Phaser.Scene {
         btnVolver.on('pointerover', () => btnVolver.setStyle({ backgroundColor: '#922b21' }));
         btnVolver.on('pointerout',  () => btnVolver.setStyle({ backgroundColor: '#c0392b' }));
         btnVolver.on('pointerdown', () => this.scene.start('MainMenu'));
+
+        createDebugSkipButton(this, {
+            label: 'Saltar a conceptos',
+            nextScene: 'PreTutorialConceptosScene',
+            x: 16,
+            y: 58,
+        });
     }
 
     private buildScrollStrip(width: number) {

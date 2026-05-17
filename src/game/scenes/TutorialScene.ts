@@ -31,7 +31,7 @@ export class TutorialScene extends Phaser.Scene {
         });
 
         this.load.image("plato", "/assets/Plato/plato.png");
-        this.load.image("Fondo-cocina", "/assets/Fondo_Cocina.png")
+        this.load.image("Fondo-cocina", "/assets/Backgrounds/Fondo_Cocina.png")
         // Si tienes "btn-Volver" como un spritesheet de 2 frames, debes cargarlo así (reemplaza los valores de frameWidth y frameHeight):
         // this.load.spritesheet("btn-Volver", "/assets/Buttons/volver.webp", { frameWidth: 100, frameHeight: 50 });
         this.load.image("btn-Volver", "/assets/Buttons/BtnVolverCafe.webp");
