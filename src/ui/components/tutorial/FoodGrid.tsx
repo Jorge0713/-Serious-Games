@@ -38,11 +38,11 @@ const nutrientMatches = [
 ];
 
 const fallbackImages: Record<FoodCategory, string> = {
-    fruit: '/frutas/apple.png',
-    vegetable: '/verduras/carrot.png',
-    legume: '/assets/legumbres_misma_escala.png',
-    cereal: '/assets/cereales_misma_escala.png',
-    animal: '/animal/chicken.png'
+    fruit: '/iconsFood/frutas/apple.png',
+    vegetable: '/iconsFood/verduras/carrot.png',
+    legume: '/iconsFood/leguminosas/beans.png',
+    cereal: '/iconsFood/cereales/rice.png',
+    animal: '/iconsFood/animal/chicken.png'
 };
 
 const categoryDescriptions: Record<FoodCategory, string> = {

@@ -32,11 +32,11 @@ export class CrucigramaScene extends Phaser.Scene {
     preload(): void {
         this.load.image('Fondo-cocina', '/assets/Fondo_Cocina.png');
         this.load.image('btn-Volver', '/assets/Buttons/BtnVolverCafe.webp');
-        this.load.spritesheet("platon", "/assets/platon.png", {
+        this.load.spritesheet("platon", "/assets/Platon/platon.png", {
             frameWidth: 291,
             frameHeight: 256
         });
-        this.load.image("platon-feliz", "/assets/platon_feliz.png");
+        this.load.image("platon-feliz", "/assets/Platon/platon_feliz.png");
         this.load.audio('Click', '/Sound/Click.mp3');
         this.load.audio('Hover', '/Sound/hiverSound.mp3');
         this.load.audio('sonido-exito', '/Sound/correcto.mp3');

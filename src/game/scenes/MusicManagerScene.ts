@@ -25,7 +25,7 @@ export class MusicManagerScene extends Phaser.Scene {
         volume: 0,
       });
 
-      try { this.bgMusic.play(); } catch (_) {}
+      try { this.bgMusic.play(); } catch { void 0; }
     }
   }
 }

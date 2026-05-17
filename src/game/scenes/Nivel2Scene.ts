@@ -20,30 +20,30 @@ export class Nivel2Scene extends Phaser.Scene {
     // --- LISTA DE ALIMENTOS (8 cereales, 8 leguminosas, 4 sebos) ---
     private alimentos = [
         // CEREALES (8)
-        { id: "c1", ruta: "/cereales/rice.png", nombre: "Arroz" },
-        { id: "c2", ruta: "/cereales/tortilla.png", nombre: "Tortilla" },
-        { id: "c3", ruta: "/cereales/bread.png", nombre: "Pan" },
-        { id: "c4", ruta: "/cereales/corn.png", nombre: "Maíz" },
-        { id: "c5", ruta: "/cereales/potato.png", nombre: "Papa" },
-        { id: "c6", ruta: "/cereales/rebanada-pan.png", nombre: "Rebanada" },
-        { id: "c7", ruta: "/cereales/white-chocolote.png", nombre: "Galleta" },
-        { id: "c8", ruta: "/cereales/rice.png", nombre: "Avena" },
+        { id: "c1", ruta: "/iconsFood/cereales/rice.png", nombre: "Arroz" },
+        { id: "c2", ruta: "/iconsFood/cereales/corn.png", nombre: "Tortilla" },
+        { id: "c3", ruta: "/iconsFood/cereales/bread.png", nombre: "Pan" },
+        { id: "c4", ruta: "/iconsFood/cereales/corn.png", nombre: "Maíz" },
+        { id: "c5", ruta: "/iconsFood/cereales/potato.png", nombre: "Papa" },
+        { id: "c6", ruta: "/iconsFood/cereales/rebanada-pan.png", nombre: "Rebanada" },
+        { id: "c7", ruta: "/iconsFood/comidaExtra/cockie.png", nombre: "Galleta" },
+        { id: "c8", ruta: "/iconsFood/cereales/oat.png", nombre: "Avena" },
 
-        // LEGUMINOSAS (8) - Usando imágenes existentes
-        { id: "l1", ruta: "/verduras/peas.png", nombre: "Guisantes" },
-        { id: "l2", ruta: "/verduras/cabbage.png", nombre: "Lentejas" },
-        { id: "l3", ruta: "/verduras/greenbean.png", nombre: "Frijoles" },
-        { id: "l4", ruta: "/verduras/daikon.png", nombre: "Garbanzos" },
-        { id: "l5", ruta: "/frutas/olive.png", nombre: "Aceituna" },
-        { id: "l6", ruta: "/verduras/yam.png", nombre: "Soja" },
-        { id: "l7", ruta: "/verduras/greenbean.png", nombre: "Ejotes" },
-        { id: "l8", ruta: "/verduras/yam.png", nombre: "Frijol" },
+        // LEGUMINOSAS (8)
+        { id: "l1", ruta: "/iconsFood/leguminosas/green_peas.png", nombre: "Guisantes" },
+        { id: "l2", ruta: "/iconsFood/leguminosas/lentil.png", nombre: "Lentejas" },
+        { id: "l3", ruta: "/iconsFood/leguminosas/beans.png", nombre: "Frijoles" },
+        { id: "l4", ruta: "/iconsFood/leguminosas/chickpea.png", nombre: "Garbanzos" },
+        { id: "l5", ruta: "/iconsFood/frutas/olive.png", nombre: "Aceituna" },
+        { id: "l6", ruta: "/iconsFood/leguminosas/soy.png", nombre: "Soja" },
+        { id: "l7", ruta: "/iconsFood/verduras/greenbean.png", nombre: "Ejotes" },
+        { id: "l8", ruta: "/iconsFood/leguminosas/kidney_beans.png", nombre: "Frijol" },
 
         // SEBOS / DISTRACTORES (4) - De origen animal
-        { id: "s1", ruta: "/animal/egg.png", nombre: "Huevo" },
-        { id: "s2", ruta: "/animal/chicken.png", nombre: "Pollo" },
-        { id: "s3", ruta: "/animal/milk-carton.png", nombre: "Leche" },
-        { id: "s4", ruta: "/animal/cheese.png", nombre: "Queso" }
+        { id: "s1", ruta: "/iconsFood/animal/egg.png", nombre: "Huevo" },
+        { id: "s2", ruta: "/iconsFood/animal/chicken.png", nombre: "Pollo" },
+        { id: "s3", ruta: "/iconsFood/animal/milk-carton.png", nombre: "Leche" },
+        { id: "s4", ruta: "/iconsFood/animal/cheese.png", nombre: "Queso" }
     ];
 
     constructor() {
@@ -60,8 +60,8 @@ export class Nivel2Scene extends Phaser.Scene {
         this.load.image("segmento-leguminosas", "/assets/legumbres_misma_escala.png");
 
         // --- PLATÓN ---
-        this.load.image("platon-feliz", "/assets/platon_feliz.png");
-        this.load.image("platon-triste", "/assets/platon_triste.png");
+        this.load.image("platon-feliz", "/assets/Platon/platon_feliz.png");
+        this.load.image("platon-triste", "/assets/Platon/platon_triste.png");
 
         // --- SONIDOS ---
         this.load.audio("object_win", "/Sound/ObjectWIN.mp3");
