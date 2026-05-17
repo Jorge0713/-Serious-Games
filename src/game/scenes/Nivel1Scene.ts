@@ -1,4 +1,5 @@
 import * as Phaser from 'phaser';
+import { createDebugSkipButton } from '../systems/DebugSkipButton';
 import { showLevelCompleteOverlay } from '../systems/LevelCompleteOverlay';
 
 const FOOD_ITEM_SIZE = 70;
@@ -93,22 +94,10 @@ export class Nivel1Scene extends Phaser.Scene {
             padding: { x: 20, y: 10 }
         }).setOrigin(0.5);
 
-        // --- BOTÓN TEMPORAL PARA DESARROLLADORES: Saltar al siguiente ---
-        const btnSaltar = this.add.text(150, height / 2, 'Saltar al siguiente', {
-            fontSize: '18px',
-            color: '#fff',
-            fontFamily: 'Arial, sans-serif',
-            backgroundColor: '#666',
-            padding: { x: 15, y: 10 }
-        })
-        .setOrigin(0.5)
-        .setInteractive({ useHandCursor: true });
-
-        btnSaltar.on('pointerover', () => btnSaltar.setStyle({ backgroundColor: '#888' }));
-        btnSaltar.on('pointerout', () => btnSaltar.setStyle({ backgroundColor: '#666' }));
-        btnSaltar.on('pointerdown', () => {
-            try { this.sound.play("sonido-click"); } catch { void 0; }
-            this.scene.start('Nivel2Scene');
+        createDebugSkipButton(this, {
+            label: 'Saltar a Nivel 2',
+            nextScene: 'Nivel2Scene',
+            soundKey: 'sonido-click',
         });
 
         // --- PASO 2: CREAR SEGMENTOS (DROP ZONES) ---

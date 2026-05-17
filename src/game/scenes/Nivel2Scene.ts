@@ -1,4 +1,5 @@
 import * as Phaser from 'phaser';
+import { createDebugSkipButton } from '../systems/DebugSkipButton';
 import { showLevelCompleteOverlay } from '../systems/LevelCompleteOverlay';
 
 const FOOD_ITEM_SIZE = 70;
@@ -93,6 +94,12 @@ export class Nivel2Scene extends Phaser.Scene {
             backgroundColor: 'rgba(255,255,255,0.7)',
             padding: { x: 20, y: 10 }
         }).setOrigin(0.5);
+
+        createDebugSkipButton(this, {
+            label: 'Saltar a Nivel 3',
+            nextScene: 'Nivel3Scene',
+            soundKey: 'sonido-click',
+        });
 
         // --- SEGMENTOS (DROP ZONES) ---
         // Izquierda = Cereales, Derecha = Leguminosas
