@@ -98,6 +98,14 @@ const FoodSectionExplorer: React.FC<FoodSectionExplorerProps> = ({ category, ite
     );
     const facts = useMemo(() => activeFood ? getFoodFacts(activeFood) : null, [activeFood]);
 
+    const selectFoodById = (foodId: string) => {
+        if (!items.some(food => food.id === foodId)) {
+            return;
+        }
+
+        setActiveFoodId(foodId);
+    };
+
     const scrollFoods = (direction: -1 | 1) => {
         trackRef.current?.scrollBy({
             left: direction * 340,
@@ -124,7 +132,10 @@ const FoodSectionExplorer: React.FC<FoodSectionExplorerProps> = ({ category, ite
                             <button
                                 type="button"
                                 className="circle-control"
-                                onClick={() => scrollFoods(-1)}
+                                onClick={event => {
+                                    event.stopPropagation();
+                                    scrollFoods(-1);
+                                }}
                                 aria-label="Ver alimentos anteriores"
                             >
                                 ‹
@@ -132,7 +143,10 @@ const FoodSectionExplorer: React.FC<FoodSectionExplorerProps> = ({ category, ite
                             <button
                                 type="button"
                                 className="circle-control"
-                                onClick={() => scrollFoods(1)}
+                                onClick={event => {
+                                    event.stopPropagation();
+                                    scrollFoods(1);
+                                }}
                                 aria-label="Ver más alimentos"
                             >
                                 ›
@@ -148,8 +162,12 @@ const FoodSectionExplorer: React.FC<FoodSectionExplorerProps> = ({ category, ite
                                 <button
                                     type="button"
                                     key={food.id}
+                                    data-food-id={food.id}
                                     className={`food-card ${isActive ? 'is-active' : ''}`}
-                                    onClick={() => setActiveFoodId(food.id)}
+                                    onClick={event => {
+                                        event.stopPropagation();
+                                        selectFoodById(food.id);
+                                    }}
                                     aria-pressed={isActive}
                                     style={{ animationDelay: `${Math.min(index * 60, 480)}ms` }}
                                 >

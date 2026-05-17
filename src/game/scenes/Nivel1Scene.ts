@@ -16,6 +16,7 @@ export class Nivel1Scene extends Phaser.Scene {
     private isFoodScrolling = false;
     private foodViewportX = 0;
     private foodViewportW = 0;
+    private placedFoods: Phaser.GameObjects.Image[] = [];
 
     // --- LISTA DE ALIMENTOS (8 verduras, 8 frutas, 4 sebos) ---
     private alimentos = [
@@ -74,6 +75,7 @@ export class Nivel1Scene extends Phaser.Scene {
 
     create() {
         this.aciertos = 0; // Reiniciar contador de aciertos
+        this.placedFoods = [];
         const { width, height } = this.scale;
 
         // 1. DIBUJAR FONDO
@@ -117,14 +119,26 @@ export class Nivel1Scene extends Phaser.Scene {
 
         // Añadimos pixelPerfect: true para que las transparencias no bloqueen el clic
         const segmentoVerduras = this.add.image(width / 2 - 300, height - 483, "segmento-verduras")
-            .setScale(escalaVerduras)
-            .setInteractive({ dropZone: true, pixelPerfect: true });
-        segmentoVerduras.setData("categoria", "verdura");
+            .setScale(escalaVerduras);
+
+        const zonaVerduras = this.add.zone(
+            segmentoVerduras.x,
+            segmentoVerduras.y,
+            segmentoVerduras.displayWidth * 0.86,
+            segmentoVerduras.displayHeight * 0.86
+        ).setRectangleDropZone(segmentoVerduras.displayWidth * 0.86, segmentoVerduras.displayHeight * 0.86);
+        zonaVerduras.setData("categoria", "verdura");
 
         const segmentoFrutas = this.add.image(width / 2 + 300, height - 500, "segmento-frutas")
-            .setScale(escalaFrutas)
-            .setInteractive({ dropZone: true, pixelPerfect: true });
-        segmentoFrutas.setData("categoria", "fruta");
+            .setScale(escalaFrutas);
+
+        const zonaFrutas = this.add.zone(
+            segmentoFrutas.x,
+            segmentoFrutas.y,
+            segmentoFrutas.displayWidth * 0.86,
+            segmentoFrutas.displayHeight * 0.86
+        ).setRectangleDropZone(segmentoFrutas.displayWidth * 0.86, segmentoFrutas.displayHeight * 0.86);
+        zonaFrutas.setData("categoria", "fruta");
 
         // --- PASO 2: PREPARAR A PLATÓN ---
         // Lo ponemos en una esquina (ej. abajo a la derecha) y oculto al inicio
@@ -143,15 +157,15 @@ export class Nivel1Scene extends Phaser.Scene {
             if (gameObject.getData("fromFoodBar")) {
                 this.foodContainer.remove(gameObject, false);
                 this.add.existing(gameObject);
-                gameObject.x = pointer.x;
-                gameObject.y = pointer.y;
+                gameObject.x = pointer.worldX;
+                gameObject.y = pointer.worldY;
                 gameObject.setAlpha(1).setVisible(true);
 
                 if (texto) {
                     this.foodContainer.remove(texto, false);
                     this.add.existing(texto);
-                    texto.x = pointer.x;
-                    texto.y = pointer.y + FOOD_LABEL_OFFSET;
+                    texto.x = pointer.worldX;
+                    texto.y = pointer.worldY + FOOD_LABEL_OFFSET;
                     texto.setDepth(31).setAlpha(1).setVisible(true);
                 }
             }
@@ -166,28 +180,38 @@ export class Nivel1Scene extends Phaser.Scene {
 
         // Mientras se mueve el mouse
         this.input.on('drag', (pointer: Phaser.Input.Pointer, gameObject: Phaser.GameObjects.Image) => {
-            gameObject.x = pointer.x;
-            gameObject.y = pointer.y;
+            gameObject.x = pointer.worldX;
+            gameObject.y = pointer.worldY;
 
             // Que el texto siga a la imagen
             const texto = gameObject.getData("texto");
             if (texto) {
-                texto.x = pointer.x;
-                texto.y = pointer.y + FOOD_LABEL_OFFSET;
+                texto.x = pointer.worldX;
+                texto.y = pointer.worldY + FOOD_LABEL_OFFSET;
             }
         });
 
         // Cuando el alimento se suelta DENTRO de un Drop Zone
-        this.input.on('drop', (_pointer: Phaser.Input.Pointer, gameObject: Phaser.GameObjects.Image, dropZone: Phaser.GameObjects.Image) => {
+        this.input.on('drop', (_pointer: Phaser.Input.Pointer, gameObject: Phaser.GameObjects.Image, dropZone: Phaser.GameObjects.Zone) => {
             const categoriaItem = gameObject.getData("categoria");
             const categoriaZona = dropZone.getData("categoria");
 
             if (categoriaItem === categoriaZona) {
+                if (this.hasPlacedFoodOverlap(gameObject)) {
+                    gameObject.clearTint();
+                    try { this.sound.play("sonido-error"); } catch { void 0; }
+                    this.returnToFoodBar(gameObject);
+                    return;
+                }
+
                 // ✅ ACIERTO
                 gameObject.clearTint();
                 this.input.setDraggable(gameObject, false);
                 gameObject.disableInteractive();
                 gameObject.setData("placed", true);
+                gameObject.setData("lastValidX", gameObject.x);
+                gameObject.setData("lastValidY", gameObject.y);
+                this.placedFoods.push(gameObject);
 
                 try { this.sound.play("object_win"); } catch { void 0; }
                 try { this.mostrarPlaton(true); } catch { void 0; }
@@ -294,6 +318,10 @@ export class Nivel1Scene extends Phaser.Scene {
             sprite.setData("categoria", categoria);
             sprite.setData("localHomeX", localX);
             sprite.setData("localHomeY", localY);
+            sprite.setData("originalX", localX);
+            sprite.setData("originalY", localY);
+            sprite.setData("lastValidX", localX);
+            sprite.setData("lastValidY", localY);
             sprite.setData("fromFoodBar", true);
             sprite.setData("texto", texto);
 
@@ -367,6 +395,15 @@ export class Nivel1Scene extends Phaser.Scene {
                 this.updateFoodBarVisibility();
             }
         });
+    }
+
+    private hasPlacedFoodOverlap(gameObject: Phaser.GameObjects.Image) {
+        const bounds = gameObject.getBounds();
+
+        return this.placedFoods.some(placedFood => (
+            placedFood !== gameObject &&
+            Phaser.Geom.Intersects.RectangleToRectangle(bounds, placedFood.getBounds())
+        ));
     }
 
     private updateFoodBarVisibility() {
