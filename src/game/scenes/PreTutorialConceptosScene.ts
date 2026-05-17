@@ -45,7 +45,7 @@ const COLOR_HEX = {
 
 const TITLE_FONT = '"Pixelify Sans", Arial, sans-serif';
 const BODY_FONT = '"VT323", "Courier New", monospace';
-const NEXT_SCENE = 'CrucigramaScene';
+const NEXT_SCENE = 'CrucigramaSaludableScene';
 
 const CONCEPTS: NutritionConcept[] = [
     {
