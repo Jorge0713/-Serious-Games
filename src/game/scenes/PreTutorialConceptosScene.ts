@@ -43,9 +43,14 @@ const COLOR_HEX = {
     terracotta: '#D2691E',
 };
 
+<<<<<<< HEAD
 const TITLE_FONT = '"Pixelify Sans", Arial, sans-serif';
 const BODY_FONT = '"VT323", "Courier New", monospace';
 const NEXT_SCENE = 'CrucigramaSaludableScene';
+=======
+const SCENE_FONT = '"Pixelify Sans", Arial, sans-serif';
+const NEXT_SCENE = 'CrucigramaScene';
+>>>>>>> 2cce771 (¨¨)
 
 const CONCEPTS: NutritionConcept[] = [
     {
@@ -160,13 +165,13 @@ export class PreTutorialConceptosScene extends Phaser.Scene {
         this.add.rectangle(width / 2, height / 2, width, height, COLORS.cream, 0.92);
 
         this.add.text(width / 2, 34, 'Puente nutricional', {
-            fontFamily: TITLE_FONT,
+            fontFamily: SCENE_FONT,
             fontSize: '42px',
             color: COLOR_HEX.darkBrown,
         }).setOrigin(0.5, 0);
 
         this.add.text(width / 2, 84, 'Antes del siguiente reto, repasa conceptos clave para construir mejores decisiones.', {
-            fontFamily: BODY_FONT,
+            fontFamily: SCENE_FONT,
             fontSize: '31px',
             color: COLOR_HEX.brown,
         }).setOrigin(0.5, 0);
@@ -191,7 +196,7 @@ export class PreTutorialConceptosScene extends Phaser.Scene {
         void panel;
 
         this.add.text(panelX + 42, panelY + 38, 'Conceptos', {
-            fontFamily: TITLE_FONT,
+            fontFamily: SCENE_FONT,
             fontSize: '34px',
             color: COLOR_HEX.darkBrown,
         }).setOrigin(0, 0);
@@ -221,12 +226,12 @@ export class PreTutorialConceptosScene extends Phaser.Scene {
         const iconBg = this.add.circle(x + 42, y + height / 2, 24, COLORS.brown, 0.16)
             .setStrokeStyle(2, COLORS.brown);
         const icon = this.add.text(x + 42, y + height / 2, concept.icon, {
-            fontFamily: TITLE_FONT,
+            fontFamily: SCENE_FONT,
             fontSize: concept.icon.length > 3 ? '13px' : '15px',
             color: COLOR_HEX.darkBrown,
         }).setOrigin(0.5);
         const label = this.add.text(x + 82, y + height / 2, concept.menuLabel, {
-            fontFamily: BODY_FONT,
+            fontFamily: SCENE_FONT,
             fontSize: '33px',
             color: COLOR_HEX.darkBrown,
         }).setOrigin(0, 0.5);
@@ -265,19 +270,19 @@ export class PreTutorialConceptosScene extends Phaser.Scene {
         const iconCircle = this.add.circle(mainX + 96, mainY + 100, 58, COLORS.green, 0.95)
             .setStrokeStyle(5, COLORS.brown);
         const iconText = this.add.text(mainX + 96, mainY + 100, concept.icon, {
-            fontFamily: TITLE_FONT,
+            fontFamily: SCENE_FONT,
             fontSize: concept.icon.length > 3 ? '22px' : '26px',
             color: COLOR_HEX.darkBrown,
         }).setOrigin(0.5);
 
         const title = this.add.text(mainX + 185, mainY + 58, concept.title, {
-            fontFamily: TITLE_FONT,
+            fontFamily: SCENE_FONT,
             fontSize: '52px',
             color: COLOR_HEX.darkBrown,
         }).setOrigin(0, 0);
 
         const subtitle = this.add.text(mainX + 188, mainY + 120, concept.subtitle, {
-            fontFamily: BODY_FONT,
+            fontFamily: SCENE_FONT,
             fontSize: '35px',
             color: COLOR_HEX.brown,
             fontStyle: 'italic',
@@ -294,12 +299,12 @@ export class PreTutorialConceptosScene extends Phaser.Scene {
         const accentLine = this.add.rectangle(infoX, infoY, 7, infoH, COLORS.green, 1)
             .setOrigin(0);
         const infoTitle = this.add.text(infoX + 34, infoY + 24, '\u00bfQU\u00c9 ES?', {
-            fontFamily: TITLE_FONT,
+            fontFamily: SCENE_FONT,
             fontSize: '20px',
             color: COLOR_HEX.green,
         }).setOrigin(0, 0);
         const infoText = this.add.text(infoX + 34, infoY + 58, concept.body, {
-            fontFamily: BODY_FONT,
+            fontFamily: SCENE_FONT,
             fontSize: '31px',
             color: COLOR_HEX.darkBrown,
             wordWrap: { width: infoW - 82 },
@@ -307,7 +312,7 @@ export class PreTutorialConceptosScene extends Phaser.Scene {
         }).setOrigin(0, 0);
 
         const callout = this.add.text(infoX + 34, infoY + 128, concept.callout, {
-            fontFamily: BODY_FONT,
+            fontFamily: SCENE_FONT,
             fontSize: '28px',
             color: COLOR_HEX.brown,
             wordWrap: { width: infoW - 82 },
@@ -315,7 +320,7 @@ export class PreTutorialConceptosScene extends Phaser.Scene {
         }).setOrigin(0, 0);
 
         const examplesTitle = this.add.text(infoX, infoY + infoH + 46, concept.examplesTitle.toUpperCase(), {
-            fontFamily: TITLE_FONT,
+            fontFamily: SCENE_FONT,
             fontSize: '22px',
             color: COLOR_HEX.brown,
         }).setOrigin(0, 0);
@@ -364,19 +369,19 @@ export class PreTutorialConceptosScene extends Phaser.Scene {
             const image = this.textures.exists(example.texture)
                 ? this.add.image(0, -38, example.texture).setDisplaySize(68, 68)
                 : this.add.text(0, -38, '?', {
-                    fontFamily: TITLE_FONT,
+                    fontFamily: SCENE_FONT,
                     fontSize: '32px',
                     color: COLOR_HEX.darkBrown,
                 }).setOrigin(0.5);
             const label = this.add.text(0, 38, example.label, {
-                fontFamily: TITLE_FONT,
+                fontFamily: SCENE_FONT,
                 fontSize: '21px',
                 color: COLOR_HEX.darkBrown,
                 align: 'center',
                 fixedWidth: cardW - 30,
             }).setOrigin(0.5, 0);
             const note = this.add.text(0, 68, example.note, {
-                fontFamily: BODY_FONT,
+                fontFamily: SCENE_FONT,
                 fontSize: '23px',
                 color: COLOR_HEX.brown,
                 align: 'center',
@@ -413,22 +418,25 @@ export class PreTutorialConceptosScene extends Phaser.Scene {
 
         const isFirst = this.currentIndex === 0;
         const isLast = this.currentIndex === CONCEPTS.length - 1;
+        const navButtonH = 72;
+        const prevButtonW = 250;
+        const nextButtonW = isLast ? 310 : 260;
 
         const prevButton = this.createNavButton(
-            mainX,
+            mainX + 70 + prevButtonW / 2,
             bottomY,
-            250,
-            72,
+            prevButtonW,
+            navButtonH,
             '< Anterior',
             false,
             isFirst,
             () => this.goToPreviousConcept()
         );
         const nextButton = this.createNavButton(
-            mainX + mainW - 190,
+            mainX + mainW - 70 - nextButtonW / 2,
             bottomY,
-            isLast ? 310 : 260,
-            72,
+            nextButtonW,
+            navButtonH,
             isLast ? 'Ir al crucigrama >' : 'Siguiente >',
             true,
             false,
@@ -471,7 +479,7 @@ export class PreTutorialConceptosScene extends Phaser.Scene {
         const bg = this.add.rectangle(0, 0, width, height, disabled ? COLORS.cream : fill, disabled ? 0.62 : 1)
             .setStrokeStyle(4, COLORS.darkBrown, disabled ? 0.38 : 1);
         const text = this.add.text(0, 0, label, {
-            fontFamily: TITLE_FONT,
+            fontFamily: SCENE_FONT,
             fontSize: '24px',
             color: disabled ? COLOR_HEX.brown : COLOR_HEX.cream,
         }).setOrigin(0.5);

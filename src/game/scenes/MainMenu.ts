@@ -153,6 +153,28 @@ export class MainMenu extends Phaser.Scene {
             this.sounds.play();
             this.scene.start('Nivel3Scene');
         });
+
+        const btnPlatoBalanceado = this.add.text(width / 2, height * 0.95, 'Mi Plato Balanceado', {
+            fontSize: '28px',
+            color: '#F5FBF2',
+            backgroundColor: '#58B15B',
+            padding: { x: 20, y: 10 },
+            fontStyle: 'bold',
+        })
+            .setOrigin(0.5)
+            .setInteractive({ useHandCursor: true });
+
+        btnPlatoBalanceado.on('pointerover', () => {
+            this.soundd.play();
+            btnPlatoBalanceado.setScale(1.08);
+        });
+        btnPlatoBalanceado.on('pointerout', () => {
+            btnPlatoBalanceado.setScale(1);
+        });
+        btnPlatoBalanceado.on('pointerdown', () => {
+            this.sounds.play();
+            this.scene.start('PlatoBalanceadoScene');
+        });
     }
 
 
