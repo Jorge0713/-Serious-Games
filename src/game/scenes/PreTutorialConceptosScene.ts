@@ -43,14 +43,9 @@ const COLOR_HEX = {
     terracotta: '#D2691E',
 };
 
-<<<<<<< HEAD
-const TITLE_FONT = '"Pixelify Sans", Arial, sans-serif';
+const SCENE_FONT = '"Pixelify Sans", Arial, sans-serif';
 const BODY_FONT = '"VT323", "Courier New", monospace';
 const NEXT_SCENE = 'CrucigramaSaludableScene';
-=======
-const SCENE_FONT = '"Pixelify Sans", Arial, sans-serif';
-const NEXT_SCENE = 'CrucigramaScene';
->>>>>>> 2cce771 (¨¨)
 
 const CONCEPTS: NutritionConcept[] = [
     {
