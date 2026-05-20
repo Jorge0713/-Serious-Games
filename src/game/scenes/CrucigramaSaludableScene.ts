@@ -38,7 +38,7 @@ export class CrucigramaSaludableScene extends Phaser.Scene {
     private hoverSound!: Phaser.Sound.BaseSound;
     private winSound!: Phaser.Sound.BaseSound;
     private inputActive = false;
-    
+
     // UI Elements
     private hintsPanelContainer!: Phaser.GameObjects.Container;
     private hintTexts: Phaser.GameObjects.Text[] = [];
@@ -159,7 +159,7 @@ export class CrucigramaSaludableScene extends Phaser.Scene {
 
         const gridWidth = (maxX - minX + 1) * (cellSize + padding);
         const gridHeight = (maxY - minY + 1) * (cellSize + padding);
-        
+
         const startDrawX = centerX - gridWidth / 2;
         const startDrawY = centerY - gridHeight / 2;
 
@@ -211,7 +211,7 @@ export class CrucigramaSaludableScene extends Phaser.Scene {
             .setStrokeStyle(3, this.colorMaderaClaro, 0.5)
             .setOrigin(0.5);
         void bg;
-            
+
         this.hintsPanelContainer = this.add.container(centerX, centerY);
 
         let currentY = -panelHeight / 2 + 30;
@@ -287,7 +287,7 @@ export class CrucigramaSaludableScene extends Phaser.Scene {
 
     private setActiveCell(key: string) {
         if (!this.inputActive) return;
-        
+
         // Reset old highlight
         if (this.activeCellKey && this.cells[this.activeCellKey]) {
             this.cells[this.activeCellKey].rect?.setFillStyle(0xFFFFFF);
@@ -314,7 +314,7 @@ export class CrucigramaSaludableScene extends Phaser.Scene {
             const char = event.key.toUpperCase();
             cell.value = char;
             cell.text?.setText(char);
-            
+
             // Highlight reset color if it was red before
             cell.rect?.setStrokeStyle(2, this.colorMaderaOscuroHex);
             cell.text?.setColor(this.colorMaderaOscuro);
@@ -349,7 +349,7 @@ export class CrucigramaSaludableScene extends Phaser.Scene {
             cell.rect?.setStrokeStyle(2, this.colorMaderaOscuroHex);
             cell.text?.setColor(this.colorMaderaOscuro);
             if (cell.rect?.fillColor !== 0xFFFFFF && key !== this.activeCellKey) {
-                 cell.rect?.setFillStyle(0xFFFFFF);
+                cell.rect?.setFillStyle(0xFFFFFF);
             }
         }
         if (this.activeCellKey) this.setActiveCell(this.activeCellKey);
@@ -370,7 +370,7 @@ export class CrucigramaSaludableScene extends Phaser.Scene {
             cell.value = cell.letter;
             cell.text?.setText(cell.letter);
             cell.text?.setColor('#2E7D32'); // Dark green to show it's a hint
-            
+
             // Move next
             this.moveToNextCell(cell);
         }
@@ -393,7 +393,7 @@ export class CrucigramaSaludableScene extends Phaser.Scene {
                 allCorrect = false;
                 cell.rect?.setStrokeStyle(3, this.colorTerracota);
                 cell.text?.setColor('#C62828');
-                
+
                 // Shake animation
                 if (cell.rect) {
                     this.tweens.add({
@@ -419,7 +419,7 @@ export class CrucigramaSaludableScene extends Phaser.Scene {
         const { width, height } = this.scale;
 
         this.add.rectangle(width / 2, height / 2, width, height, 0x000000, 0.6).setDepth(10);
-        
+
         const card = this.add.rectangle(width / 2, height / 2, 700, 400, 0xFFFFFF)
             .setStrokeStyle(6, this.colorVerde)
             .setDepth(11);

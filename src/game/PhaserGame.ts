@@ -8,8 +8,6 @@ import { Nivel3Scene } from './scenes/Nivel3Scene'
 import { PreTutorialConceptosScene } from './scenes/PreTutorialConceptosScene'
 import { CrucigramaSaludableScene } from './scenes/CrucigramaSaludableScene'
 
-// Forzar actualización de TypeScript
-
 export const createGame = (parent: HTMLElement): Phaser.Game => {
     return new Phaser.Game({
         type: Phaser.AUTO,
