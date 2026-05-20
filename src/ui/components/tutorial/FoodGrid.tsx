@@ -38,11 +38,11 @@ const nutrientMatches = [
 ];
 
 const fallbackImages: Record<FoodCategory, string> = {
-    fruit: '/frutas/apple.png',
-    vegetable: '/verduras/carrot.png',
-    legume: '/assets/legumbres_misma_escala.png',
-    cereal: '/assets/cereales_misma_escala.png',
-    animal: '/animal/chicken.png'
+    fruit: '/iconsFood/frutas/apple.png',
+    vegetable: '/iconsFood/verduras/carrot.png',
+    legume: '/iconsFood/leguminosas/beans.png',
+    cereal: '/iconsFood/cereales/rice.png',
+    animal: '/iconsFood/animal/chicken.png'
 };
 
 const categoryDescriptions: Record<FoodCategory, string> = {
@@ -89,10 +89,14 @@ const getFoodFacts = (food: FoodItem) => {
 };
 
 const FoodSectionExplorer: React.FC<FoodSectionExplorerProps> = ({ category, items }) => {
-    const [activeFood, setActiveFood] = useState<FoodItem>(items[0]);
+    const [activeFoodId, setActiveFoodId] = useState<string | null>(items[0]?.id ?? null);
     const trackRef = useRef<HTMLDivElement>(null);
     const config = categoryConfig[category];
-    const facts = useMemo(() => getFoodFacts(activeFood), [activeFood]);
+    const activeFood = useMemo(
+        () => items.find(food => food.id === activeFoodId) ?? items[0] ?? null,
+        [activeFoodId, items]
+    );
+    const facts = useMemo(() => activeFood ? getFoodFacts(activeFood) : null, [activeFood]);
 
     const scrollFoods = (direction: -1 | 1) => {
         trackRef.current?.scrollBy({
@@ -111,26 +115,28 @@ const FoodSectionExplorer: React.FC<FoodSectionExplorerProps> = ({ category, ite
                 </div>
             </div>
 
-            <div className="food-explorer">
+            {activeFood && facts ? (
+                <div className="food-explorer">
                 <div className="carousel-zone">
                     <div className="carousel-toolbar">
                         <span className="carousel-label">Colección nutritiva</span>
                         <div className="carousel-actions" aria-label="Controles del carrusel">
                             <button
                                 type="button"
-                                className="circle-control"
+                                className="circle-control btn-left-control"
                                 onClick={() => scrollFoods(-1)}
                                 aria-label="Ver alimentos anteriores"
                             >
-                                ‹
+                                <span className="btn-left-sprite"></span>
                             </button>
+
                             <button
                                 type="button"
-                                className="circle-control"
+                                className="circle-control btn-right-control"
                                 onClick={() => scrollFoods(1)}
                                 aria-label="Ver más alimentos"
                             >
-                                ›
+                                <span className="btn-right-sprite"></span>
                             </button>
                         </div>
                     </div>
@@ -144,7 +150,7 @@ const FoodSectionExplorer: React.FC<FoodSectionExplorerProps> = ({ category, ite
                                     type="button"
                                     key={food.id}
                                     className={`food-card ${isActive ? 'is-active' : ''}`}
-                                    onClick={() => setActiveFood(food)}
+                                    onClick={() => setActiveFoodId(food.id)}
                                     aria-pressed={isActive}
                                     style={{ animationDelay: `${Math.min(index * 60, 480)}ms` }}
                                 >
@@ -181,7 +187,6 @@ const FoodSectionExplorer: React.FC<FoodSectionExplorerProps> = ({ category, ite
                     </div>
 
                     <div className="spotlight-content">
-                        <span className="spotlight-kicker">{activeFood.name}</span>
                         <h3>{activeFood.nameES}</h3>
 
                         <div className="info-block">
@@ -206,7 +211,12 @@ const FoodSectionExplorer: React.FC<FoodSectionExplorerProps> = ({ category, ite
                         </div>
                     </div>
                 </aside>
-            </div>
+                </div>
+            ) : (
+                <div className="empty-food-state">
+                    No hay alimentos disponibles para esta seccion.
+                </div>
+            )}
         </section>
     );
 };
@@ -246,10 +256,15 @@ export const FoodGrid: React.FC<FoodGridProps> = ({
                     className="btn-back"
                     onClick={onPreviousSection}
                     disabled={isFirstSection}
-                    aria-disabled={isFirstSection}
+                    aria-label="Volver"
                 >
-                    ← Volver
+                    <img
+                        src="/assets/Buttons/BtnBack.png"
+                        alt=""
+                        className="btn-back-img"
+                    />
                 </button>
+
                 <span className="section-progress">
                     Sección {currentSectionIndex + 1} / {totalSections}
                 </span>
@@ -302,7 +317,7 @@ export const FoodGrid: React.FC<FoodGridProps> = ({
                     color: var(--wood-dark);
                     background:
                         linear-gradient(180deg, rgba(var(--cream-rgb), 0.98), rgba(var(--cream-rgb), 0.94)),
-                        url('/assets/Fondo_Cocina.png');
+                        url('/assets/Backgrounds/Fondo_Cocina.png');
                     background-size: cover;
                     background-position: center;
                     overflow-y: auto;
@@ -420,21 +435,28 @@ export const FoodGrid: React.FC<FoodGridProps> = ({
                 }
 
                 .btn-back {
-                    min-height: 46px;
-                    padding: 10px 22px;
-                    color: var(--cream);
-                    background: var(--terracotta);
-                    border: 2px solid var(--wood-dark);
-                    border-radius: 16px;
-                    box-shadow: 0 12px 24px rgba(var(--wood-dark-rgb), 0.28);
-                    font-size: 25px;
+                    background: none;
+                    border: none;
+                    padding: 0;
+                    box-shadow: none;
+
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                }
+
+                .btn-back-img {
+                    width: 140px;
+                    height: auto;
+
+                    image-rendering: pixelated;
+
+                    transition: transform 180ms ease;
                 }
 
                 .btn-back:disabled {
                     cursor: not-allowed;
                     opacity: 0.5;
-                    transform: none;
-                    box-shadow: 0 8px 18px rgba(var(--wood-dark-rgb), 0.16);
                 }
 
                 .section-progress {
@@ -452,16 +474,23 @@ export const FoodGrid: React.FC<FoodGridProps> = ({
                     font-weight: 900;
                 }
 
-                .btn-back:hover,
-                .btn-next:hover,
-                .circle-control:hover {
-                    transform: translateY(-3px) scale(1.03);
-                    box-shadow: 0 16px 30px rgba(var(--wood-dark-rgb), 0.3);
+                .btn-back:hover  .btn-back-img {
+                     transform: translateY(-2px) scale(1.04);
+                }
+                
+                .circle-control:hover .btn-left-sprite,
+                .circle-control:hover .btn-right-sprite {
+                    transform: translateY(-2px) scale(1.04);
                 }
 
-                .btn-back:disabled:hover {
-                    transform: none;
-                    box-shadow: 0 8px 18px rgba(var(--wood-dark-rgb), 0.16);
+                .btn-back:active .btn-back-img {
+                    transform: scale(0.95);
+                }
+
+                .btn-left-sprite,
+                .btn-right-sprite {
+                    display: block;
+                    width: 12px;
                 }
 
                 .sections-stack {
@@ -529,6 +558,17 @@ export const FoodGrid: React.FC<FoodGridProps> = ({
                         inset 0 0 0 2px rgba(var(--cream-rgb), 0.72);
                 }
 
+                .empty-food-state {
+                    padding: 24px;
+                    color: var(--wood-dark);
+                    background: var(--cream);
+                    border: 3px solid rgba(var(--wood-dark-rgb), 0.48);
+                    border-radius: 22px;
+                    box-shadow: 0 14px 28px rgba(var(--wood-dark-rgb), 0.14);
+                    font-size: 24px;
+                    line-height: 1.2;
+                }
+
                 .carousel-zone {
                     min-width: 0;
                     display: flex;
@@ -557,23 +597,45 @@ export const FoodGrid: React.FC<FoodGridProps> = ({
                 }
 
                 .circle-control {
-                    display: grid;
-                    place-items: center;
-                    width: 46px;
-                    height: 46px;
-                    color: var(--cream);
-                    background: var(--wood-dark);
-                    border: 3px solid var(--wood);
-                    border-radius: 50%;
-                    box-shadow: 0 10px 0 rgba(var(--wood-dark-rgb), 0.16);
-                    font-family: var(--display-font);
-                    font-size: 34px;
-                    line-height: 1;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    width: 64px;
+                    height: 64px;
+                    padding: 0;
+                    background: none;
+                    border: none;
+                    cursor: pointer;
                 }
 
-                .circle-control:hover {
-                    background: var(--green-main);
-                    border-color: var(--wood-dark);
+                .btn-left-sprite {
+                    display: block;
+                    width: 64px;
+                    height: 64px;
+                    background-image: url('/assets/Buttons/btnLeft.webp');
+                    background-repeat: no-repeat;
+                    background-position: -64px 0;
+                    background-size: 128px 64px;
+                    image-rendering: pixelated;
+                }
+
+                .btn-left-control:active .btn-left-sprite {
+                    background-position: 0 0;
+                }
+
+                .btn-right-sprite {
+                    display: block;
+                    width: 64px;
+                    height: 64px;
+                    background-image: url('/assets/Buttons/btnRight.webp');
+                    background-repeat: no-repeat;
+                    background-position: 0 0;
+                    background-size: 128px 64px;
+                    image-rendering: pixelated;
+                }
+
+                .btn-right-control:active .btn-right-sprite {
+                    background-position: -64px 0;
                 }
 
                 .food-track {
@@ -724,14 +786,13 @@ export const FoodGrid: React.FC<FoodGridProps> = ({
                     top: 88px;
                     align-self: start;
                     min-height: 100%;
-                    padding: 18px;
-                    background:
-                        linear-gradient(180deg, rgba(var(--terracotta-rgb), 0.16), rgba(var(--cream-rgb), 0.98));
-                    border: 3px solid var(--wood-dark);
-                    border-radius: 24px;
+                    padding: 45px 38px 47px;
+                    background-image: url('/assets/Backgrounds/foodSpotlight.webp');
+                    background-position: center;
+                    background-size: 100% 100%;
+                    background-repeat: no-repeat;
                     box-shadow:
-                        0 18px 0 rgba(var(--wood-rgb), 0.18),
-                        0 24px 38px rgba(var(--wood-dark-rgb), 0.2);
+                        0 10px 24px rgba(var(--wood-dark-rgb), 0.16);
                     animation: spotlightIn 320ms ease both;
                     overflow: hidden;
                 }
@@ -759,14 +820,18 @@ export const FoodGrid: React.FC<FoodGridProps> = ({
                     align-items: center;
                     justify-content: space-between;
                     gap: 10px;
+                    width: 100%;
+                    min-height: 60px;
                     color: var(--cream);
-                    background: var(--wood-dark);
-                    border: 2px solid var(--wood);
-                    border-radius: 16px;
-                    padding: 10px 12px;
+                    background-image: url('/assets/Backgrounds/fichaNutritiva.webp');
+                    background-repeat: no-repeat;
+                    background-size: 100% 100%;
+                    background-position: center;
+                    padding: 14px 28px;
                     font-family: var(--display-font);
                     font-size: 15px;
                     font-weight: 900;
+                    box-sizing: border-box;
                 }
 
                 .spotlight-image-wrap {
@@ -774,9 +839,8 @@ export const FoodGrid: React.FC<FoodGridProps> = ({
                     place-items: center;
                     min-height: 190px;
                     margin: 16px 0;
-                    background:
-                        radial-gradient(circle, rgba(var(--green-rgb), 0.28), var(--cream) 60%),
-                        linear-gradient(180deg, rgba(var(--terracotta-rgb), 0.12), rgba(var(--wood-rgb), 0.12));
+                    background: rgba(255, 248, 240, 0.62);
+                    backdrop-filter: blur(3px);
                     border: 3px solid rgba(var(--wood-rgb), 0.34);
                     border-radius: 22px;
                 }
@@ -794,20 +858,11 @@ export const FoodGrid: React.FC<FoodGridProps> = ({
                     gap: 12px;
                 }
 
-                .spotlight-kicker {
-                    color: var(--terracotta);
-                    font-family: var(--display-font);
-                    font-size: 16px;
-                    font-weight: 900;
-                    text-transform: uppercase;
-                    letter-spacing: 0;
-                }
-
                 .spotlight-content h3 {
                     width: auto;
                     height: auto;
                     margin: 0;
-                    color: var(--wood-dark);
+                    color: var(--cream);
                     font-size: clamp(30px, 3vw, 44px);
                     line-height: 1;
                     font-weight: 1000;
@@ -818,11 +873,12 @@ export const FoodGrid: React.FC<FoodGridProps> = ({
                 .info-block {
                     padding: 14px;
                     color: var(--wood-dark);
-                    background: linear-gradient(180deg, rgba(var(--cream-rgb), 0.92), rgba(var(--terracotta-rgb), 0.14));
-                    border: 2px solid rgba(var(--wood-rgb), 0.38);
+                    background: rgba(255, 248, 240, 0.78);
+                    backdrop-filter: blur(2px);
+                    border: 2px solid rgba(var(--wood-rgb), 0.22);
                     border-left: 8px solid var(--green-main);
                     border-radius: 18px;
-                    box-shadow: inset 0 1px 0 rgba(var(--cream-rgb), 0.88);
+                    box-shadow: inset 0 1px 0 rgba(var(--cream-rgb), 0.58);
                 }
 
                 .info-block.compact {

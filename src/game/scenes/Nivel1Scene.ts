@@ -20,30 +20,30 @@ export class Nivel1Scene extends Phaser.Scene {
     // --- LISTA DE ALIMENTOS (8 verduras, 8 frutas, 4 sebos) ---
     private alimentos = [
         // VERDURAS (8)
-        { id: "v1", ruta: "/verduras/carrot.png", nombre: "Zanahoria" },
-        { id: "v2", ruta: "/verduras/broccoli.png", nombre: "Brócoli" },
-        { id: "v3", ruta: "/verduras/cabbage.png", nombre: "Col" },
-        { id: "v4", ruta: "/verduras/onion.png", nombre: "Cebolla" },
-        { id: "v5", ruta: "/verduras/gourd.png", nombre: "Calabaza" },
-        { id: "v6", ruta: "/verduras/lettuce.png", nombre: "Lechuga" },
-        { id: "v7", ruta: "/verduras/tomato.png", nombre: "Tomate" },
-        { id: "v8", ruta: "/verduras/green-bell-pepper.png", nombre: "Pimiento" },
+        { id: "v1", ruta: "/iconsFood/verduras/carrot.png", nombre: "Zanahoria" },
+        { id: "v2", ruta: "/iconsFood/verduras/broccoli.png", nombre: "Brócoli" },
+        { id: "v3", ruta: "/iconsFood/verduras/cabbage.png", nombre: "Col" },
+        { id: "v4", ruta: "/iconsFood/verduras/onion.png", nombre: "Cebolla" },
+        { id: "v5", ruta: "/iconsFood/verduras/gourd.png", nombre: "Calabaza" },
+        { id: "v6", ruta: "/iconsFood/verduras/lettuce.png", nombre: "Lechuga" },
+        { id: "v7", ruta: "/iconsFood/verduras/tomato.png", nombre: "Tomate" },
+        { id: "v8", ruta: "/iconsFood/verduras/green-bell-pepper.png", nombre: "Pimiento" },
 
         // FRUTAS (8)
-        { id: "f1", ruta: "/frutas/apple.png", nombre: "Manzana" },
-        { id: "f2", ruta: "/frutas/pear.png", nombre: "Pera" },
-        { id: "f3", ruta: "/frutas/grapes.png", nombre: "Uvas" },
-        { id: "f4", ruta: "/frutas/orange.png", nombre: "Naranja" },
-        { id: "f5", ruta: "/frutas/raspberry.png", nombre: "Frambuesa" },
-        { id: "f6", ruta: "/frutas/strawberry.png", nombre: "Fresa" },
-        { id: "f7", ruta: "/frutas/bananas.png", nombre: "Plátano" },
-        { id: "f8", ruta: "/frutas/lime.png", nombre: "Limón" },
+        { id: "f1", ruta: "/iconsFood/frutas/apple.png", nombre: "Manzana" },
+        { id: "f2", ruta: "/iconsFood/frutas/pear.png", nombre: "Pera" },
+        { id: "f3", ruta: "/iconsFood/frutas/grapes.png", nombre: "Uvas" },
+        { id: "f4", ruta: "/iconsFood/frutas/orange.png", nombre: "Naranja" },
+        { id: "f5", ruta: "/iconsFood/frutas/raspberry.png", nombre: "Frambuesa" },
+        { id: "f6", ruta: "/iconsFood/frutas/strawberry.png", nombre: "Fresa" },
+        { id: "f7", ruta: "/iconsFood/frutas/bananas.png", nombre: "Plátano" },
+        { id: "f8", ruta: "/iconsFood/frutas/lime.png", nombre: "Limón" },
 
         // SEBOS / DISTRACTORES (4)
-        { id: "s1", ruta: "/cereales/corn.png", nombre: "Maíz" },
-        { id: "s2", ruta: "/cereales/potato.png", nombre: "Papa" },
-        { id: "s3", ruta: "/origenAnimal/mojarra.png", nombre: "Pescado" },
-        { id: "s4", ruta: "/origenAnimal/carne-cruda.png", nombre: "Carne" }
+        { id: "s1", ruta: "/iconsFood/cereales/corn_yellow.png", nombre: "Maíz" },
+        { id: "s2", ruta: "/iconsFood/cereales/potato.png", nombre: "Papa" },
+        { id: "s3", ruta: "/iconsFood/animal/fish.png", nombre: "Pescado" },
+        { id: "s4", ruta: "/iconsFood/animal/beef.png", nombre: "Carne" }
     ];
 
     constructor() {
@@ -52,16 +52,15 @@ export class Nivel1Scene extends Phaser.Scene {
 
     preload() {
         // --- FONDO GENERAL ---
-        this.load.image("Fondo-cocina", "/assets/Fondo_Cocina.png");
+        this.load.image("Fondo-cocina", "/assets/Backgrounds/Fondo_Cocina.png");
 
         // --- PON AQUÍ LAS RUTAS DE LAS IMÁGENES DE LOS SEGMENTOS VACÍOS ---
-        // Ejemplo: this.load.image("segmento-verduras", "/ruta/a/tu/segmento_verduras.png");
-        this.load.image("segmento-verduras", "/assets/verduras_misma_escala.png");
-        this.load.image("segmento-frutas", "/assets/frutas_misma_escala.png");
+        this.load.image("segmento-verduras", "/assets/Plato/verduras_misma_escala.png");
+        this.load.image("segmento-frutas", "/assets/Plato/frutas_misma_escala.png");
 
         // --- PON AQUÍ LAS RUTAS DE PLATÓN ---
-        this.load.image("platon-feliz", "/assets/platon_feliz.png");
-        this.load.image("platon-triste", "/assets/platon_triste.png");
+        this.load.image("platon-feliz", "/assets/Platon/platon_feliz.png");
+        this.load.image("platon-triste", "/assets/Platon/platon_triste.png");
 
         // --- PON AQUÍ LAS RUTAS DE LOS SONIDOS ---
         this.load.audio("object_win", "/Sound/ObjectWIN.mp3");
@@ -138,26 +137,21 @@ export class Nivel1Scene extends Phaser.Scene {
         // --- PASO 4: LÓGICA DE DRAG & DROP ---
 
         // Al empezar a arrastrar
-        this.input.on('dragstart', (_pointer: Phaser.Input.Pointer, gameObject: Phaser.GameObjects.Image) => {
+        this.input.on('dragstart', (pointer: Phaser.Input.Pointer, gameObject: Phaser.GameObjects.Image) => {
             const texto = gameObject.getData("texto") as Phaser.GameObjects.Text | undefined;
 
             if (gameObject.getData("fromFoodBar")) {
-                const localHomeX = gameObject.getData("localHomeX") as number;
-                const localHomeY = gameObject.getData("localHomeY") as number;
-                const worldX = this.foodContainer.x + localHomeX;
-                const worldY = this.foodContainer.y + localHomeY;
-
                 this.foodContainer.remove(gameObject, false);
                 this.add.existing(gameObject);
-                gameObject.x = worldX;
-                gameObject.y = worldY;
+                gameObject.x = pointer.x;
+                gameObject.y = pointer.y;
                 gameObject.setAlpha(1).setVisible(true);
 
                 if (texto) {
                     this.foodContainer.remove(texto, false);
                     this.add.existing(texto);
-                    texto.x = worldX;
-                    texto.y = worldY + FOOD_LABEL_OFFSET;
+                    texto.x = pointer.x;
+                    texto.y = pointer.y + FOOD_LABEL_OFFSET;
                     texto.setDepth(31).setAlpha(1).setVisible(true);
                 }
             }
@@ -171,15 +165,15 @@ export class Nivel1Scene extends Phaser.Scene {
         });
 
         // Mientras se mueve el mouse
-        this.input.on('drag', (_pointer: Phaser.Input.Pointer, gameObject: Phaser.GameObjects.Image, dragX: number, dragY: number) => {
-            gameObject.x = dragX;
-            gameObject.y = dragY;
+        this.input.on('drag', (pointer: Phaser.Input.Pointer, gameObject: Phaser.GameObjects.Image) => {
+            gameObject.x = pointer.x;
+            gameObject.y = pointer.y;
 
             // Que el texto siga a la imagen
             const texto = gameObject.getData("texto");
             if (texto) {
-                texto.x = dragX;
-                texto.y = dragY + FOOD_LABEL_OFFSET;
+                texto.x = pointer.x;
+                texto.y = pointer.y + FOOD_LABEL_OFFSET;
             }
         });
 

@@ -66,6 +66,7 @@ function App() {
     const game = window.__phaserGame;
     if (!game) return;
 
+    game.input.enabled = true;
     game.scene.stop('TutorialScene');
     game.scene.start(sceneKey);
   }, []);
@@ -101,11 +102,24 @@ function App() {
     window.goToNivel3 = startNivel3;
   }, [startNivel1, startNivel2, startNivel3]);
 
+  useEffect(() => {
+    const game = window.__phaserGame;
+    if (!game) return;
+
+    game.input.enabled = !showTutorialUI;
+  }, [showTutorialUI]);
+
   return (
     <>
       <HomePage />
       {showTutorialUI && (
-        <div className="tutorial-overlay">
+        <div
+          className="tutorial-overlay"
+          onClick={event => event.stopPropagation()}
+          onPointerDown={event => event.stopPropagation()}
+          onPointerMove={event => event.stopPropagation()}
+          onPointerUp={event => event.stopPropagation()}
+        >
           <TutorialPage
             categories={currentSection.categories}
             title={currentSection.title}
@@ -123,6 +137,7 @@ function App() {
           position: fixed;
           inset: 0;
           z-index: 1000;
+          pointer-events: auto;
         }
       `}</style>
     </>
