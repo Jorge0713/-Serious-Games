@@ -1,4 +1,5 @@
 import * as Phaser from 'phaser';
+import { createDebugSkipButton } from '../systems/DebugSkipButton';
 import { showLevelCompleteOverlay } from '../systems/LevelCompleteOverlay';
 
 // ─── Tipos ────────────────────────────────────────────────────────────────────
@@ -13,6 +14,8 @@ interface DraggableImage extends Phaser.GameObjects.Image {
     foodCategory: 'animal' | 'junk';
     localHomeX: number;   // posición dentro del container
     localHomeY: number;
+    lastValidX: number;
+    lastValidY: number;
     baseScale: number;
     placed: boolean;
 }
@@ -82,6 +85,7 @@ export class Nivel3Scene extends Phaser.Scene {
     private scoreText!: Phaser.GameObjects.Text;
     private totalAnimal  = 0;
     private placedAnimal = 0;
+    private placedFoods: DraggableImage[] = [];
 
     constructor() { super('Nivel3Scene'); }
 
@@ -97,6 +101,9 @@ export class Nivel3Scene extends Phaser.Scene {
     // ── CREATE ────────────────────────────────────────────────────────────────
     create() {
         const { width, height } = this.scale;
+        this.score = 0;
+        this.placedAnimal = 0;
+        this.placedFoods = [];
 
         // ── Fondo ──
         this.add.image(width / 2, height / 2, 'fondo_cocina3').setDisplaySize(width, height);
@@ -155,6 +162,13 @@ export class Nivel3Scene extends Phaser.Scene {
         btnVolver.on('pointerover', () => btnVolver.setStyle({ backgroundColor: '#922b21' }));
         btnVolver.on('pointerout',  () => btnVolver.setStyle({ backgroundColor: '#c0392b' }));
         btnVolver.on('pointerdown', () => this.scene.start('MainMenu'));
+
+        createDebugSkipButton(this, {
+            label: 'Saltar a conceptos',
+            nextScene: 'PreTutorialConceptosScene',
+            x: 16,
+            y: 58,
+        });
     }
 
     private buildScrollStrip(width: number) {
@@ -221,10 +235,12 @@ export class Nivel3Scene extends Phaser.Scene {
 
             const bScale     = img.scale;
             img.foodCategory = cfg.category;
-            img.localHomeX   = lx;
-            img.localHomeY   = ly;
-            img.baseScale    = bScale;
-            img.placed       = false;
+            img.localHomeX = lx;
+            img.localHomeY = ly;
+            img.lastValidX = lx;
+            img.lastValidY = ly;
+            img.baseScale = bScale;
+            img.placed = false;
 
             img.setInteractive({ useHandCursor: true });
             this.input.setDraggable(img);
@@ -271,26 +287,21 @@ export class Nivel3Scene extends Phaser.Scene {
 
     // ── Eventos globales de drag ───────────────────────────────────────────────
     private setupDragEvents() {
-        this.input.on('dragstart', (_ptr: Phaser.Input.Pointer, obj: DraggableImage) => {
+        this.input.on('dragstart', (ptr: Phaser.Input.Pointer, obj: DraggableImage) => {
             if (obj.placed) return;
-
-            // Convertir posición local del container a coordenadas de mundo
-            const worldX = this.foodContainer.x + obj.localHomeX;
-            const worldY = this.foodContainer.y + obj.localHomeY;
-
             this.foodContainer.remove(obj, false);
             this.add.existing(obj);               // agrega directo a la escena
             obj.clearMask();
-            obj.x = worldX;
-            obj.y = worldY;
+            obj.x = ptr.worldX;
+            obj.y = ptr.worldY;
             obj.setDepth(30);
         });
 
         // Mientras arrastra (usa las coordenadas directas del puntero para evitar desfases)
         this.input.on('drag', (ptr: Phaser.Input.Pointer, obj: DraggableImage) => {
             if (obj.placed) return;
-            obj.x = ptr.x;
-            obj.y = ptr.y;
+            obj.x = ptr.worldX;
+            obj.y = ptr.worldY;
         });
 
         // Sin highlight: no se muestra ningún contorno al arrastrar sobre la zona
@@ -300,13 +311,22 @@ export class Nivel3Scene extends Phaser.Scene {
             if (obj.placed) return;
 
             if (obj.foodCategory === 'animal') {
-                // ✅ Correcto: queda exactamente donde lo soltó el usuario
+                obj.x = ptr.worldX;
+                obj.y = ptr.worldY;
+
+                if (this.hasPlacedFoodOverlap(obj)) {
+                    this.returnToContainer(obj);
+                    this.showFeedback('Ese espacio ya estÃ¡ ocupado', '#e74c3c');
+                    return;
+                }
+
                 obj.placed = true;
                 obj.disableInteractive();
-                obj.x = ptr.x;   // posición exacta del cursor al soltar
-                obj.y = ptr.y;
+                obj.lastValidX = obj.x;
+                obj.lastValidY = obj.y;
                 obj.setAlpha(0.92);
                 obj.setDepth(6);
+                this.placedFoods.push(obj);
                 
                 // Reproducir sonido de victoria para objeto
                 this.sound.play('object_win');
@@ -357,7 +377,15 @@ export class Nivel3Scene extends Phaser.Scene {
         });
     }
 
-    // ── Feedback temporal ─────────────────────────────────────────────────────
+    private hasPlacedFoodOverlap(obj: DraggableImage) {
+        const bounds = obj.getBounds();
+
+        return this.placedFoods.some(placedFood => (
+            placedFood !== obj &&
+            Phaser.Geom.Intersects.RectangleToRectangle(bounds, placedFood.getBounds())
+        ));
+    }
+
     private showFeedback(msg: string, color: string) {
         this.feedbackText.setText(msg).setColor(color).setAlpha(1);
         if (this.feedbackTimer) this.feedbackTimer.remove();
@@ -370,10 +398,10 @@ export class Nivel3Scene extends Phaser.Scene {
     private showWin() {
         showLevelCompleteOverlay(this, {
             title: '\u00A1NIVEL COMPLETADO!',
-            message: 'Identificaste los alimentos de origen animal y terminaste todos los retos del plato.',
+            message: 'Identificaste los alimentos de origen animal. Ahora repasaremos conceptos clave antes del siguiente reto.',
             scoreText: `Puntos: ${this.score}`,
-            buttonLabel: 'Ir al menu',
-            nextScene: 'MainMenu',
+            buttonLabel: 'Ver conceptos',
+            nextScene: 'PreTutorialConceptosScene',
             soundKey: 'level_win',
         });
     }

@@ -129,7 +129,7 @@ export class MainMenu extends Phaser.Scene {
 
         btnCrucigrama.on('pointerdown', () => {
             this.sounds.play();
-            this.scene.start('CrucigramaScene');
+            this.scene.start('CrucigramaSaludableScene');
         });
 
         const btnNivel3 = this.add.text(width / 2, height * 0.20, 'IR AL NIVEL 3', {
@@ -152,6 +152,28 @@ export class MainMenu extends Phaser.Scene {
         btnNivel3.on('pointerdown', () => {
             this.sounds.play();
             this.scene.start('Nivel3Scene');
+        });
+
+        const btnPlatoBalanceado = this.add.text(width / 2, height * 0.95, 'Mi Plato Balanceado', {
+            fontSize: '28px',
+            color: '#F5FBF2',
+            backgroundColor: '#58B15B',
+            padding: { x: 20, y: 10 },
+            fontStyle: 'bold',
+        })
+            .setOrigin(0.5)
+            .setInteractive({ useHandCursor: true });
+
+        btnPlatoBalanceado.on('pointerover', () => {
+            this.soundd.play();
+            btnPlatoBalanceado.setScale(1.08);
+        });
+        btnPlatoBalanceado.on('pointerout', () => {
+            btnPlatoBalanceado.setScale(1);
+        });
+        btnPlatoBalanceado.on('pointerdown', () => {
+            this.sounds.play();
+            this.scene.start('PlatoBalanceadoScene');
         });
     }
 

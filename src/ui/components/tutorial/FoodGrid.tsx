@@ -150,7 +150,10 @@ const FoodSectionExplorer: React.FC<FoodSectionExplorerProps> = ({ category, ite
                                     type="button"
                                     key={food.id}
                                     className={`food-card ${isActive ? 'is-active' : ''}`}
-                                    onClick={() => setActiveFoodId(food.id)}
+                                    onClick={() => {
+                                        console.log('Click tarjeta', food);
+                                        setActiveFoodId(food.id);
+                                    }}
                                     aria-pressed={isActive}
                                     style={{ animationDelay: `${Math.min(index * 60, 480)}ms` }}
                                 >
@@ -316,7 +319,7 @@ export const FoodGrid: React.FC<FoodGridProps> = ({
                     box-sizing: border-box;
                     color: var(--wood-dark);
                     background:
-                        linear-gradient(180deg, rgba(var(--cream-rgb), 0.98), rgba(var(--cream-rgb), 0.94)),
+                        linear-gradient(180deg, rgba(var(--cream-rgb), 0.80), rgba(var(--cream-rgb), 0.80)),
                         url('/assets/Backgrounds/Fondo_Cocina.png');
                     background-size: cover;
                     background-position: center;
@@ -829,7 +832,7 @@ export const FoodGrid: React.FC<FoodGridProps> = ({
                     background-position: center;
                     padding: 14px 28px;
                     font-family: var(--display-font);
-                    font-size: 15px;
+                    font-size: 18px;
                     font-weight: 900;
                     box-sizing: border-box;
                 }
