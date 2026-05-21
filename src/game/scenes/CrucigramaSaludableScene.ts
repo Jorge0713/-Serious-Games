@@ -348,6 +348,8 @@ export class CrucigramaSaludableScene extends Phaser.Scene {
             } else {
                 this.moveToPreviousCell(cell);
             }
+        } else if (event.key === 'Enter') {
+            this.validar();
         } else if (event.key === 'Delete') {
             cell.value = '';
             cell.text?.setText('');
