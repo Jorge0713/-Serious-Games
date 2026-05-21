@@ -11,6 +11,8 @@ export class Nivel2Scene extends Phaser.Scene {
     private fondo_cocina!: Phaser.GameObjects.Image;
     private platon!: Phaser.GameObjects.Image;
     private aciertos: number = 0;
+    private score: number = 0;
+    private scoreText!: Phaser.GameObjects.Text;
     private foodContainer!: Phaser.GameObjects.Container;
     private minFoodScrollX = 0;
     private maxFoodScrollX = 0;
@@ -77,6 +79,7 @@ export class Nivel2Scene extends Phaser.Scene {
 
     create() {
         this.aciertos = 0;
+        this.score = 0;
         this.placedFoods = [];
         const { width, height } = this.scale;
 
@@ -94,6 +97,16 @@ export class Nivel2Scene extends Phaser.Scene {
             backgroundColor: 'rgba(255,255,255,0.7)',
             padding: { x: 20, y: 10 }
         }).setOrigin(0.5);
+
+        // Contador de puntos
+        this.scoreText = this.add.text(width - 40, 40, 'Puntos: 0', {
+            fontSize: '32px',
+            color: '#2ecc71',
+            fontFamily: 'Arial',
+            fontStyle: 'bold',
+            stroke: '#000',
+            strokeThickness: 4
+        }).setOrigin(1, 0).setDepth(20);
 
         createDebugSkipButton(this, {
             label: 'Saltar a Nivel 3',
@@ -194,6 +207,9 @@ export class Nivel2Scene extends Phaser.Scene {
 
                 try { this.sound.play("object_win"); } catch { void 0; }
                 try { this.mostrarPlaton(true); } catch { void 0; }
+
+                this.score += 10;
+                this.scoreText.setText(`Puntos: ${this.score}`);
 
                 this.aciertos++;
                 if (this.aciertos === 16) {
@@ -436,6 +452,7 @@ export class Nivel2Scene extends Phaser.Scene {
         showLevelCompleteOverlay(this, {
             title: '\u00A1FELICIDADES!',
             message: 'Completaste cereales y leguminosas. Ya puedes pasar al reto de origen animal.',
+            scoreText: `Puntos: ${this.score}`,
             buttonLabel: 'Ir al Nivel 3',
             nextScene: 'Nivel3Scene',
             soundKey: 'object_win',
