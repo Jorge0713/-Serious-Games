@@ -1,5 +1,6 @@
 import * as Phaser from 'phaser';
 import { hoverScale } from "../../componentes/HoverScale";
+import { makeResponsiveVolver } from "../../componentes/ResponsiveVolver";
 
 interface WordConfig {
     id: string;
@@ -63,7 +64,7 @@ export class CrucigramaSaludableScene extends Phaser.Scene {
     }
 
     preload() {
-        this.load.image('btn-Volver', '/assets/Buttons/BtnVolverCafe.webp');
+        this.load.image('btn-Volver', '/assets/Buttons/BtnBack.png');
         this.load.audio('Click', '/Sound/Click.mp3');
         this.load.audio('Hover', '/Sound/hiverSound.mp3');
         this.load.audio('sonido-exito', '/Sound/correcto.mp3');
@@ -86,15 +87,18 @@ export class CrucigramaSaludableScene extends Phaser.Scene {
             fontStyle: 'bold'
         });
 
-        this.add.text(width * 0.1, 100, 'Encuentra las palabras ocultas relacionadas con nutrición.', {
+        const subtitulo = this.add.text(width * 0.1, 100, 'Encuentra las palabras ocultas relacionadas con nutrición.', {
             fontSize: '24px',
             color: this.colorMaderaOscuro,
             fontFamily: 'Arial'
         });
 
-        const btnVolver = this.add.image(60, 60, 'btn-Volver')
-            .setScale(0.4)
+        // uiContainer is removed as elements are already added to the scene
+
+        const btnVolver = this.add.image(150, 100, 'btn-Volver')
             .setInteractive({ useHandCursor: true });
+
+        makeResponsiveVolver(this, btnVolver);
 
         hoverScale(this, btnVolver, {
             scaleOver: 0.45,

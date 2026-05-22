@@ -33,14 +33,14 @@ export class MainMenu extends Phaser.Scene {
     }
 
     create(): void {
-        const { width, height } = this.scale
-
-
+        // Modificar scale mode a ENVELOP en PhaserGame.ts nos permite dejar esto así, pero los Y los acercamos al centro
+        const width = 1920;
+        const height = 1080;
         this.cameras.main.setBackgroundColor('#000000')
 
-
-        this.add.image(width / 2, height / 2, 'full')
-            .setDisplaySize(width, height)
+        // fondo = 0,0 a 1920, 1080 -> 1920x1080. cover.
+        const fondo = this.add.image(width / 2, height / 2, 'full')
+        fondo.setDisplaySize(width, height)
         
 
 
@@ -50,127 +50,93 @@ export class MainMenu extends Phaser.Scene {
         this.soundd = this.sound.add('Hover', { volume: 0.1, loop: false })
 
         this.input.once('pointerdown', () => this.sounds.play())
-        this.input.on('pointerover', () => this.soundd.play())
-        // Banner (ratio 2400:1349) — 45% del ancho del canvas
-        this.add.image(width / 2, height*0.34, 'Banner')
-            .setDisplaySize(width*0.5,height*0.7)
-        // Logo (ratio 541:461) — 13% del ancho del canvas
-        this.add.image(width / 2, height * 0.08, 'Logo')
-            .setDisplaySize(width*0.45,height*0.45)
+        
+        // Logo (reducir tamaño)
+        const logo = this.add.image(width / 2, 180, 'Logo')
+        logo.setDisplaySize(width * 0.25, height * 0.25)
 
-   
-      
+        // Banner (reducir tamaño y bajar)
+        const banner = this.add.image(width / 2, 530, 'Banner')
+        banner.setDisplaySize(width * 0.4, height * 0.5)
 
-        const btnTutorial = this.add.image(width / 2, height * 0.33, 'btn-tutorial')
+        const btnTutorial = this.add.image(width / 2, 460, 'btn-tutorial')
             .setInteractive()
+            .setScale(0.8)
 
-        const btnPlato = this.add.image(width / 2, height * 0.52, 'btn-CrearPlatoInactivo')
+        const btnPlato = this.add.image(width / 2, 600, 'btn-CrearPlatoInactivo')
             .setInteractive()
+            .setScale(0.8)
 
         hoverScale(this, btnTutorial, {
-            scaleOver: 1.1,
+            scaleOver: 0.85,
             duration: 150,
             hoverSound: this.soundd
         })
 
         hoverScale(this, btnPlato, {
-            scaleOver: 1.1,
+            scaleOver: 0.85,
             duration: 150,
             hoverSound: this.soundd
         })
+
         btnPlato.on('pointerdown', () => {
             this.sounds.play()
             // this.scene.start('...')  ← la escena que corresponda
         })
+        
         btnTutorial.on('pointerdown', () => {
             this.sounds.play()
             this.scene.start('TutorialScene')
         })
 
-        // --- BOTÓN TEMPORAL PARA IR AL NIVEL 1 ---
-        const btnNivel1 = this.add.text(width / 2, height * 0.75, 'IR AL NIVEL 1', {
-            fontSize: '32px',
+        // --- BOTONES TEMPORALES ---
+        // Los pondremos más pequeños y debajo del banner
+        const debugStartY = 810;
+        const debugSpacing = 55;
+
+        const btnNivel1 = this.add.text(width / 2, debugStartY, 'IR AL NIVEL 1', {
+            fontSize: '20px',
             color: '#fff',
             backgroundColor: '#00cc00',
-            padding: { x: 20, y: 10 }
-        })
-            .setOrigin(0.5)
-            .setInteractive({ useHandCursor: true });
-
-        btnNivel1.on('pointerover', () => {
-            this.soundd.play();
-            btnNivel1.setScale(1.1);
-        });
-        btnNivel1.on('pointerout', () => {
-            btnNivel1.setScale(1);
-        });
+            padding: { x: 10, y: 5 }
+        }).setOrigin(0.5).setInteractive();
 
         btnNivel1.on('pointerdown', () => {
             this.sounds.play();
             this.scene.start('Nivel1Scene');
         });
 
-        const btnCrucigrama = this.add.text(width / 2, height * 0.87, 'Probar crucigrama', {
-            fontSize: '32px',
+        const btnCrucigrama = this.add.text(width / 2, debugStartY + debugSpacing, 'Probar crucigrama', {
+            fontSize: '20px',
             color: '#fff',
             backgroundColor: '#6a0dad',
-            padding: { x: 20, y: 10 }
-        })
-            .setOrigin(0.5)
-            .setInteractive({ useHandCursor: true });
-
-        btnCrucigrama.on('pointerover', () => {
-            this.soundd.play();
-            btnCrucigrama.setScale(1.1);
-        });
-        btnCrucigrama.on('pointerout', () => {
-            btnCrucigrama.setScale(1);
-        });
+            padding: { x: 10, y: 5 }
+        }).setOrigin(0.5).setInteractive();
 
         btnCrucigrama.on('pointerdown', () => {
             this.sounds.play();
             this.scene.start('CrucigramaSaludableScene');
         });
 
-        const btnNivel3 = this.add.text(width / 2, height * 0.20, 'IR AL NIVEL 3', {
-            fontSize: '28px',
+        const btnNivel3 = this.add.text(width / 2, debugStartY + debugSpacing * 2, 'IR AL NIVEL 3', {
+            fontSize: '20px',
             color: '#fff',
             backgroundColor: '#ff6600',
-            padding: { x: 20, y: 10 }
-        })
-            .setOrigin(0.5)
-            .setInteractive({ useHandCursor: true });
-
-        btnNivel3.on('pointerover', () => {
-            this.soundd.play();
-            btnNivel3.setScale(1.1);
-        });
-        btnNivel3.on('pointerout', () => {
-            btnNivel3.setScale(1);
-        });
+            padding: { x: 10, y: 5 }
+        }).setOrigin(0.5).setInteractive();
 
         btnNivel3.on('pointerdown', () => {
             this.sounds.play();
             this.scene.start('Nivel3Scene');
         });
 
-        const btnPlatoBalanceado = this.add.text(width / 2, height * 0.95, 'Mi Plato Balanceado', {
-            fontSize: '28px',
+        const btnPlatoBalanceado = this.add.text(width / 2, debugStartY + debugSpacing * 3, 'Mi Plato Balanceado', {
+            fontSize: '20px',
             color: '#F5FBF2',
             backgroundColor: '#58B15B',
-            padding: { x: 20, y: 10 },
-            fontStyle: 'bold',
-        })
-            .setOrigin(0.5)
-            .setInteractive({ useHandCursor: true });
+            padding: { x: 10, y: 5 }
+        }).setOrigin(0.5).setInteractive();
 
-        btnPlatoBalanceado.on('pointerover', () => {
-            this.soundd.play();
-            btnPlatoBalanceado.setScale(1.08);
-        });
-        btnPlatoBalanceado.on('pointerout', () => {
-            btnPlatoBalanceado.setScale(1);
-        });
         btnPlatoBalanceado.on('pointerdown', () => {
             this.sounds.play();
             this.scene.start('PlatoBalanceadoScene');

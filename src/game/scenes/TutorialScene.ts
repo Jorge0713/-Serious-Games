@@ -1,6 +1,7 @@
 import * as Phaser from "phaser";
 import { DialogueSystem } from "../systems/dialog/DialogueSystem";
 import { hoverScale } from "../../componentes/HoverScale";
+import { makeResponsiveVolver } from "../../componentes/ResponsiveVolver";
 
 export class TutorialScene extends Phaser.Scene {
     private dialog!: DialogueSystem;
@@ -91,7 +92,7 @@ export class TutorialScene extends Phaser.Scene {
         this.dialog = new DialogueSystem({
             scene: this,
             x: 50,
-            y: height - 200,
+            y: height - 250, // Más arriba por safe area
             width: width - 850,
         });
 
@@ -115,10 +116,11 @@ export class TutorialScene extends Phaser.Scene {
 
         // 🔙 BOTÓN REGRESAR (oculto por defecto)
 
-        this.btnVolver = this.add.sprite(width * 0.10, height * 0.15, 'btn-Volver')
+        this.btnVolver = this.add.sprite(150, 100, 'btn-Volver')
             .setInteractive()
-            .setScale(0.5)
             .setAlpha(1);
+
+        makeResponsiveVolver(this, this.btnVolver);
 
         hoverScale(this, this.btnVolver, {
             scaleOver: 0.45,

@@ -70,21 +70,21 @@ export const showLevelCompleteOverlay = (
         color: COLOR_HEX.neutral,
     }).setOrigin(0, 0.5);
 
-    const title = scene.add.text(0, -96, config.title, {
+    const title = scene.add.text(0, -120, config.title, {
         fontFamily: TITLE_FONT,
-        fontSize: '58px',
+        fontSize: '56px',
         color: COLOR_HEX.tertiary,
         align: 'center',
     }).setOrigin(0.5);
 
-    const message = scene.add.text(0, -18, config.message, {
+    const message = scene.add.text(0, -70, config.message, {
         fontFamily: BODY_FONT,
-        fontSize: '34px',
+        fontSize: '32px',
         color: COLOR_HEX.tertiary,
         align: 'center',
         wordWrap: { width: 760 },
         lineSpacing: 6,
-    }).setOrigin(0.5);
+    }).setOrigin(0.5, 0); // Origin at top-center to grow downwards
 
     const scorePill = scene.add.rectangle(0, 84, 440, 54, COLORS.primary, 1)
         .setStrokeStyle(4, COLORS.tertiary)
@@ -95,10 +95,10 @@ export const showLevelCompleteOverlay = (
         color: COLOR_HEX.neutral,
     }).setOrigin(0.5).setVisible(Boolean(config.scoreText));
 
-    const button = scene.add.rectangle(0, 172, 380, 70, COLORS.primary, 1)
+    const button = scene.add.rectangle(0, 180, 380, 70, COLORS.primary, 1)
         .setStrokeStyle(5, COLORS.tertiary)
         .setInteractive({ useHandCursor: true });
-    const buttonText = scene.add.text(0, 172, config.buttonLabel, {
+    const buttonText = scene.add.text(0, 180, config.buttonLabel, {
         fontFamily: TITLE_FONT,
         fontSize: '30px',
         color: COLOR_HEX.neutral,

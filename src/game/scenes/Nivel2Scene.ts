@@ -90,7 +90,7 @@ export class Nivel2Scene extends Phaser.Scene {
         void this.fondo_cocina;
 
         // 2. TEXTO DE INSTRUCCIÓN
-        this.add.text(width / 2, 75, 'Arrastra los cereales y leguminosas a su lugar en el plato', {
+        this.add.text(width / 2, 130, 'Sigue acomodando los cereales y leguminosas', {
             fontSize: '32px',
             color: '#000',
             fontFamily: 'Arial, sans-serif',
@@ -99,7 +99,7 @@ export class Nivel2Scene extends Phaser.Scene {
         }).setOrigin(0.5);
 
         // Contador de puntos
-        this.scoreText = this.add.text(width - 40, 40, 'Puntos: 0', {
+        this.scoreText = this.add.text(width - 100, 100, `Puntos: ${this.score}`, {
             fontSize: '32px',
             color: '#2ecc71',
             fontFamily: 'Arial',
@@ -143,8 +143,8 @@ export class Nivel2Scene extends Phaser.Scene {
         ).setRectangleDropZone(segmentoLeguminosas.displayWidth * 0.86, segmentoLeguminosas.displayHeight * 0.86);
         zonaLeguminosas.setData("categoria", "leguminosa");
 
-        // --- PLATÓN ---
-        this.platon = this.add.image(width - 200, height - 200, "platon-feliz")
+        // --- PASO 3: PREPARAR A PLATÓN ---
+        this.platon = this.add.image(width - 200, height - 260, "platon-feliz")
             .setAlpha(0)
             .setScale(0.8);
 
@@ -241,7 +241,7 @@ export class Nivel2Scene extends Phaser.Scene {
         const barLeft = (width - barWidth) / 2;
         const viewportX = barLeft + arrowWidth;
         const viewportW = barWidth - arrowWidth * 2;
-        const stripTop = 128;
+        const stripTop = 180;
         const stripHeight = 148;
         const stripCenterY = stripTop + stripHeight / 2;
 
@@ -432,7 +432,7 @@ export class Nivel2Scene extends Phaser.Scene {
         this.tweens.add({
             targets: this.platon,
             alpha: 1,
-            y: this.scale.height - 250,
+            y: this.scale.height - 310, // Efecto "asomarse"
             duration: 300,
             ease: 'Back.easeOut',
             onComplete: () => {
@@ -440,7 +440,7 @@ export class Nivel2Scene extends Phaser.Scene {
                     this.tweens.add({
                         targets: this.platon,
                         alpha: 0,
-                        y: this.scale.height - 200,
+                        y: this.scale.height - 260,
                         duration: 300
                     });
                 });
