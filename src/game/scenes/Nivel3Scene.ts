@@ -2,7 +2,11 @@ import * as Phaser from 'phaser';
 import { createDebugSkipButton } from '../systems/DebugSkipButton';
 import { showLevelCompleteOverlay } from '../systems/LevelCompleteOverlay';
 
-// ─── Tipos ────────────────────────────────────────────────────────────────────
+const FOOD_ITEM_SIZE = 70;
+const FOOD_ITEM_SPACING = 125;
+const FOOD_LABEL_OFFSET = 48;
+const FOOD_SCROLL_STEP = 500;
+
 interface FoodConfig {
     key: string;
     path: string;
@@ -20,12 +24,11 @@ interface DraggableImage extends Phaser.GameObjects.Image {
     placed: boolean;
 }
 
-// ─── Catálogo de alimentos ───────────────────────────────────────────────────
 const ANIMAL_FOODS: FoodConfig[] = [
     { key: 'an_egg',       path: '/iconsFood/animal/egg.png',           category: 'animal', label: 'Huevo' },
     { key: 'an_chicken',   path: '/iconsFood/animal/chicken.png',       category: 'animal', label: 'Pollo' },
     { key: 'an_fish',      path: '/iconsFood/animal/fish.png',          category: 'animal', label: 'Pescado' },
-    { key: 'an_milk',      path: '/iconsFood/animal/milk_bottled.png',  category: 'animal', label: 'Leche' },
+    { key: 'an_milk',      path: '/iconsFood/animal/milk-carton.png',   category: 'animal', label: 'Leche' },
     { key: 'an_cheese',    path: '/iconsFood/animal/cheese.png',        category: 'animal', label: 'Queso' },
     { key: 'an_salmon',    path: '/iconsFood/animal/salmon.png',        category: 'animal', label: 'Salmón' },
     { key: 'an_carne',     path: '/iconsFood/animal/beef.png',          category: 'animal', label: 'Carne' },
@@ -44,44 +47,21 @@ const JUNK_FOODS: FoodConfig[] = [
     { key: 'jk_icecream',  path: '/iconsFood/comidaExtra/ice-cream.png',      category: 'junk', label: 'Helado' },
     { key: 'jk_cupcake',   path: '/iconsFood/comidaExtra/cupcake.png',        category: 'junk', label: 'Cupcake' },
     { key: 'jk_hotcakes',  path: '/iconsFood/comidaExtra/hotcakes.png',       category: 'junk', label: 'Hotcakes' },
-    { key: 'jk_fanta',     path: '/iconsFood/comidaExtra/fanta.png',          category: 'junk', label: 'Fanta' },
-    { key: 'jk_pepsi',     path: '/iconsFood/comidaExtra/pepsi.png',          category: 'junk', label: 'Pepsi' },
-    { key: 'jk_chococake', path: '/iconsFood/comidaExtra/chocolate-cake.png', category: 'junk', label: 'Pastel Choco' },
-    { key: 'jk_taco',      path: '/iconsFood/comidaExtra/taco.png',           category: 'junk', label: 'Taco' },
-    { key: 'jk_sandwich',  path: '/iconsFood/comidaExtra/sandwich.png',       category: 'junk', label: 'Sandwich' },
-    { key: 'jk_azucar',    path: '/iconsFood/comidaExtra/azucar.png',         category: 'junk', label: 'Azúcar' },
-    { key: 'jk_cockie',    path: '/iconsFood/comidaExtra/cockie.png',         category: 'junk', label: 'Galleta' },
 ];
 
 const ALL_FOODS: FoodConfig[] = [...ANIMAL_FOODS, ...JUNK_FOODS];
 
-// ─── Constantes de layout ────────────────────────────────────────────────────
-const ITEM_SIZE   = 90;   // px, cuadrado — más grandes para barra visible
-const ITEM_SPACEX = 130;  // separación horizontal
-const ITEM_SPACEY = 135;  // separación vertical — barra más alta
-const SCROLL_STEP = 650;  // px a desplazar por clic de flecha
-
-// ─── Escena ───────────────────────────────────────────────────────────────────
 export class Nivel3Scene extends Phaser.Scene {
-
-    // Scroll
+    private fondo_cocina!: Phaser.GameObjects.Image;
+    private platon!: Phaser.GameObjects.Image;
     private foodContainer!: Phaser.GameObjects.Container;
-    private minScrollX = 0;
-    private maxScrollX = 0;
-    private isScrolling = false;
-    private viewportX = 0;
-    private viewportW = 0;
+    private minFoodScrollX = 0;
+    private maxFoodScrollX = 0;
+    private isFoodScrolling = false;
+    private foodViewportX = 0;
+    private foodViewportW = 0;
 
-    // Drop zone
-    private sectionX = 0;
-    private sectionY = 0;
-    private sectionW = 420;
-    private sectionH = 340;
-
-    // Feedback / puntaje
-    private feedbackText!: Phaser.GameObjects.Text;
-    private feedbackTimer?: Phaser.Time.TimerEvent;
-    private score        = 0;
+    private score = 0;
     private scoreText!: Phaser.GameObjects.Text;
     private totalAnimal  = 0;
     private placedAnimal = 0;
@@ -91,306 +71,339 @@ export class Nivel3Scene extends Phaser.Scene {
 
     // ── PRELOAD ───────────────────────────────────────────────────────────────
     preload() {
-        this.load.image('fondo_cocina3',   '/assets/Backgrounds/Fondo_Cocina.png');
+        this.load.image('Fondo-cocina',    '/assets/Backgrounds/Fondo_Cocina.png');
         this.load.image('animal_section',  '/assets/Plato/AnlimalSection.png');
+        this.load.image("platon-feliz",    "/assets/Platon/platon_feliz.png");
+        this.load.image("platon-triste",   "/assets/Platon/platon_triste.png");
         this.load.audio('object_win',      '/Sound/ObjectWIN.mp3');
+        this.load.audio("sonido-error",    "/Sound/incorrecto.mp3");
+        this.load.audio("sonido-click",    "/Sound/Click.mp3");
         this.load.audio('level_win',       '/Sound/win.mp3');
         ALL_FOODS.forEach(f => this.load.image(f.key, f.path));
     }
 
     // ── CREATE ────────────────────────────────────────────────────────────────
     create() {
-        const { width, height } = this.scale;
         this.score = 0;
         this.placedAnimal = 0;
         this.placedFoods = [];
+        const { width, height } = this.scale;
 
-        // ── Fondo ──
-        this.add.image(width / 2, height / 2, 'fondo_cocina3').setDisplaySize(width, height);
-        this.add.rectangle(width / 2, height / 2, width, height, 0x000000, 0.48);
+        // 1. DIBUJAR FONDO
+        this.fondo_cocina = this.add.image(width / 2, height / 2, "Fondo-cocina")
+            .setScale(0.5)
+            .setDisplaySize(width, height);
+        void this.fondo_cocina;
 
-        // ── Título ──
-        this.add.text(width / 2, 36, '¡Arrastra los alimentos de origen animal!', {
-            fontSize: '32px', color: '#f1c40f', fontFamily: 'Arial', fontStyle: 'bold',
-            stroke: '#000', strokeThickness: 4,
+        // 2. TEXTO DE INSTRUCCIÓN
+        this.add.text(width / 2, 75, 'Arrastra los alimentos de origen animal al plato', {
+            fontSize: '32px',
+            color: '#000',
+            fontFamily: 'Arial, sans-serif',
+            backgroundColor: 'rgba(255,255,255,0.7)',
+            padding: { x: 20, y: 10 }
         }).setOrigin(0.5);
 
-        this.add.text(width / 2, 76, 'Usa las flechas para desplazar los alimentos', {
-            fontSize: '17px', color: '#ecf0f1', fontFamily: 'Arial',
-            stroke: '#000', strokeThickness: 3,
-        }).setOrigin(0.5);
-
-        // ── Puntaje ──
-        this.scoreText = this.add.text(width - 16, 16, 'Puntos: 0', {
-            fontSize: '22px', color: '#2ecc71', fontFamily: 'Arial', fontStyle: 'bold',
-            stroke: '#000', strokeThickness: 3,
-        }).setOrigin(1, 0).setDepth(10);
-
-        this.buildScrollStrip(width);
-
-        // ── Zona de drop centrada (imagen AnimalSection) ──
-        this.sectionX = width / 2;
-        this.sectionY = height * 0.73;
-        this.sectionW = 620;
-        this.sectionH = 480;
-
-        this.add.image(this.sectionX, this.sectionY, 'animal_section')
-            .setDisplaySize(this.sectionW, this.sectionH).setDepth(2);
-
-        this.add.graphics().setDepth(3);
-
-        this.add.zone(
-            this.sectionX, this.sectionY,
-            this.sectionW, this.sectionH
-        ).setRectangleDropZone(this.sectionW, this.sectionH).setDepth(4);
-
-        // ── Feedback ──
-        this.feedbackText = this.add.text(width / 2, height * 0.525, '', {
-            fontSize: '25px', color: '#fff', fontFamily: 'Arial', fontStyle: 'bold',
-            stroke: '#000', strokeThickness: 4,
-            backgroundColor: '#00000099', padding: { x: 16, y: 8 },
-        }).setOrigin(0.5).setAlpha(0).setDepth(20);
-
-        // ── Eventos de drag globales ──
-        this.setupDragEvents();
-
-        // ── Botón Volver ──
-        const btnVolver = this.add.text(16, 16, '← Volver', {
-            fontSize: '19px', color: '#fff', backgroundColor: '#c0392b',
-            padding: { x: 12, y: 7 }, fontFamily: 'Arial',
-        }).setInteractive({ useHandCursor: true }).setDepth(10);
-        btnVolver.on('pointerover', () => btnVolver.setStyle({ backgroundColor: '#922b21' }));
-        btnVolver.on('pointerout',  () => btnVolver.setStyle({ backgroundColor: '#c0392b' }));
-        btnVolver.on('pointerdown', () => this.scene.start('MainMenu'));
+        // Contador de puntos
+        this.scoreText = this.add.text(width - 40, 40, 'Puntos: 0', {
+            fontSize: '32px',
+            color: '#2ecc71',
+            fontFamily: 'Arial',
+            fontStyle: 'bold',
+            stroke: '#000',
+            strokeThickness: 4
+        }).setOrigin(1, 0).setDepth(20);
 
         createDebugSkipButton(this, {
             label: 'Saltar a conceptos',
             nextScene: 'PreTutorialConceptosScene',
-            x: 16,
-            y: 58,
+            soundKey: 'sonido-click',
         });
+
+        // --- SECCIÓN DEL PLATO ---
+        const escalaAnimal = 1.5; 
+        const segmentoAnimal = this.add.image(width / 2, height - 380, 'animal_section')
+            .setScale(escalaAnimal).setDepth(2);
+
+        const zonaAnimal = this.add.zone(
+            segmentoAnimal.x,
+            segmentoAnimal.y,
+            segmentoAnimal.displayWidth * 0.8,
+            segmentoAnimal.displayHeight * 0.8
+        ).setRectangleDropZone(segmentoAnimal.displayWidth * 0.8, segmentoAnimal.displayHeight * 0.8).setDepth(4);
+        zonaAnimal.setData("categoria", "animal");
+
+        // --- PLATÓN ---
+        this.platon = this.add.image(width - 200, height - 200, "platon-feliz")
+            .setAlpha(0)
+            .setScale(0.8).setDepth(10);
+
+        this.buildFoodBar(width);
+        this.setupDragEvents();
     }
 
-    private buildScrollStrip(width: number) {
-        const BAR_W = Math.round(width * 0.70);
-        const ARROW_W = 48;
-        const barLeft = (width - BAR_W) / 2;
-        const viewportX = barLeft + ARROW_W;
-        const viewportW = BAR_W - ARROW_W * 2;
-        const stripTop = 108;
-        const stripHeight = ITEM_SPACEY * 2 + 40;
+    private buildFoodBar(width: number) {
+        const barWidth = Math.round(width * 0.82);
+        const arrowWidth = 64;
+        const barLeft = (width - barWidth) / 2;
+        const viewportX = barLeft + arrowWidth;
+        const viewportW = barWidth - arrowWidth * 2;
+        const stripTop = 128;
+        const stripHeight = 148;
+        const stripCenterY = stripTop + stripHeight / 2;
 
-        // Fondo semitransparente solo sobre la barra
-        this.add.rectangle(
-            width / 2, stripTop + stripHeight / 2,
-            BAR_W, stripHeight,
-            0x000000, 0.38
-        ).setDepth(1);
+        this.add.rectangle(width / 2, stripCenterY, barWidth, stripHeight, 0xf7cc85, 0.82)
+            .setStrokeStyle(4, 0x5E412F)
+            .setDepth(1);
 
         // Container que desplazamos; parte desde viewportX
         this.foodContainer = this.add.container(viewportX, 0).setDepth(5);
-
-        // Guardamos las variables para el recorte manual en update()
-        this.viewportX = viewportX;
-        this.viewportW = viewportW;
-
-        // Flechas de scroll (a los lados de la barra, no de la pantalla)
-        const midY = stripTop + stripHeight / 2;
-        const btnLeft  = this.add.text(barLeft + ARROW_W / 2, midY, '◄', {
-            fontSize: '30px', color: '#f1c40f', stroke: '#000', strokeThickness: 3,
-        }).setOrigin(0.5).setDepth(10).setInteractive({ useHandCursor: true });
-        const btnRight = this.add.text(barLeft + BAR_W - ARROW_W / 2, midY, '►', {
-            fontSize: '30px', color: '#f1c40f', stroke: '#000', strokeThickness: 3,
-        }).setOrigin(0.5).setDepth(10).setInteractive({ useHandCursor: true });
-
-        btnLeft.on('pointerover',  () => btnLeft.setColor('#fff'));
-        btnLeft.on('pointerout',   () => btnLeft.setColor('#f1c40f'));
-        btnLeft.on('pointerdown',  () => this.scrollStrip(+SCROLL_STEP, viewportX, viewportW));
-        btnRight.on('pointerover', () => btnRight.setColor('#fff'));
-        btnRight.on('pointerout',  () => btnRight.setColor('#f1c40f'));
-        btnRight.on('pointerdown', () => this.scrollStrip(-SCROLL_STEP, viewportX, viewportW));
+        this.foodViewportX = viewportX;
+        this.foodViewportW = viewportW;
 
         // Items mezclados en el container
         const shuffled = Phaser.Utils.Array.Shuffle([...ALL_FOODS]) as FoodConfig[];
         this.totalAnimal = ANIMAL_FOODS.length;
 
-        const totalCols = Math.ceil(shuffled.length / 2);
-        const totalVW   = totalCols * ITEM_SPACEX;
-        this.minScrollX = viewportX;
-        this.maxScrollX = viewportX - Math.max(0, totalVW - viewportW);
+        const totalContentWidth = shuffled.length * FOOD_ITEM_SPACING + 24;
+        this.minFoodScrollX = viewportX;
+        this.maxFoodScrollX = viewportX - Math.max(0, totalContentWidth - viewportW);
 
-        const row1Y = stripTop + 20 + ITEM_SIZE / 2;
-        const row2Y = stripTop + 20 + ITEM_SIZE / 2 + ITEM_SPACEY;
+        const btnLeft = this.add.text(barLeft + arrowWidth / 2, stripCenterY, '<', {
+            fontSize: '42px',
+            color: '#ffffff',
+            fontStyle: 'bold',
+            fontFamily: 'Arial, sans-serif',
+            backgroundColor: '#5E412F',
+            padding: { x: 16, y: 8 }
+        }).setOrigin(0.5).setDepth(10).setInteractive({ useHandCursor: true });
 
-        shuffled.forEach((cfg, i) => {
-            const col   = Math.floor(i / 2);  // 2 filas, apila de a 2 verticalmente
-            const rowIdx = i % 2;
-            const lx    = col * ITEM_SPACEX + ITEM_SIZE / 2 + 10;
-            const ly    = rowIdx === 0 ? row1Y : row2Y;
+        const btnRight = this.add.text(barLeft + barWidth - arrowWidth / 2, stripCenterY, '>', {
+            fontSize: '42px',
+            color: '#ffffff',
+            fontStyle: 'bold',
+            fontFamily: 'Arial, sans-serif',
+            backgroundColor: '#5E412F',
+            padding: { x: 16, y: 8 }
+        }).setOrigin(0.5).setDepth(10).setInteractive({ useHandCursor: true });
 
-            if (!this.textures.exists(cfg.key)) return;
+        btnLeft.on('pointerover', () => btnLeft.setStyle({ backgroundColor: '#76A665' }));
+        btnLeft.on('pointerout', () => btnLeft.setStyle({ backgroundColor: '#5E412F' }));
+        btnLeft.on('pointerdown', () => this.scrollFoodBar(FOOD_SCROLL_STEP));
+        btnRight.on('pointerover', () => btnRight.setStyle({ backgroundColor: '#76A665' }));
+        btnRight.on('pointerout', () => btnRight.setStyle({ backgroundColor: '#5E412F' }));
+        btnRight.on('pointerdown', () => this.scrollFoodBar(-FOOD_SCROLL_STEP));
 
-            const img = this.add.image(lx, ly, cfg.key) as DraggableImage;
-            img.setDisplaySize(ITEM_SIZE, ITEM_SIZE);
+        shuffled.forEach((item, index) => {
+            const localX = index * FOOD_ITEM_SPACING + FOOD_ITEM_SIZE / 2 + 16;
+            const localY = stripCenterY - 16;
 
-            const bScale     = img.scale;
-            img.foodCategory = cfg.category;
-            img.localHomeX = lx;
-            img.localHomeY = ly;
-            img.lastValidX = lx;
-            img.lastValidY = ly;
-            img.baseScale = bScale;
-            img.placed = false;
+            const sprite = this.add.image(localX, localY, item.key) as DraggableImage;
+            sprite.setDisplaySize(FOOD_ITEM_SIZE, FOOD_ITEM_SIZE);
 
-            img.setInteractive({ useHandCursor: true });
-            this.input.setDraggable(img);
-            this.foodContainer.add(img);
+            const texto = this.add.text(localX, localY + FOOD_LABEL_OFFSET, item.label, {
+                fontSize: '15px',
+                color: '#ffffff',
+                fontStyle: 'bold',
+                fontFamily: 'Arial, sans-serif',
+                stroke: '#5E412F',
+                strokeThickness: 4
+            }).setOrigin(0.5);
 
-            // Etiqueta (también dentro del container)
-            const lbl = this.add.text(lx, ly + ITEM_SIZE / 2 + 2, cfg.label, {
-                fontSize: '11px', color: '#ecf0f1', fontFamily: 'Arial',
-                stroke: '#000', strokeThickness: 2,
-            }).setOrigin(0.5, 0);
-            this.foodContainer.add(lbl);
+            sprite.setInteractive({ useHandCursor: true });
+            this.input.setDraggable(sprite);
 
-            // Hover
-            img.on('pointerover', () => {
-                if (img.placed) return;
-                this.tweens.add({ targets: img, scale: img.baseScale * 1.25, duration: 110, ease: 'Power1' });
-            });
-            img.on('pointerout', () => {
-                if (img.placed) return;
-                this.tweens.add({ targets: img, scale: img.baseScale, duration: 110, ease: 'Power1' });
-            });
+            sprite.foodCategory = item.category;
+            sprite.localHomeX = localX;
+            sprite.localHomeY = localY;
+            sprite.lastValidX = localX;
+            sprite.lastValidY = localY;
+            sprite.baseScale = sprite.scale;
+            sprite.placed = false;
+            sprite.setData("texto", texto);
+            sprite.setData("fromFoodBar", true);
+
+            this.foodContainer.add([sprite, texto]);
         });
 
     }
 
-    // ── Desplaza el container animado ─────────────────────────────────────────
-    private scrollStrip(delta: number, _vx?: number, _vw?: number) {
-        if (this.isScrolling) return;
+    private scrollFoodBar(delta: number) {
+        if (!this.foodContainer || this.isFoodScrolling) return;
+
         const newX = Phaser.Math.Clamp(
             this.foodContainer.x + delta,
-            this.maxScrollX,
-            this.minScrollX
+            this.maxFoodScrollX,
+            this.minFoodScrollX
         );
+
         if (newX === this.foodContainer.x) return;
-        this.isScrolling = true;
+
+        this.isFoodScrolling = true;
         this.tweens.add({
             targets: this.foodContainer,
             x: newX,
-            duration: 350,
+            duration: 320,
             ease: 'Cubic.easeOut',
-            onComplete: () => { this.isScrolling = false; },
+            onComplete: () => {
+                this.isFoodScrolling = false;
+            }
         });
     }
 
     // ── Eventos globales de drag ───────────────────────────────────────────────
     private setupDragEvents() {
-        this.input.on('dragstart', (ptr: Phaser.Input.Pointer, obj: DraggableImage) => {
-            if (obj.placed) return;
-            this.foodContainer.remove(obj, false);
-            this.add.existing(obj);               // agrega directo a la escena
-            obj.clearMask();
-            obj.x = ptr.worldX;
-            obj.y = ptr.worldY;
-            obj.setDepth(30);
+        this.input.on('dragstart', (pointer: Phaser.Input.Pointer, gameObject: DraggableImage) => {
+            if (gameObject.placed) return;
+            const texto = gameObject.getData("texto") as Phaser.GameObjects.Text | undefined;
+
+            if (gameObject.getData("fromFoodBar")) {
+                this.foodContainer.remove(gameObject, false);
+                this.add.existing(gameObject);
+                gameObject.x = pointer.worldX;
+                gameObject.y = pointer.worldY;
+                gameObject.setAlpha(1).setVisible(true);
+
+                if (texto) {
+                    this.foodContainer.remove(texto, false);
+                    this.add.existing(texto);
+                    texto.x = pointer.worldX;
+                    texto.y = pointer.worldY + FOOD_LABEL_OFFSET;
+                    texto.setDepth(31).setAlpha(1).setVisible(true);
+                }
+            }
+
+            this.children.bringToTop(gameObject);
+            if (texto) {
+                this.children.bringToTop(texto);
+                texto.setDepth(51);
+            }
+            gameObject.setDepth(50);
+            gameObject.setTint(0xdddddd);
         });
 
-        // Mientras arrastra (usa las coordenadas directas del puntero para evitar desfases)
-        this.input.on('drag', (ptr: Phaser.Input.Pointer, obj: DraggableImage) => {
-            if (obj.placed) return;
-            obj.x = ptr.worldX;
-            obj.y = ptr.worldY;
+        this.input.on('drag', (pointer: Phaser.Input.Pointer, gameObject: DraggableImage) => {
+            if (gameObject.placed) return;
+            gameObject.x = pointer.worldX;
+            gameObject.y = pointer.worldY;
+            const texto = gameObject.getData("texto");
+            if (texto) {
+                texto.x = pointer.worldX;
+                texto.y = pointer.worldY + FOOD_LABEL_OFFSET;
+            }
         });
 
-        // Sin highlight: no se muestra ningún contorno al arrastrar sobre la zona
+        this.input.on('drop', (_pointer: Phaser.Input.Pointer, gameObject: DraggableImage, dropZone: Phaser.GameObjects.Zone) => {
+            if (gameObject.placed) return;
 
-        // Drop sobre zona — posición libre donde el usuario lo soltó
-        this.input.on('drop', (ptr: Phaser.Input.Pointer, obj: DraggableImage) => {
-            if (obj.placed) return;
-
-            if (obj.foodCategory === 'animal') {
-                obj.x = ptr.worldX;
-                obj.y = ptr.worldY;
-
-                if (this.hasPlacedFoodOverlap(obj)) {
-                    this.returnToContainer(obj);
-                    this.showFeedback('Ese espacio ya estÃ¡ ocupado', '#e74c3c');
+            if (gameObject.foodCategory === 'animal') {
+                if (this.hasPlacedFoodOverlap(gameObject)) {
+                    gameObject.clearTint();
+                    this.sound.play("sonido-error");
+                    this.returnToFoodBar(gameObject);
                     return;
                 }
 
-                obj.placed = true;
-                obj.disableInteractive();
-                obj.lastValidX = obj.x;
-                obj.lastValidY = obj.y;
-                obj.setAlpha(0.92);
-                obj.setDepth(6);
-                this.placedFoods.push(obj);
-                
-                // Reproducir sonido de victoria para objeto
+                gameObject.clearTint();
+                this.input.setDraggable(gameObject, false);
+                gameObject.placed = true;
+                gameObject.disableInteractive();
+                gameObject.lastValidX = gameObject.x;
+                gameObject.lastValidY = gameObject.y;
+                gameObject.setDepth(10); 
+                this.placedFoods.push(gameObject);
                 this.sound.play('object_win');
+                this.mostrarPlaton(true);
 
                 this.score += 10;
                 this.scoreText.setText(`Puntos: ${this.score}`);
                 this.placedAnimal++;
-                this.showFeedback('✅ ¡Correcto! +10 puntos', '#2ecc71');
+
                 if (this.placedAnimal >= this.totalAnimal) {
-                    this.time.delayedCall(900, () => this.showWin());
+                    this.time.delayedCall(1000, () => this.showWin());
                 }
             } else {
-                // ❌ Incorrecto: devolver al container en su posición original
-                this.returnToContainer(obj);
-                this.showFeedback('❌ El alimento no pertenece a esa sección', '#e74c3c');
+                gameObject.clearTint();
+                this.sound.play("sonido-error");
+                this.mostrarPlaton(false);
+                this.returnToFoodBar(gameObject);
             }
         });
 
-        this.input.on('dragend', (_ptr: Phaser.Input.Pointer, obj: DraggableImage, dropped: boolean) => {
-            if (obj.placed) return;
+        this.input.on('dragend', (_pointer: Phaser.Input.Pointer, gameObject: DraggableImage, dropped: boolean) => {
+            if (gameObject.placed) return;
             if (!dropped) {
-                this.returnToContainer(obj);
+                gameObject.clearTint();
+                this.returnToFoodBar(gameObject);
             }
         });
     }
 
-    // ── Regresa el item al container en su posición original ─────────────────
-    private returnToContainer(obj: DraggableImage) {
-        // Animar hacia la posición actual del container (incluyendo scroll)
-        const targetWorldX = this.foodContainer.x + obj.localHomeX;
-        const targetWorldY = this.foodContainer.y + obj.localHomeY;
+    private returnToFoodBar(gameObject: DraggableImage) {
+        const texto = gameObject.getData("texto") as Phaser.GameObjects.Text | undefined;
+        const localHomeX = gameObject.localHomeX;
+        const localHomeY = gameObject.localHomeY;
+        const targetWorldX = this.foodContainer.x + localHomeX;
+        const targetWorldY = this.foodContainer.y + localHomeY;
 
         this.tweens.add({
-            targets: obj,
+            targets: gameObject,
             x: targetWorldX,
             y: targetWorldY,
-            scale: obj.baseScale,
-            duration: 380,
-            ease: 'Back.easeOut',
+            duration: 300,
+            ease: 'Power2',
             onComplete: () => {
-                // Reinsertar en el container con posición local
-                this.children.remove(obj);
-                obj.x = obj.localHomeX;
-                obj.y = obj.localHomeY;
-                this.foodContainer.add(obj);
-                obj.setDepth(5);
-            },
+                this.children.remove(gameObject);
+                gameObject.x = localHomeX;
+                gameObject.y = localHomeY;
+                gameObject.clearTint();
+                this.foodContainer.add(gameObject);
+            }
+        });
+
+        if (!texto) return;
+
+        this.tweens.add({
+            targets: texto,
+            x: targetWorldX,
+            y: targetWorldY + FOOD_LABEL_OFFSET,
+            duration: 300,
+            ease: 'Power2',
+            onComplete: () => {
+                this.children.remove(texto);
+                texto.x = localHomeX;
+                texto.y = localHomeY + FOOD_LABEL_OFFSET;
+                this.foodContainer.add(texto);
+            }
         });
     }
 
     private hasPlacedFoodOverlap(obj: DraggableImage) {
         const bounds = obj.getBounds();
-
         return this.placedFoods.some(placedFood => (
             placedFood !== obj &&
             Phaser.Geom.Intersects.RectangleToRectangle(bounds, placedFood.getBounds())
         ));
     }
 
-    private showFeedback(msg: string, color: string) {
-        this.feedbackText.setText(msg).setColor(color).setAlpha(1);
-        if (this.feedbackTimer) this.feedbackTimer.remove();
-        this.feedbackTimer = this.time.delayedCall(2200, () => {
-            this.tweens.add({ targets: this.feedbackText, alpha: 0, duration: 400 });
+    private mostrarPlaton(esFeliz: boolean) {
+        this.platon.setTexture(esFeliz ? "platon-feliz" : "platon-triste");
+        this.tweens.add({
+            targets: this.platon,
+            alpha: 1,
+            y: this.scale.height - 250,
+            duration: 300,
+            ease: 'Back.easeOut',
+            onComplete: () => {
+                this.time.delayedCall(2000, () => {
+                    this.tweens.add({
+                        targets: this.platon,
+                        alpha: 0,
+                        y: this.scale.height - 200,
+                        duration: 300
+                    });
+                });
+            }
         });
     }
 
@@ -410,27 +423,26 @@ export class Nivel3Scene extends Phaser.Scene {
     update() {
         if (!this.foodContainer) return;
         
-        const left = this.viewportX;
-        const right = this.viewportX + this.viewportW;
+        const left = this.foodViewportX;
+        const right = this.foodViewportX + this.foodViewportW;
         
         this.foodContainer.list.forEach((child) => {
             const item = child as Phaser.GameObjects.Image | Phaser.GameObjects.Text;
             const worldX = this.foodContainer.x + item.x;
-            
-            // Si el elemento está fuera de los límites de la barra por más de 50px, lo ocultamos
-            if (worldX < left - 50 || worldX > right + 50) {
-                item.setVisible(false);
+            const visible = worldX >= left - 50 && worldX <= right + 50;
+
+            item.setVisible(visible);
+            if (!visible) {
+                item.setAlpha(0);
+                return;
+            }
+
+            if (worldX < left + 36) {
+                item.setAlpha(Math.max(0.2, (worldX - (left - 50)) / 86));
+            } else if (worldX > right - 36) {
+                item.setAlpha(Math.max(0.2, ((right + 50) - worldX) / 86));
             } else {
-                item.setVisible(true);
-                
-                // Efecto de difuminado (fade) suave en los bordes
-                if (worldX < left + 30) {
-                    item.setAlpha(Math.max(0, (worldX - (left - 50)) / 80));
-                } else if (worldX > right - 30) {
-                    item.setAlpha(Math.max(0, ((right + 50) - worldX) / 80));
-                } else {
-                    item.setAlpha(1);
-                }
+                item.setAlpha(1);
             }
         });
     }

@@ -44,7 +44,6 @@ const COLOR_HEX = {
 };
 
 const SCENE_FONT = '"Pixelify Sans", Arial, sans-serif';
-const BODY_FONT = '"VT323", "Courier New", monospace';
 const NEXT_SCENE = 'CrucigramaSaludableScene';
 
 const CONCEPTS: NutritionConcept[] = [
@@ -139,6 +138,7 @@ export class PreTutorialConceptosScene extends Phaser.Scene {
 
     preload() {
         this.load.image('concept_bg_kitchen', '/assets/Backgrounds/Fondo_Cocina.png');
+        this.load.image('btn-Volver', '/assets/Buttons/BtnVolverCafe.webp');
         this.load.audio('concept_click', '/Sound/Click.mp3');
         this.load.audio('concept_complete', '/Sound/ObjectWIN.mp3');
 
@@ -158,6 +158,22 @@ export class PreTutorialConceptosScene extends Phaser.Scene {
 
         this.add.image(width / 2, height / 2, 'concept_bg_kitchen').setDisplaySize(width, height);
         this.add.rectangle(width / 2, height / 2, width, height, COLORS.cream, 0.92);
+
+        // Botón Volver al Menú
+        const btnVolver = this.add.image(80, 50, 'btn-Volver')
+            .setScale(0.4)
+            .setInteractive({ useHandCursor: true });
+
+        btnVolver.on('pointerover', () => {
+            this.tweens.add({ targets: btnVolver, scale: 0.45, duration: 200, ease: 'Power1' });
+        });
+        btnVolver.on('pointerout', () => {
+            this.tweens.add({ targets: btnVolver, scale: 0.4, duration: 200, ease: 'Power1' });
+        });
+        btnVolver.on('pointerdown', () => {
+            this.playClick();
+            this.scene.start('MainMenu');
+        });
 
         this.add.text(width / 2, 34, 'Puente nutricional', {
             fontFamily: SCENE_FONT,
