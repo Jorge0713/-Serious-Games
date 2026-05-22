@@ -35,14 +35,15 @@ const WORDS: WordConfig[] = [
 export class CrucigramaSaludableScene extends Phaser.Scene {
     private cells: Record<string, Cell> = {};
     private activeCellKey: string | null = null;
+    private currentDirection: 'H' | 'V' = 'H';
     private clickSound!: Phaser.Sound.BaseSound;
     private hoverSound!: Phaser.Sound.BaseSound;
     private winSound!: Phaser.Sound.BaseSound;
     private inputActive = false;
 
     // UI Elements
-    private hintsPanelContainer!: Phaser.GameObjects.Container;
-    private hintTexts: Phaser.GameObjects.Text[] = [];
+    private uiContainer!: Phaser.GameObjects.Container;
+    private centerContainer!: Phaser.GameObjects.Container;
 
     // Colors (Bosque Cálido)
     private colorVerde = 0x58B15B;
@@ -61,33 +62,51 @@ export class CrucigramaSaludableScene extends Phaser.Scene {
         this.activeCellKey = null;
         this.inputActive = true;
         this.hintTexts = [];
+        this.currentDirection = 'H';
     }
 
     preload() {
         this.load.image('btn-Volver', '/assets/Buttons/BtnBack.png');
         this.load.audio('Click', '/Sound/Click.mp3');
-        this.load.audio('Hover', '/Sound/hiverSound.mp3');
+        this.load.audio('Hover', '/Sound/hoverSound.mp3');
         this.load.audio('sonido-exito', '/Sound/correcto.mp3');
     }
 
     create() {
-        const { width, height } = this.scale;
-
         this.cameras.main.setBackgroundColor(this.colorFondo);
 
         this.clickSound = this.sound.add('Click', { volume: 0.1 });
         this.hoverSound = this.sound.add('Hover', { volume: 0.1 });
         this.winSound = this.sound.add('sonido-exito', { volume: 0.3 });
 
+        this.setupUI();
+
+        this.input.keyboard?.on('keydown', this.handleKeydown, this);
+        this.scale.on('resize', () => this.handleResize());
+    }
+
+    private setupUI() {
+        const { width, height } = this.scale;
+        
+        // Limpiar si ya existe
+        if (this.uiContainer) this.uiContainer.destroy();
+        this.uiContainer = this.add.container(0, 0);
+
+        // Center container para escala responsiva
+        const scaleFactor = Math.min(width / 1600, height / 900);
+        this.centerContainer = this.add.container(width / 2, height / 2 + 50);
+        this.centerContainer.setScale(scaleFactor);
+        this.uiContainer.add(this.centerContainer);
+
         // Título
-        this.add.text(width * 0.1, 40, 'Crucigrama Saludable', {
+        const title = this.add.text(width * 0.1, 40, 'Crucigrama Saludable', {
             fontSize: '48px',
             color: this.colorMaderaOscuro,
             fontFamily: 'Arial',
             fontStyle: 'bold'
         });
 
-        const subtitulo = this.add.text(width * 0.1, 100, 'Encuentra las palabras ocultas relacionadas con nutrición.', {
+        const subtitle = this.add.text(width * 0.1, 100, 'Encuentra las palabras ocultas relacionadas con nutrición.', {
             fontSize: '24px',
             color: this.colorMaderaOscuro,
             fontFamily: 'Arial'
@@ -111,15 +130,28 @@ export class CrucigramaSaludableScene extends Phaser.Scene {
             this.scene.start('MainMenu');
         });
 
-        this.buildGrid();
-        this.drawGrid(width * 0.35, height * 0.55);
-        this.drawHintsPanel(width * 0.8, height * 0.55);
-        this.drawActionButtons(width * 0.5, 80);
+        this.uiContainer.add([title, subtitle, btnVolver]);
 
-        this.input.keyboard?.on('keydown', this.handleKeydown, this);
+        // Re-construir grid de datos si está vacío
+        if (Object.keys(this.cells).length === 0) {
+            this.buildGrid();
+        }
+        
+        // Dibujamos con coordenadas relativas al centro
+        this.drawGrid(-280, -50);
+        this.drawHintsPanel(380, -50);
+        this.drawActionButtons(0, 380);
+    }
+
+    private handleResize() {
+        this.setupUI();
+        if (this.activeCellKey) {
+            this.setActiveCell(this.activeCellKey);
+        }
     }
 
     private buildGrid() {
+        this.cells = {};
         for (const word of WORDS) {
             let cx = word.startX;
             let cy = word.startY;
@@ -138,11 +170,8 @@ export class CrucigramaSaludableScene extends Phaser.Scene {
                     this.cells[key].words.push(word.id);
                 }
 
-                if (word.horizontal) {
-                    cx++;
-                } else {
-                    cy++;
-                }
+                if (word.horizontal) cx++;
+                else cy++;
             }
         }
     }
@@ -151,7 +180,6 @@ export class CrucigramaSaludableScene extends Phaser.Scene {
         const cellSize = 50;
         const padding = 5;
 
-        // Calcular tamaño total para centrar
         let minX = 999, maxX = -999, minY = 999, maxY = -999;
         for (const key in this.cells) {
             const cell = this.cells[key];
@@ -163,11 +191,9 @@ export class CrucigramaSaludableScene extends Phaser.Scene {
 
         const gridWidth = (maxX - minX + 1) * (cellSize + padding);
         const gridHeight = (maxY - minY + 1) * (cellSize + padding);
-
         const startDrawX = centerX - gridWidth / 2;
         const startDrawY = centerY - gridHeight / 2;
 
-        // Dibujar celdas
         for (const key in this.cells) {
             const cell = this.cells[key];
             const px = startDrawX + (cell.x - minX) * (cellSize + padding) + cellSize / 2;
@@ -177,7 +203,7 @@ export class CrucigramaSaludableScene extends Phaser.Scene {
                 .setStrokeStyle(2, this.colorMaderaOscuroHex)
                 .setInteractive({ useHandCursor: true });
 
-            const text = this.add.text(px, py, '', {
+            const text = this.add.text(px, py, cell.value, {
                 fontSize: '28px',
                 color: this.colorMaderaOscuro,
                 fontFamily: 'Arial',
@@ -191,8 +217,8 @@ export class CrucigramaSaludableScene extends Phaser.Scene {
 
             cell.rect = rect;
             cell.text = text;
+            this.centerContainer.add([rect, text]);
 
-            // Dibujar número si es el inicio de una palabra
             for (const word of WORDS) {
                 if (word.startX === cell.x && word.startY === cell.y) {
                     const numText = this.add.text(px - cellSize / 2 + 4, py - cellSize / 2 + 2, word.id.replace(/[HV]/g, ''), {
@@ -202,6 +228,7 @@ export class CrucigramaSaludableScene extends Phaser.Scene {
                         fontStyle: 'bold'
                     });
                     cell.numberText = numText;
+                    this.centerContainer.add(numText);
                 }
             }
         }
@@ -212,11 +239,10 @@ export class CrucigramaSaludableScene extends Phaser.Scene {
         const panelHeight = 700;
 
         const bg = this.add.rectangle(centerX, centerY, panelWidth, panelHeight, 0xFFFFFF)
-            .setStrokeStyle(3, this.colorMaderaClaro, 0.5)
-            .setOrigin(0.5);
-        void bg;
-
-        this.hintsPanelContainer = this.add.container(centerX, centerY);
+            .setStrokeStyle(3, this.colorMaderaClaro, 0.5);
+        
+        const container = this.add.container(centerX, centerY);
+        this.centerContainer.add([bg, container]);
 
         let currentY = -panelHeight / 2 + 30;
 
@@ -227,7 +253,7 @@ export class CrucigramaSaludableScene extends Phaser.Scene {
                 fontFamily: 'Arial',
                 fontStyle: 'bold'
             });
-            this.hintsPanelContainer.add(t);
+            container.add(t);
             currentY += 40;
         };
 
@@ -239,24 +265,25 @@ export class CrucigramaSaludableScene extends Phaser.Scene {
                 fontFamily: 'Arial',
                 wordWrap: { width: panelWidth - 40 }
             });
-            this.hintTexts.push(t);
-            this.hintsPanelContainer.add(t);
+            container.add(t);
             currentY += t.height + 20;
         };
 
         addSectionTitle('→ Horizontales');
         WORDS.filter(w => w.horizontal).forEach(addHint);
-
         currentY += 10;
         addSectionTitle('↓ Verticales');
         WORDS.filter(w => !w.horizontal).forEach(addHint);
     }
 
     private drawActionButtons(startX: number, startY: number) {
+        const container = this.add.container(startX, startY);
+        this.centerContainer.add(container);
+
         const createBtn = (x: number, y: number, text: string, color: number, textColor: string, callback: () => void) => {
             const w = 180;
             const h = 50;
-            const container = this.add.container(x, y);
+            const btnCont = this.add.container(x, y);
             const bg = this.add.rectangle(0, 0, w, h, color)
                 .setInteractive({ useHandCursor: true })
                 .setStrokeStyle(2, this.colorMaderaOscuroHex, 0.2);
@@ -267,85 +294,126 @@ export class CrucigramaSaludableScene extends Phaser.Scene {
                 fontStyle: 'bold'
             }).setOrigin(0.5);
 
-            container.add([bg, txt]);
+            btnCont.add([bg, txt]);
 
             bg.on('pointerover', () => {
                 this.hoverSound.play();
                 bg.setAlpha(0.8);
-                container.setScale(1.05);
+                btnCont.setScale(1.05);
             });
             bg.on('pointerout', () => {
                 bg.setAlpha(1);
-                container.setScale(1);
+                btnCont.setScale(1);
             });
             bg.on('pointerdown', () => {
                 this.clickSound.play();
                 callback();
             });
+            container.add(btnCont);
         };
 
-        createBtn(startX, startY, 'C Limpiar', 0xEAE0D5, this.colorMaderaOscuro, () => this.limpiar());
-        createBtn(startX + 200, startY, '💡 Pista', 0xF4A261, '#FFFFFF', () => this.darPista());
-        createBtn(startX + 400, startY, '✓ Validar', this.colorVerde, '#FFFFFF', () => this.validar());
+        createBtn(-220, 0, 'C Limpiar', 0xEAE0D5, this.colorMaderaOscuro, () => this.limpiar());
+        createBtn(0, 0, '💡 Pista', 0xF4A261, '#FFFFFF', () => this.darPista());
+        createBtn(220, 0, '✓ Validar', this.colorVerde, '#FFFFFF', () => this.validar());
     }
 
     private setActiveCell(key: string) {
         if (!this.inputActive) return;
 
-        // Reset old highlight
+        if (this.activeCellKey === key) {
+            const cell = this.cells[key];
+            if (cell.words.length > 1) {
+                this.currentDirection = this.currentDirection === 'H' ? 'V' : 'H';
+            }
+        } else {
+            const cell = this.cells[key];
+            if (cell) {
+                const hasH = cell.words.some(id => id.includes('H'));
+                const hasV = cell.words.some(id => id.includes('V'));
+                if (this.currentDirection === 'H' && !hasH) this.currentDirection = 'V';
+                if (this.currentDirection === 'V' && !hasV) this.currentDirection = 'H';
+            }
+        }
+
         if (this.activeCellKey && this.cells[this.activeCellKey]) {
             this.cells[this.activeCellKey].rect?.setFillStyle(0xFFFFFF);
         }
 
         this.activeCellKey = key;
 
-        // Highlight new
         if (this.activeCellKey && this.cells[this.activeCellKey]) {
-            this.cells[this.activeCellKey].rect?.setFillStyle(0xE8F5E9); // Light green
+            this.cells[this.activeCellKey].rect?.setFillStyle(0xE8F5E9);
         }
     }
 
     private handleKeydown(event: KeyboardEvent) {
         if (!this.inputActive || !this.activeCellKey) return;
-
         const cell = this.cells[this.activeCellKey];
 
         if (event.key === 'Backspace') {
+            if (cell.value !== '') {
+                cell.value = '';
+                cell.text?.setText('');
+            } else {
+                this.moveToPreviousCell(cell);
+            }
+        } else if (event.key === 'Enter') {
+            this.validar();
+        } else if (event.key === 'Delete') {
             cell.value = '';
             cell.text?.setText('');
-            // Optional: Move back to previous cell
         } else if (event.key.length === 1 && event.key.match(/[a-zA-Z]/)) {
             const char = event.key.toUpperCase();
             cell.value = char;
             cell.text?.setText(char);
-
-            // Highlight reset color if it was red before
             cell.rect?.setStrokeStyle(2, this.colorMaderaOscuroHex);
             cell.text?.setColor(this.colorMaderaOscuro);
-
-            // Move to next cell logic
             this.moveToNextCell(cell);
         }
     }
 
     private moveToNextCell(currentCell: Cell) {
-        // Try to infer direction from the words this cell belongs to
-        // If it belongs to one word, move in that direction
-        if (currentCell.words.length > 0) {
-            const wordId = currentCell.words[0]; // Simplification
-            const word = WORDS.find(w => w.id === wordId);
-            if (word) {
-                const nextX = word.horizontal ? currentCell.x + 1 : currentCell.x;
-                const nextY = word.horizontal ? currentCell.y : currentCell.y + 1;
-                const nextKey = `${nextX},${nextY}`;
-                if (this.cells[nextKey]) {
-                    this.setActiveCell(nextKey);
-                }
-            }
+        const nextX = this.currentDirection === 'H' ? currentCell.x + 1 : currentCell.x;
+        const nextY = this.currentDirection === 'H' ? currentCell.y : currentCell.y + 1;
+        const nextKey = `${nextX},${nextY}`;
+        if (this.cells[nextKey]) this.setActiveCell(nextKey);
+    }
+
+    private moveToPreviousCell(currentCell: Cell) {
+        const prevX = this.currentDirection === 'H' ? currentCell.x - 1 : currentCell.x;
+        const prevY = this.currentDirection === 'H' ? currentCell.y : currentCell.y - 1;
+        const prevKey = `${prevX},${prevY}`;
+        if (this.cells[prevKey]) {
+            const prevCell = this.cells[prevKey];
+            prevCell.value = '';
+            prevCell.text?.setText('');
+            this.setActiveCell(prevKey);
         }
     }
 
     private limpiar() {
+        const cell = this.activeCellKey ? this.cells[this.activeCellKey] : null;
+        if (cell) {
+            const wordId = cell.words.find(id => id.includes(this.currentDirection)) || cell.words[0];
+            let wordAlreadyEmpty = true;
+            for (const key in this.cells) {
+                const c = this.cells[key];
+                if (c.words.includes(wordId) && c.value !== '') {
+                    wordAlreadyEmpty = false;
+                    c.value = '';
+                    c.text?.setText('');
+                    c.rect?.setStrokeStyle(2, this.colorMaderaOscuroHex);
+                    c.text?.setColor(this.colorMaderaOscuro);
+                }
+            }
+            if (wordAlreadyEmpty) this.limpiarTodo();
+        } else {
+            this.limpiarTodo();
+        }
+        if (this.activeCellKey) this.setActiveCell(this.activeCellKey);
+    }
+
+    private limpiarTodo() {
         for (const key in this.cells) {
             const cell = this.cells[key];
             cell.value = '';
@@ -356,40 +424,29 @@ export class CrucigramaSaludableScene extends Phaser.Scene {
                 cell.rect?.setFillStyle(0xFFFFFF);
             }
         }
-        if (this.activeCellKey) this.setActiveCell(this.activeCellKey);
     }
 
     private darPista() {
         if (!this.activeCellKey) {
-            // Pick random empty cell
             const emptyKeys = Object.keys(this.cells).filter(k => this.cells[k].value !== this.cells[k].letter);
             if (emptyKeys.length > 0) {
-                const randomKey = emptyKeys[Math.floor(Math.random() * emptyKeys.length)];
-                this.setActiveCell(randomKey);
+                this.setActiveCell(emptyKeys[Math.floor(Math.random() * emptyKeys.length)]);
             }
         }
-
         if (this.activeCellKey) {
             const cell = this.cells[this.activeCellKey];
             cell.value = cell.letter;
             cell.text?.setText(cell.letter);
-            cell.text?.setColor('#2E7D32'); // Dark green to show it's a hint
-
-            // Move next
+            cell.text?.setColor('#2E7D32');
             this.moveToNextCell(cell);
         }
     }
 
     private validar() {
         let allCorrect = true;
-
         for (const key in this.cells) {
             const cell = this.cells[key];
-            if (cell.value === '') {
-                allCorrect = false;
-                continue;
-            }
-
+            if (cell.value === '') { allCorrect = false; continue; }
             if (cell.value === cell.letter) {
                 cell.rect?.setStrokeStyle(3, this.colorVerde);
                 cell.text?.setColor('#2E7D32');
@@ -397,80 +454,28 @@ export class CrucigramaSaludableScene extends Phaser.Scene {
                 allCorrect = false;
                 cell.rect?.setStrokeStyle(3, this.colorTerracota);
                 cell.text?.setColor('#C62828');
-
-                // Shake animation
-                if (cell.rect) {
-                    this.tweens.add({
-                        targets: [cell.rect, cell.text],
-                        x: '+=5',
-                        yoyo: true,
-                        repeat: 3,
-                        duration: 50
-                    });
-                }
+                if (cell.rect) this.tweens.add({ targets: [cell.rect, cell.text], x: '+=5', yoyo: true, repeat: 3, duration: 50 });
             }
         }
-
-        if (allCorrect) {
-            this.showWinScreen();
-        }
+        if (allCorrect) this.showWinScreen();
     }
 
     private showWinScreen() {
         this.inputActive = false;
         this.winSound.play();
-
         const { width, height } = this.scale;
+        const overlay = this.add.rectangle(width / 2, height / 2, width, height, 0x000000, 0.6).setDepth(100).setAlpha(0);
+        const card = this.add.rectangle(width / 2, height / 2, 700, 400, 0xFFFFFF).setStrokeStyle(6, this.colorVerde).setDepth(101);
+        const t1 = this.add.text(width / 2, height / 2 - 80, '¡Excelente Trabajo!', { fontSize: '56px', color: '#2E7D32', fontFamily: 'Arial', fontStyle: 'bold' }).setOrigin(0.5).setDepth(101);
+        const t2 = this.add.text(width / 2, height / 2 + 10, 'Has completado el crucigrama saludable.', { fontSize: '28px', color: this.colorMaderaOscuro, fontFamily: 'Arial' }).setOrigin(0.5).setDepth(101);
+        const btn = this.add.rectangle(width / 2, height / 2 + 120, 300, 70, this.colorVerde).setInteractive({ useHandCursor: true }).setDepth(101);
+        const bt = this.add.text(width / 2, height / 2 + 120, 'Continuar', { fontSize: '32px', color: '#FFFFFF', fontFamily: 'Arial', fontStyle: 'bold' }).setOrigin(0.5).setDepth(102);
 
-        this.add.rectangle(width / 2, height / 2, width, height, 0x000000, 0.6).setDepth(10);
+        btn.on('pointerover', () => { this.hoverSound.play(); btn.setFillStyle(0x4CAF50); });
+        btn.on('pointerout', () => { btn.setFillStyle(this.colorVerde); });
+        btn.on('pointerdown', () => { this.clickSound.play(); this.scene.start('MainMenu'); });
 
-        const card = this.add.rectangle(width / 2, height / 2, 700, 400, 0xFFFFFF)
-            .setStrokeStyle(6, this.colorVerde)
-            .setDepth(11);
-
-        this.add.text(width / 2, height / 2 - 80, '¡Excelente Trabajo!', {
-            fontSize: '56px',
-            color: '#2E7D32',
-            fontFamily: 'Arial',
-            fontStyle: 'bold'
-        }).setOrigin(0.5).setDepth(11);
-
-        this.add.text(width / 2, height / 2 + 10, 'Has completado el crucigrama saludable.', {
-            fontSize: '28px',
-            color: this.colorMaderaOscuro,
-            fontFamily: 'Arial'
-        }).setOrigin(0.5).setDepth(11);
-
-        const btnContinuar = this.add.rectangle(width / 2, height / 2 + 120, 300, 70, this.colorVerde)
-            .setInteractive({ useHandCursor: true })
-            .setDepth(11);
-
-        this.add.text(width / 2, height / 2 + 120, 'Continuar', {
-            fontSize: '32px',
-            color: '#FFFFFF',
-            fontFamily: 'Arial',
-            fontStyle: 'bold'
-        }).setOrigin(0.5).setDepth(12);
-
-        btnContinuar.on('pointerover', () => {
-            this.hoverSound.play();
-            btnContinuar.setFillStyle(0x4CAF50);
-        });
-        btnContinuar.on('pointerout', () => {
-            btnContinuar.setFillStyle(this.colorVerde);
-        });
-        btnContinuar.on('pointerdown', () => {
-            this.clickSound.play();
-            this.scene.start('MainMenu'); // Temporary, till PreTutorialConceptosScene is there
-        });
-
-        // Intro animation
-        this.tweens.add({
-            targets: [card],
-            scaleX: { from: 0, to: 1 },
-            scaleY: { from: 0, to: 1 },
-            duration: 500,
-            ease: 'Back.easeOut'
-        });
+        this.tweens.add({ targets: overlay, alpha: 1, duration: 500 });
+        this.tweens.add({ targets: [card, t1, t2, btn, bt], scaleX: { from: 0, to: 1 }, scaleY: { from: 0, to: 1 }, duration: 500, ease: 'Back.easeOut' });
     }
 }
