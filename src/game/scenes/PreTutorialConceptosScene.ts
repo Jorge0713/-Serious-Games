@@ -43,6 +43,7 @@ const COLOR_HEX = {
     terracotta: '#D2691E',
 };
 
+
 const SCENE_FONT = '"Pixelify Sans", Arial, sans-serif';
 const BODY_FONT = '"VT323", "Courier New", monospace';
 const NEXT_SCENE = 'CrucigramaSaludableScene';

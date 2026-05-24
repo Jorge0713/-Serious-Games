@@ -1,149 +1,92 @@
 import * as Phaser from 'phaser';
 import { createDebugSkipButton } from '../systems/DebugSkipButton';
 import { showLevelCompleteOverlay } from '../systems/LevelCompleteOverlay';
+import { nutritionalInfo } from '../../data/nutritionalInfo';
+import type { FoodItem } from '../../data/nutritionalInfo';
+import { getErrorMessage } from '../../data/errorMessages';
 
-// ─── Tipos ────────────────────────────────────────────────────────────────────
-interface FoodConfig {
-    key: string;
-    path: string;
-    category: 'animal' | 'junk';
-    label: string;
-}
-
-interface DraggableImage extends Phaser.GameObjects.Image {
-    foodCategory: 'animal' | 'junk';
-    localHomeX: number;
-    localHomeY: number;
-    lastValidX: number;
-    lastValidY: number;
-    baseScale: number;
-    placed: boolean;
-}
-
-// ─── Catálogo de alimentos ───────────────────────────────────────────────────
-const ANIMAL_FOODS: FoodConfig[] = [
-    { key: 'an_egg',       path: '/iconsFood/animal/egg.png',           category: 'animal', label: 'Huevo' },
-    { key: 'an_chicken',   path: '/iconsFood/animal/chicken.png',       category: 'animal', label: 'Pollo' },
-    { key: 'an_fish',      path: '/iconsFood/animal/fish.png',          category: 'animal', label: 'Pescado' },
-    { key: 'an_milk',      path: '/iconsFood/animal/milk_bottled.png',  category: 'animal', label: 'Leche' },
-    { key: 'an_cheese',    path: '/iconsFood/animal/cheese.png',        category: 'animal', label: 'Queso' },
-    { key: 'an_salmon',    path: '/iconsFood/animal/salmon.png',        category: 'animal', label: 'Salmón' },
-    { key: 'an_carne',     path: '/iconsFood/animal/beef.png',          category: 'animal', label: 'Carne' },
-    { key: 'an_roast',     path: '/iconsFood/animal/roast-chicken.png', category: 'animal', label: 'Pollo Asado' },
-];
-
-const JUNK_FOODS: FoodConfig[] = [
-    { key: 'jk_burger',    path: '/iconsFood/comidaExtra/burger.png',         category: 'junk', label: 'Hamburguesa' },
-    { key: 'jk_pizza',     path: '/iconsFood/comidaExtra/pizza.png',          category: 'junk', label: 'Pizza' },
-    { key: 'jk_donut',     path: '/iconsFood/comidaExtra/donut.png',          category: 'junk', label: 'Dona' },
-    { key: 'jk_fries',     path: '/iconsFood/comidaExtra/french-fries.png',   category: 'junk', label: 'Papas Fritas' },
-    { key: 'jk_soda',      path: '/iconsFood/comidaExtra/coca.png',           category: 'junk', label: 'Refresco' },
-    { key: 'jk_hotdog',    path: '/iconsFood/comidaExtra/hotdog.png',         category: 'junk', label: 'Hot Dog' },
-    { key: 'jk_cake',      path: '/iconsFood/comidaExtra/cake.png',           category: 'junk', label: 'Pastel' },
-    { key: 'jk_chocolate', path: '/iconsFood/comidaExtra/chocolate.png',      category: 'junk', label: 'Chocolate' },
-    { key: 'jk_icecream',  path: '/iconsFood/comidaExtra/ice-cream.png',      category: 'junk', label: 'Helado' },
-    { key: 'jk_cupcake',   path: '/iconsFood/comidaExtra/cupcake.png',        category: 'junk', label: 'Cupcake' },
-    { key: 'jk_hotcakes',  path: '/iconsFood/comidaExtra/hotcakes.png',       category: 'junk', label: 'Hotcakes' },
-    { key: 'jk_fanta',     path: '/iconsFood/comidaExtra/fanta.png',          category: 'junk', label: 'Fanta' },
-    { key: 'jk_pepsi',     path: '/iconsFood/comidaExtra/pepsi.png',          category: 'junk', label: 'Pepsi' },
-    { key: 'jk_chococake', path: '/iconsFood/comidaExtra/chocolate-cake.png', category: 'junk', label: 'Pastel Choco' },
-    { key: 'jk_taco',      path: '/iconsFood/comidaExtra/taco.png',           category: 'junk', label: 'Taco' },
-    { key: 'jk_sandwich',  path: '/iconsFood/comidaExtra/sandwich.png',       category: 'junk', label: 'Sandwich' },
-    { key: 'jk_azucar',    path: '/iconsFood/comidaExtra/azucar.png',         category: 'junk', label: 'Azúcar' },
-    { key: 'jk_cockie',    path: '/iconsFood/comidaExtra/cockie.png',         category: 'junk', label: 'Galleta' },
-];
-
-const ALL_FOODS: FoodConfig[] = [...ANIMAL_FOODS, ...JUNK_FOODS];
-
-// ─── Constantes de layout ────────────────────────────────────────────────────
-const ITEM_SIZE   = 90;
-const ITEM_SPACEX = 130;
-const ITEM_SPACEY = 135;
-const SCROLL_STEP = 650;
+const FOOD_ITEM_SIZE    = 70;
+const FOOD_ITEM_SPACING = 125;
+const FOOD_LABEL_OFFSET = 48;
+const FOOD_SCROLL_STEP  = 500;
+const ANIMAL_PER_WAVE   = 4;
+const JUNK_PER_WAVE     = 6;
+const WAVE_TIME_NORMAL  = 60;
+const WAVE_TIME_LAST    = 30;
 
 export class Nivel3Scene extends Phaser.Scene {
+    private platon!:        Phaser.GameObjects.Image;
+    private animalSection!: Phaser.GameObjects.Image;
     private foodContainer!: Phaser.GameObjects.Container;
-    private minScrollX = 0;
-    private maxScrollX = 0;
-    private isScrolling = false;
-    private viewportX = 0;
-    private viewportW = 0;
+    private minFoodScrollX = 0;
+    private maxFoodScrollX = 0;
+    private isFoodScrolling = false;
+    private foodViewportX = 0;
+    private foodViewportW = 0;
+    private placedFoods: Phaser.GameObjects.Image[] = [];
+    private isTutorialActive = false;
 
+    // Wave state
+    private waveNumber        = 0;
+    private waveCorrectTarget = 0;
+    private waveAciertos      = 0;
+    private remainingAnimal: FoodItem[] = [];
+    private junkPool:        FoodItem[] = [];
+    private waveInProgress = false;
+
+    // Timer
+    private timerSeconds = WAVE_TIME_NORMAL;
+    private timerEvent?: Phaser.Time.TimerEvent;
+    private timerText!:        Phaser.GameObjects.Text;
+    private timerWarningText!: Phaser.GameObjects.Text;
+    private tickingSound?: Phaser.Sound.BaseSound;
+    private urgentMode = false;
+
+    // Lives
+    private lives = 2;
+    private livesText!: Phaser.GameObjects.Text;
+
+    // Drop zone (synced every frame to follow bobbing section)
     private dropZone!: Phaser.GameObjects.Zone;
-    private gfxZone!: Phaser.GameObjects.Graphics;
-    private sectionX = 0;
-    private sectionY = 0;
-    private sectionW = 420;
-    private sectionH = 340;
+    private dzOffY    = 0;
 
-    private feedbackText!: Phaser.GameObjects.Text;
-    private feedbackTimer?: Phaser.Time.TimerEvent;
-    private score = 0;
-    private scoreText!: Phaser.GameObjects.Text;
-    private totalAnimal = 0;
-    private placedAnimal = 0;
-    private placedFoods: DraggableImage[] = [];
+    // Educational feedback toast
+    private toastBg?:    Phaser.GameObjects.Rectangle;
+    private toastLabel?: Phaser.GameObjects.Text;
+    private toastTxt?:   Phaser.GameObjects.Text;
+    private toastTimer?: Phaser.Time.TimerEvent;
 
     constructor() { super('Nivel3Scene'); }
 
     preload() {
-        this.load.image('fondo_cocina3',   '/assets/Backgrounds/Fondo_Cocina.png');
-        this.load.image('animal_section',  '/assets/Plato/AnlimalSection.png');
-        this.load.audio('object_win',      '/Sound/ObjectWIN.mp3');
-        this.load.audio('level_win',       '/Sound/win.mp3');
-        ALL_FOODS.forEach(f => this.load.image(f.key, f.path));
+        this.load.image('fondo_cocina3',    '/assets/Backgrounds/Fondo_Cocina.png');
+        this.load.image('inventario-animal', '/assets/Plato/inventoryAnimal.webp');
+        this.load.image('platon-feliz',     '/assets/Platon/platon_feliz.png');
+        this.load.image('platon-triste',    '/assets/Platon/platon_triste.png');
+        this.load.image('manita',           '/assets/Backgrounds/manita.png');
+        this.load.audio('object_win',   '/Sound/ObjectWIN.mp3');
+        this.load.audio('level_win',    '/Sound/win.mp3');
+        this.load.audio('sonido-error', '/Sound/incorrecto.mp3');
+        this.load.audio('sonido-click', '/Sound/Click.mp3');
+        this.load.audio('carta-sonido', '/Sound/CartaSound.mp3');
+        this.load.audio('reloj-tic',    '/Sound/Clock.mp3');
+        nutritionalInfo.forEach(food => this.load.image(food.id, food.image));
     }
 
     create() {
         const { width, height } = this.scale;
-        this.score = 0;
-        this.placedAnimal = 0;
-        this.placedFoods = [];
+        this.placedFoods    = [];
+        this.waveNumber     = 0;
+        this.waveAciertos   = 0;
+        this.waveInProgress = false;
+        this.lives          = 2;
 
         this.add.image(width / 2, height / 2, 'fondo_cocina3').setDisplaySize(width, height);
-        this.add.rectangle(width / 2, height / 2, width, height, 0x000000, 0.48);
 
-        this.add.text(width / 2, 36, '¡Arrastra los alimentos de origen animal!', {
-            fontSize: '32px', color: '#f1c40f', fontFamily: 'Arial', fontStyle: 'bold',
-            stroke: '#000', strokeThickness: 4,
+        this.add.text(width / 2, 75, '¡Arrastra los alimentos de origen animal a su canasta!', {
+            fontSize: '32px', color: '#000', fontFamily: 'Arial, sans-serif',
+            backgroundColor: 'rgba(255,255,255,0.7)', padding: { x: 20, y: 10 },
         }).setOrigin(0.5);
-
-        this.add.text(width / 2, 76, 'Usa las flechas para desplazar los alimentos', {
-            fontSize: '17px', color: '#ecf0f1', fontFamily: 'Arial',
-            stroke: '#000', strokeThickness: 3,
-        }).setOrigin(0.5);
-
-        this.scoreText = this.add.text(width - 16, 16, 'Puntos: 0', {
-            fontSize: '22px', color: '#2ecc71', fontFamily: 'Arial', fontStyle: 'bold',
-            stroke: '#000', strokeThickness: 3,
-        }).setOrigin(1, 0).setDepth(10);
-
-        this.buildScrollStrip(width);
-
-        this.sectionX = width / 2;
-        this.sectionY = height * 0.73;
-        this.sectionW = 620;
-        this.sectionH = 480;
-
-        this.add.image(this.sectionX, this.sectionY, 'animal_section')
-            .setDisplaySize(this.sectionW, this.sectionH).setDepth(2);
-
-        this.gfxZone = this.add.graphics().setDepth(3);
-        void this.gfxZone;
-
-        this.dropZone = this.add.zone(
-            this.sectionX, this.sectionY,
-            this.sectionW, this.sectionH
-        ).setRectangleDropZone(this.sectionW, this.sectionH).setDepth(4);
-        void this.dropZone;
-
-        this.feedbackText = this.add.text(width / 2, height * 0.525, '', {
-            fontSize: '25px', color: '#fff', fontFamily: 'Arial', fontStyle: 'bold',
-            stroke: '#000', strokeThickness: 4,
-            backgroundColor: '#00000099', padding: { x: 16, y: 8 },
-        }).setOrigin(0.5).setAlpha(0).setDepth(20);
-
-        this.setupDragEvents();
 
         const btnVolver = this.add.text(16, 16, '← Volver', {
             fontSize: '19px', color: '#fff', backgroundColor: '#c0392b',
@@ -154,251 +97,670 @@ export class Nivel3Scene extends Phaser.Scene {
         btnVolver.on('pointerdown', () => this.scene.start('MainMenu'));
 
         createDebugSkipButton(this, {
-            label: 'Saltar a conceptos',
-            nextScene: 'PreTutorialConceptosScene',
-            x: 16,
-            y: 58,
-        });
-    }
-
-    private buildScrollStrip(width: number) {
-        const BAR_W = Math.round(width * 0.70);
-        const ARROW_W = 48;
-        const barLeft = (width - BAR_W) / 2;
-        const viewportX = barLeft + ARROW_W;
-        const viewportW = BAR_W - ARROW_W * 2;
-        const stripTop = 108;
-        const stripHeight = ITEM_SPACEY * 2 + 40;
-
-        this.add.rectangle(
-            width / 2, stripTop + stripHeight / 2,
-            BAR_W, stripHeight,
-            0x000000, 0.38
-        ).setDepth(1);
-
-        this.foodContainer = this.add.container(viewportX, 0).setDepth(5);
-
-        this.viewportX = viewportX;
-        this.viewportW = viewportW;
-
-        const midY = stripTop + stripHeight / 2;
-        const btnLeft = this.add.text(barLeft + ARROW_W / 2, midY, '◄', {
-            fontSize: '30px', color: '#f1c40f', stroke: '#000', strokeThickness: 3,
-        }).setOrigin(0.5).setDepth(10).setInteractive({ useHandCursor: true });
-        const btnRight = this.add.text(barLeft + BAR_W - ARROW_W / 2, midY, '►', {
-            fontSize: '30px', color: '#f1c40f', stroke: '#000', strokeThickness: 3,
-        }).setOrigin(0.5).setDepth(10).setInteractive({ useHandCursor: true });
-
-        btnLeft.on('pointerover',  () => btnLeft.setColor('#fff'));
-        btnLeft.on('pointerout',   () => btnLeft.setColor('#f1c40f'));
-        btnLeft.on('pointerdown',  () => this.scrollStrip(+SCROLL_STEP));
-        btnRight.on('pointerover', () => btnRight.setColor('#fff'));
-        btnRight.on('pointerout',  () => btnRight.setColor('#f1c40f'));
-        btnRight.on('pointerdown', () => this.scrollStrip(-SCROLL_STEP));
-
-        const shuffled = Phaser.Utils.Array.Shuffle([...ALL_FOODS]) as FoodConfig[];
-        this.totalAnimal = ANIMAL_FOODS.length;
-
-        const totalCols = Math.ceil(shuffled.length / 2);
-        const totalVW = totalCols * ITEM_SPACEX;
-        this.minScrollX = viewportX;
-        this.maxScrollX = viewportX - Math.max(0, totalVW - viewportW);
-
-        const row1Y = stripTop + 20 + ITEM_SIZE / 2;
-        const row2Y = stripTop + 20 + ITEM_SIZE / 2 + ITEM_SPACEY;
-
-        shuffled.forEach((cfg, i) => {
-            const col = Math.floor(i / 2);
-            const rowIdx = i % 2;
-            const lx = col * ITEM_SPACEX + ITEM_SIZE / 2 + 10;
-            const ly = rowIdx === 0 ? row1Y : row2Y;
-
-            if (!this.textures.exists(cfg.key)) return;
-
-            const img = this.add.image(lx, ly, cfg.key) as DraggableImage;
-            img.setDisplaySize(ITEM_SIZE, ITEM_SIZE);
-
-            const bScale = img.scale;
-            img.foodCategory = cfg.category;
-            img.localHomeX = lx;
-            img.localHomeY = ly;
-            img.lastValidX = lx;
-            img.lastValidY = ly;
-            img.baseScale = bScale;
-            img.placed = false;
-
-            img.setInteractive({ useHandCursor: true });
-            this.input.setDraggable(img);
-            this.foodContainer.add(img);
-
-            const lbl = this.add.text(lx, ly + ITEM_SIZE / 2 + 2, cfg.label, {
-                fontSize: '11px', color: '#ecf0f1', fontFamily: 'Arial',
-                stroke: '#000', strokeThickness: 2,
-            }).setOrigin(0.5, 0);
-            this.foodContainer.add(lbl);
-
-            img.on('pointerover', () => {
-                if (img.placed) return;
-                this.tweens.add({ targets: img, scale: img.baseScale * 1.25, duration: 110, ease: 'Power1' });
-            });
-            img.on('pointerout', () => {
-                if (img.placed) return;
-                this.tweens.add({ targets: img, scale: img.baseScale, duration: 110, ease: 'Power1' });
-            });
-        });
-    }
-
-    private scrollStrip(delta: number) {
-        if (this.isScrolling) return;
-        const newX = Phaser.Math.Clamp(
-            this.foodContainer.x + delta,
-            this.maxScrollX,
-            this.minScrollX
-        );
-        if (newX === this.foodContainer.x) return;
-        this.isScrolling = true;
-        this.tweens.add({
-            targets: this.foodContainer,
-            x: newX,
-            duration: 350,
-            ease: 'Cubic.easeOut',
-            onComplete: () => { this.isScrolling = false; },
-        });
-    }
-
-    private setupDragEvents() {
-        this.input.on('dragstart', (ptr: Phaser.Input.Pointer, obj: DraggableImage) => {
-            if (obj.placed) return;
-            this.foodContainer.remove(obj, false);
-            this.add.existing(obj);
-            obj.clearMask();
-            obj.x = ptr.worldX;
-            obj.y = ptr.worldY;
-            obj.setDepth(30);
+            label: 'Saltar a conceptos', nextScene: 'PreTutorialConceptosScene', x: 16, y: 58,
         });
 
-        this.input.on('drag', (ptr: Phaser.Input.Pointer, obj: DraggableImage) => {
-            if (obj.placed) return;
-            obj.x = ptr.worldX;
-            obj.y = ptr.worldY;
-        });
+        // SECCIÓN ANIMAL
+        const escalaCanasta  = 0.60;
+        const canastaCentroY = height - 490;
 
-        this.input.on('drop', (ptr: Phaser.Input.Pointer, obj: DraggableImage) => {
-            if (obj.placed) return;
+        this.animalSection = this.add.image(width / 2, canastaCentroY, 'inventario-animal')
+            .setScale(escalaCanasta).setDepth(2);
 
-            if (obj.foodCategory === 'animal') {
-                obj.x = ptr.worldX;
-                obj.y = ptr.worldY;
-
-                if (this.hasPlacedFoodOverlap(obj)) {
-                    this.returnToContainer(obj);
-                    this.showFeedback('Ese espacio ya estÃ¡ ocupado', '#e74c3c');
-                    return;
-                }
-
-                obj.placed = true;
-                obj.disableInteractive();
-                obj.lastValidX = obj.x;
-                obj.lastValidY = obj.y;
-                obj.setAlpha(0.92);
-                obj.setDepth(6);
-                this.placedFoods.push(obj);
-                
-                this.sound.play('object_win');
-
-                this.score += 10;
-                this.scoreText.setText(`Puntos: ${this.score}`);
-                this.placedAnimal++;
-                this.showFeedback('✅ ¡Correcto! +10 puntos', '#2ecc71');
-                if (this.placedAnimal >= this.totalAnimal) {
-                    this.time.delayedCall(900, () => this.showWin());
-                }
-            } else {
-                this.returnToContainer(obj);
-                this.showFeedback('❌ El alimento no pertenece a esa sección', '#e74c3c');
+        this.add.text(width / 2, canastaCentroY + this.animalSection.displayHeight / 2 + 12,
+            'TU CANASTA DE ORIGEN ANIMAL', {
+                fontSize: '22px', color: '#ffffff', fontFamily: 'Arial',
+                fontStyle: 'bold', stroke: '#5E412F', strokeThickness: 5,
             }
-        });
+        ).setOrigin(0.5).setDepth(3);
 
-        this.input.on('dragend', (_ptr: Phaser.Input.Pointer, obj: DraggableImage, dropped: boolean) => {
-            if (obj.placed) return;
-            if (!dropped) {
-                this.returnToContainer(obj);
+        const dzW = this.animalSection.displayWidth;
+        const dzH = this.animalSection.displayHeight;
+        this.dropZone = this.add.zone(width / 2, canastaCentroY, dzW, dzH)
+            .setRectangleDropZone(dzW, dzH).setDepth(4);
+        this.dropZone.setData('categoria', 'animal');
+
+        this.startSectionIdleAnim(this.animalSection);
+
+        // TIMER
+        this.add.text(width - 110, 110, 'TIEMPO', {
+            fontSize: '16px', color: '#ffffff', fontFamily: 'Arial', fontStyle: 'bold',
+        }).setOrigin(0.5).setDepth(20);
+        this.timerText = this.add.text(width - 110, 140, '60', {
+            fontSize: '38px', color: '#ffffff', fontFamily: 'Arial',
+            fontStyle: 'bold', stroke: '#5E412F', strokeThickness: 5,
+        }).setOrigin(0.5).setDepth(20);
+        this.timerWarningText = this.add.text(width - 110, 176, '¡Faltan 20 segundos!', {
+            fontSize: '13px', color: '#ffaa00', fontFamily: 'Arial',
+            fontStyle: 'bold', stroke: '#000000', strokeThickness: 3,
+        }).setOrigin(0.5).setDepth(20).setVisible(false);
+
+        // VIDAS
+        this.add.text(30, 110, 'VIDAS', {
+            fontSize: '16px', color: '#ffffff', fontFamily: 'Arial', fontStyle: 'bold',
+        }).setOrigin(0, 0.5).setDepth(20);
+        this.livesText = this.add.text(30, 140, '♥ ♥', {
+            fontSize: '30px', color: '#ff4444', fontFamily: 'Arial', fontStyle: 'bold',
+            stroke: '#000000', strokeThickness: 3,
+        }).setOrigin(0, 0.5).setDepth(20);
+
+        this.platon = this.add.image(width - 200, height - 200, 'platon-feliz').setAlpha(0).setScale(0.8);
+
+        this.buildFoodBarShell(width);
+        this.setupDragDrop();
+
+        this.events.once('shutdown', () => this.stopTimer());
+        this.time.delayedCall(400, () => this.showIntroPlaton());
+    }
+
+    // ─── WAVE SYSTEM ──────────────────────────────────────────────────────────
+
+    private initWavePools() {
+        const allAnimal = nutritionalInfo.filter(f => f.category === 'animal');
+        const allJunk   = nutritionalInfo.filter(f => f.category !== 'animal');
+
+        this.remainingAnimal = Phaser.Utils.Array.Shuffle([...allAnimal]) as FoodItem[];
+        this.junkPool        = Phaser.Utils.Array.Shuffle([...allJunk])   as FoodItem[];
+
+        // Huevo primero en oleada 1
+        const eggIdx = this.remainingAnimal.findIndex(f => f.id === 'egg');
+        if (eggIdx > 0) {
+            const [egg] = this.remainingAnimal.splice(eggIdx, 1);
+            this.remainingAnimal.unshift(egg);
+        }
+        this.startNextWave();
+    }
+
+    private startNextWave() {
+        this.waveNumber++;
+        this.waveAciertos   = 0;
+        this.waveInProgress = false;
+
+        this.clearPlacedFoods(() => {
+            const aCount = Math.min(ANIMAL_PER_WAVE, this.remainingAnimal.length);
+            this.waveCorrectTarget = aCount;
+
+            const waveAnimal = this.remainingAnimal.splice(0, aCount);
+            const waveJunk   = (Phaser.Utils.Array.Shuffle([...this.junkPool]) as FoodItem[]).slice(0, JUNK_PER_WAVE);
+
+            let foods = Phaser.Utils.Array.Shuffle([...waveAnimal, ...waveJunk]) as FoodItem[];
+
+            if (this.waveNumber === 1) {
+                const ei = foods.findIndex(f => f.id === 'egg');
+                if (ei > 0) { const [e] = foods.splice(ei, 1); foods = [e, ...foods]; }
             }
+
+            const isLastWave = this.remainingAnimal.length === 0;
+            if (this.foodContainer) this.foodContainer.x = this.foodViewportX;
+            this.clearFoodBar();
+            this.populateFoodBar(foods);
+            this.startTimer(isLastWave ? WAVE_TIME_LAST : WAVE_TIME_NORMAL);
+            this.waveInProgress = true;
         });
     }
 
-    private returnToContainer(obj: DraggableImage) {
-        const targetWorldX = this.foodContainer.x + obj.localHomeX;
-        const targetWorldY = this.foodContainer.y + obj.localHomeY;
+    private clearPlacedFoods(onDone: () => void) {
+        if (this.placedFoods.length === 0) { onDone(); return; }
+
+        this.placedFoods.forEach(s => { s.setData('basket', undefined); s.setData('slotRelY', undefined); });
+
+        const targets: Phaser.GameObjects.GameObject[] = [];
+        this.placedFoods.forEach(sprite => {
+            const texto = sprite.getData('texto') as Phaser.GameObjects.Text | undefined;
+            if (texto) targets.push(texto);
+            targets.push(sprite);
+        });
 
         this.tweens.add({
-            targets: obj,
-            x: targetWorldX,
-            y: targetWorldY,
-            scale: obj.baseScale,
-            duration: 380,
-            ease: 'Back.easeOut',
-            onComplete: () => {
-                this.children.remove(obj);
-                obj.x = obj.localHomeX;
-                obj.y = obj.localHomeY;
-                this.foodContainer.add(obj);
-                obj.setDepth(5);
+            targets, alpha: 0, y: '-=40', duration: 350, ease: 'Power2',
+            onComplete: () => { targets.forEach(o => o.destroy()); this.placedFoods = []; onDone(); }
+        });
+    }
+
+    private clearFoodBar() {
+        if (!this.foodContainer) return;
+        [...this.foodContainer.list].forEach(c => (c as Phaser.GameObjects.GameObject).destroy());
+        this.foodContainer.removeAll(false);
+    }
+
+    private onWaveComplete() {
+        if (!this.waveInProgress) return;
+        this.waveInProgress = false;
+        this.stopTimer();
+
+        if (this.remainingAnimal.length === 0) {
+            this.time.delayedCall(1000, () => showLevelCompleteOverlay(this, {
+                title: '¡NIVEL COMPLETADO!',
+                message: 'Identificaste los alimentos de origen animal. Ahora repasaremos conceptos clave antes del siguiente reto.',
+                buttonLabel: 'Ver conceptos',
+                nextScene: 'PreTutorialConceptosScene',
+                soundKey: 'level_win',
+                clickSoundKey: 'sonido-click',
+            }));
+            return;
+        }
+
+        this.showWaveCompleteOverlay(() => this.startNextWave());
+    }
+
+    private showWaveCompleteOverlay(onDone: () => void) {
+        const { width, height } = this.scale;
+        const cx = width / 2, cy = height / 2;
+
+        const overlay   = this.add.rectangle(cx, cy, width, height, 0x000000, 0.72).setDepth(100).setAlpha(0);
+        const platonBig = this.add.image(width * 0.78, cy + 30, 'platon-feliz').setScale(0).setDepth(101);
+        const titleTxt  = this.add.text(cx - 60, cy - 90, '¡OLEADA\nCOMPLETADA!', {
+            fontSize: '52px', color: '#FFD700', fontFamily: 'Arial',
+            fontStyle: 'bold', stroke: '#000000', strokeThickness: 7, align: 'center',
+        }).setOrigin(0.5).setDepth(103).setAlpha(0);
+        const msgTxt = this.add.text(cx - 60, cy + 40,
+            '¡Identificaste los alimentos\nde origen animal de esta ronda!', {
+                fontSize: '24px', color: '#ffffff', fontFamily: 'Arial',
+                fontStyle: 'bold', stroke: '#000000', strokeThickness: 5, align: 'center',
+            }
+        ).setOrigin(0.5).setDepth(103).setAlpha(0);
+
+        try { this.sound.play('object_win'); } catch { void 0; }
+        this.tweens.add({ targets: overlay, alpha: 1, duration: 300 });
+        this.tweens.add({ targets: [titleTxt, msgTxt], alpha: 1, duration: 400, delay: 200 });
+        this.tweens.add({ targets: platonBig, scaleX: 0.75, scaleY: 0.75, duration: 500, ease: 'Back.easeOut', delay: 150 });
+
+        this.time.delayedCall(3200, () => {
+            this.tweens.add({
+                targets: [overlay, titleTxt, msgTxt, platonBig], alpha: 0, duration: 400,
+                onComplete: () => { overlay.destroy(); titleTxt.destroy(); msgTxt.destroy(); platonBig.destroy(); onDone(); }
+            });
+        });
+    }
+
+    // ─── TIMER ────────────────────────────────────────────────────────────────
+
+    private startTimer(seconds: number) {
+        this.timerSeconds = seconds;
+        this.updateTimerDisplay();
+        if (this.timerEvent) this.timerEvent.destroy();
+        this.urgentMode = false;
+        if (this.tickingSound) { try { this.tickingSound.stop(); } catch { void 0; } }
+        try {
+            this.tickingSound = this.sound.add('reloj-tic', { loop: true, volume: 0.45 });
+            this.tickingSound.play();
+        } catch { void 0; }
+        if (this.timerWarningText) this.timerWarningText.setVisible(false);
+        this.timerEvent = this.time.addEvent({
+            delay: 1000, repeat: seconds - 1,
+            callback: () => {
+                this.timerSeconds = Math.max(0, this.timerSeconds - 1);
+                this.updateTimerDisplay();
+                if (this.timerSeconds <= 0) this.onTimerExpire();
             },
         });
     }
 
-    private hasPlacedFoodOverlap(obj: DraggableImage) {
-        const bounds = obj.getBounds();
-
-        return this.placedFoods.some(placedFood => (
-            placedFood !== obj &&
-            Phaser.Geom.Intersects.RectangleToRectangle(bounds, placedFood.getBounds())
-        ));
+    private stopTimer() {
+        if (this.timerEvent) { this.timerEvent.destroy(); this.timerEvent = undefined; }
+        if (this.tickingSound) { try { this.tickingSound.stop(); } catch { void 0; } this.tickingSound = undefined; }
+        if (this.timerWarningText) {
+            this.tweens.killTweensOf(this.timerWarningText);
+            this.timerWarningText.setVisible(false).setAlpha(1);
+        }
+        this.urgentMode = false;
     }
 
-    private showFeedback(msg: string, color: string) {
-        this.feedbackText.setText(msg).setColor(color).setAlpha(1);
-        if (this.feedbackTimer) this.feedbackTimer.remove();
-        this.feedbackTimer = this.time.delayedCall(2200, () => {
-            this.tweens.add({ targets: this.feedbackText, alpha: 0, duration: 400 });
+    private updateTimerDisplay() {
+        if (!this.timerText) return;
+        this.timerText.setText(String(this.timerSeconds));
+        if (this.timerSeconds <= 10)      this.timerText.setColor('#ff2222');
+        else if (this.timerSeconds <= 20) this.timerText.setColor('#ffaa00');
+        else                               this.timerText.setColor('#ffffff');
+
+        if (this.timerSeconds <= 20 && !this.urgentMode) {
+            this.urgentMode = true;
+            try { (this.tickingSound as any).setRate(1.75); } catch { void 0; }
+            if (this.timerWarningText) {
+                this.timerWarningText.setVisible(true).setAlpha(1);
+                this.tweens.add({ targets: this.timerWarningText, alpha: 0, duration: 380, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
+            }
+        }
+    }
+
+    private onTimerExpire() {
+        if (!this.waveInProgress) return;
+        this.waveInProgress = false;
+        this.stopTimer();
+        this.executeGameOver('¡Se acabó el tiempo!');
+    }
+
+    // ─── LIVES ────────────────────────────────────────────────────────────────
+
+    private updateLivesDisplay() {
+        if (!this.livesText) return;
+        const hearts = Array(Math.max(0, this.lives)).fill('♥').join(' ');
+        this.livesText.setText(hearts || '—');
+        this.livesText.setColor(this.lives === 1 ? '#ff8800' : '#ff4444');
+    }
+
+    private executeGameOver(reason: string) {
+        this.isTutorialActive = false;
+        try { this.sound.play('sonido-error'); } catch { void 0; }
+        this.mostrarPlaton(false);
+
+        const { width, height } = this.scale;
+        this.add.rectangle(width / 2, height / 2, width, height, 0x000000, 0.65).setDepth(100);
+        this.add.text(width / 2, height / 2 - 65, '¡FALLASTE!', {
+            fontSize: '64px', color: '#ff4444', fontFamily: 'Arial',
+            fontStyle: 'bold', stroke: '#000000', strokeThickness: 6,
+        }).setOrigin(0.5).setDepth(101);
+        this.add.text(width / 2, height / 2 + 5, reason, {
+            fontSize: '28px', color: '#ffffff', fontFamily: 'Arial',
+            stroke: '#000000', strokeThickness: 4,
+        }).setOrigin(0.5).setDepth(101);
+
+        this.time.delayedCall(1000, () => {
+            const restartTxt = this.add.text(width / 2, height / 2 + 72,
+                'Toca aquí para intentarlo de nuevo', {
+                    fontSize: '26px', color: '#ffdd88', fontFamily: 'Arial',
+                    fontStyle: 'bold', stroke: '#000000', strokeThickness: 4,
+                }
+            ).setOrigin(0.5).setDepth(101).setAlpha(0);
+            this.tweens.add({ targets: restartTxt, alpha: 1, duration: 350 });
+            this.tweens.add({ targets: restartTxt, alpha: { from: 1, to: 0.25 }, duration: 600, yoyo: true, repeat: -1, ease: 'Sine.easeInOut', delay: 400 });
+            this.input.once('pointerdown', () => this.scene.restart());
         });
     }
 
-    private showWin() {
-        showLevelCompleteOverlay(this, {
-            title: '\u00A1NIVEL COMPLETADO!',
-            message: 'Identificaste los alimentos de origen animal. Ahora repasaremos conceptos clave antes del siguiente reto.',
-            scoreText: `Puntos: ${this.score}`,
-            buttonLabel: 'Ver conceptos',
-            nextScene: 'PreTutorialConceptosScene',
-            soundKey: 'level_win',
-        });
+    // ─── FOOD BAR ─────────────────────────────────────────────────────────────
+
+    private buildFoodBarShell(width: number) {
+        const barWidth     = Math.round(width * 0.82);
+        const arrowWidth   = 64;
+        const barLeft      = (width - barWidth) / 2;
+        const viewportX    = barLeft + arrowWidth;
+        const viewportW    = barWidth - arrowWidth * 2;
+        const stripTop     = 128;
+        const stripHeight  = 148;
+        const stripCenterY = stripTop + stripHeight / 2;
+
+        this.add.rectangle(width / 2, stripCenterY, barWidth, stripHeight, 0xf7cc85, 0.82)
+            .setStrokeStyle(4, 0x5E412F).setDepth(1);
+
+        this.foodContainer = this.add.container(viewportX, 0).setDepth(5);
+        this.foodViewportX = viewportX;
+        this.foodViewportW = viewportW;
     }
 
-    update() {
-        if (!this.foodContainer) return;
-        
-        const left = this.viewportX;
-        const right = this.viewportX + this.viewportW;
-        
-        this.foodContainer.list.forEach((child) => {
-            const item = child as Phaser.GameObjects.Image | Phaser.GameObjects.Text;
-            const worldX = this.foodContainer.x + item.x;
-            
-            if (worldX < left - 50 || worldX > right + 50) {
-                item.setVisible(false);
-            } else {
-                item.setVisible(true);
-                
-                if (worldX < left + 30) {
-                    item.setAlpha(Math.max(0, (worldX - (left - 50)) / 80));
-                } else if (worldX > right - 30) {
-                    item.setAlpha(Math.max(0, ((right + 50) - worldX) / 80));
+    private populateFoodBar(foods: FoodItem[]) {
+        const { width } = this.scale;
+        const barWidth    = Math.round(width * 0.82);
+        const arrowWidth  = 64;
+        const barLeft     = (width - barWidth) / 2;
+        const viewportX   = barLeft + arrowWidth;
+        const viewportW   = barWidth - arrowWidth * 2;
+        const stripTop    = 128;
+        const stripHeight = 148;
+        const stripCenterY = stripTop + stripHeight / 2;
+
+        const contentSpan = (foods.length - 1) * FOOD_ITEM_SPACING + FOOD_ITEM_SIZE;
+        const xPad = Math.max(0, (viewportW - contentSpan) / 2);
+        this.minFoodScrollX = viewportX;
+        this.maxFoodScrollX = viewportX - Math.max(0, xPad * 2 + contentSpan - viewportW);
+
+        foods.forEach((cfg, index) => {
+            const localX = xPad + FOOD_ITEM_SIZE / 2 + index * FOOD_ITEM_SPACING;
+            const localY = stripCenterY - 10;
+
+            const categoria = cfg.category === 'animal' ? 'animal' : 'chatarra';
+
+            const sprite = this.add.image(localX, localY, cfg.id)
+                .setDisplaySize(FOOD_ITEM_SIZE, FOOD_ITEM_SIZE).setAlpha(0)
+                .setInteractive({ useHandCursor: true });
+            const tScaleX = sprite.scaleX, tScaleY = sprite.scaleY;
+            sprite.setScale(0);
+
+            const texto = this.add.text(localX, localY + FOOD_LABEL_OFFSET, cfg.nameES, {
+                fontSize: '15px', color: '#ffffff', fontStyle: 'bold',
+                fontFamily: 'Arial, sans-serif', stroke: '#5E412F', strokeThickness: 4,
+            }).setOrigin(0.5).setAlpha(0);
+
+            this.input.setDraggable(sprite);
+            sprite.setData('categoria',   categoria);
+            sprite.setData('localHomeX',  localX);
+            sprite.setData('localHomeY',  localY);
+            sprite.setData('lastValidX',  localX);
+            sprite.setData('lastValidY',  localY);
+            sprite.setData('fromFoodBar', true);
+            sprite.setData('placed',      false);
+            sprite.setData('texto',       texto);
+
+            this.foodContainer.add([sprite, texto]);
+
+            this.time.delayedCall(index * 160, () => {
+                try { this.sound.play('carta-sonido'); } catch { void 0; }
+                this.tweens.add({ targets: sprite, scaleX: tScaleX, scaleY: tScaleY, alpha: 1, duration: 260, ease: 'Back.easeOut' });
+                this.tweens.add({ targets: texto, alpha: 1, duration: 200, delay: 120, ease: 'Power2' });
+            });
+        });
+
+        this.updateFoodBarVisibility();
+    }
+
+    // ─── DRAG & DROP ─────────────────────────────────────────────────────────
+
+    private setupDragDrop() {
+        this.input.on('dragstart', (pointer: Phaser.Input.Pointer, gameObject: Phaser.GameObjects.Image) => {
+            if (this.isTutorialActive) return;
+            if (gameObject.getData('placed')) return;
+            const texto = gameObject.getData('texto') as Phaser.GameObjects.Text | undefined;
+            if (gameObject.getData('fromFoodBar')) {
+                this.foodContainer.remove(gameObject, false);
+                this.add.existing(gameObject);
+                gameObject.x = pointer.worldX; gameObject.y = pointer.worldY;
+                gameObject.setAlpha(1).setVisible(true);
+                if (texto) {
+                    this.foodContainer.remove(texto, false);
+                    this.add.existing(texto);
+                    texto.x = pointer.worldX; texto.y = pointer.worldY + FOOD_LABEL_OFFSET;
+                    texto.setDepth(31).setAlpha(1).setVisible(true);
+                }
+            }
+            gameObject.setDepth(30);
+            if (texto) texto.setDepth(31);
+            this.children.bringToTop(gameObject);
+            if (texto) this.children.bringToTop(texto);
+            gameObject.setTint(0xdddddd);
+        });
+
+        this.input.on('drag', (pointer: Phaser.Input.Pointer, gameObject: Phaser.GameObjects.Image) => {
+            if (this.isTutorialActive) return;
+            if (gameObject.getData('placed')) return;
+            gameObject.x = pointer.worldX; gameObject.y = pointer.worldY;
+            const texto = gameObject.getData('texto') as Phaser.GameObjects.Text | undefined;
+            if (texto) { texto.x = pointer.worldX; texto.y = pointer.worldY + FOOD_LABEL_OFFSET; }
+        });
+
+        this.input.on('drop', (_pointer: Phaser.Input.Pointer, gameObject: Phaser.GameObjects.Image) => {
+            if (this.isTutorialActive) return;
+            if (!this.waveInProgress) return;
+            if (gameObject.getData('placed')) return;
+
+            const categoria = gameObject.getData('categoria') as string;
+
+            if (categoria === 'animal') {
+                const slot = this.findNearestFreeInventorySlot(this.animalSection, gameObject.x, gameObject.y, gameObject);
+                if (slot) {
+                    gameObject.x = slot.x; gameObject.y = slot.y;
+                    const t = gameObject.getData('texto') as Phaser.GameObjects.Text | undefined;
+                    if (t) { t.x = slot.x; t.y = slot.y + FOOD_LABEL_OFFSET; }
                 } else {
-                    item.setAlpha(1);
+                    gameObject.clearTint(); this.returnToFoodBar(gameObject); return;
+                }
+
+                gameObject.clearTint();
+                gameObject.setDepth(3);
+                const placedTexto = gameObject.getData('texto') as Phaser.GameObjects.Text | undefined;
+                if (placedTexto) placedTexto.setDepth(3);
+                this.input.setDraggable(gameObject, false);
+                gameObject.disableInteractive();
+                gameObject.setData('placed',   true);
+                gameObject.setData('basket',   this.animalSection);
+                gameObject.setData('slotRelY', gameObject.y - this.animalSection.y);
+                this.placedFoods.push(gameObject);
+
+                try { this.sound.play('object_win'); } catch { void 0; }
+                try { this.mostrarPlaton(true); } catch { void 0; }
+                this.shakeSection();
+
+                this.waveAciertos++;
+                if (this.waveAciertos >= this.waveCorrectTarget) {
+                    this.time.delayedCall(800, () => this.onWaveComplete());
+                }
+            } else {
+                // Chatarra en zona animal → error
+                gameObject.clearTint();
+                try { this.sound.play('sonido-error'); } catch { void 0; }
+                try { this.mostrarPlaton(false); } catch { void 0; }
+                this.shakeWrongFood(gameObject);
+                this.showEducationalFeedback(categoria, 'animal');
+                this.returnToFoodBar(gameObject);
+                this.lives--;
+                this.updateLivesDisplay();
+                if (this.lives <= 0) {
+                    this.waveInProgress = false;
+                    this.stopTimer();
+                    this.time.delayedCall(400, () => this.executeGameOver('¡Pusiste un alimento incorrecto!'));
                 }
             }
         });
+
+        this.input.on('dragend', (_pointer: Phaser.Input.Pointer, gameObject: Phaser.GameObjects.Image, dropped: boolean) => {
+            if (this.isTutorialActive) return;
+            if (gameObject.getData('placed')) return;
+            if (!dropped) { gameObject.clearTint(); this.returnToFoodBar(gameObject); }
+        });
+    }
+
+    // ─── SCROLL ───────────────────────────────────────────────────────────────
+
+    private scrollFoodBar(delta: number) {
+        if (!this.foodContainer || this.isFoodScrolling || this.isTutorialActive) return;
+        const newX = Phaser.Math.Clamp(this.foodContainer.x + delta, this.maxFoodScrollX, this.minFoodScrollX);
+        if (newX === this.foodContainer.x) return;
+        this.isFoodScrolling = true;
+        this.tweens.add({
+            targets: this.foodContainer, x: newX, duration: 320, ease: 'Cubic.easeOut',
+            onUpdate:   () => this.updateFoodBarVisibility(),
+            onComplete: () => { this.isFoodScrolling = false; this.updateFoodBarVisibility(); },
+        });
+    }
+
+    // ─── RETURN TO BAR ────────────────────────────────────────────────────────
+
+    private returnToFoodBar(gameObject: Phaser.GameObjects.Image) {
+        const texto      = gameObject.getData('texto')     as Phaser.GameObjects.Text | undefined;
+        const localHomeX = gameObject.getData('localHomeX') as number;
+        const localHomeY = gameObject.getData('localHomeY') as number;
+        const targetX = this.foodContainer.x + localHomeX;
+        const targetY = this.foodContainer.y + localHomeY;
+
+        this.tweens.add({
+            targets: gameObject, x: targetX, y: targetY, duration: 300, ease: 'Power2',
+            onComplete: () => {
+                this.children.remove(gameObject);
+                gameObject.x = localHomeX; gameObject.y = localHomeY;
+                gameObject.clearTint();
+                this.foodContainer.add(gameObject);
+                this.updateFoodBarVisibility();
+            },
+        });
+        if (!texto) return;
+        this.tweens.add({
+            targets: texto, x: targetX, y: targetY + FOOD_LABEL_OFFSET, duration: 300, ease: 'Power2',
+            onComplete: () => {
+                this.children.remove(texto);
+                texto.x = localHomeX; texto.y = localHomeY + FOOD_LABEL_OFFSET;
+                this.foodContainer.add(texto);
+                this.updateFoodBarVisibility();
+            },
+        });
+    }
+
+    // ─── INVENTORY SLOTS ──────────────────────────────────────────────────────
+
+    private static readonly SLOT_COL_OFFSETS = [-240, -80, 80, 240];
+    private static readonly SLOT_ROW_OFFSETS = [-154,  12, 185];
+
+    private getInventorySlotPositions(panel: Phaser.GameObjects.Image) {
+        const s = panel.scaleX;
+        const slots: { x: number; y: number }[] = [];
+        for (const ry of Nivel3Scene.SLOT_ROW_OFFSETS)
+            for (const rx of Nivel3Scene.SLOT_COL_OFFSETS)
+                slots.push({ x: panel.x + rx * s, y: panel.y + ry * s });
+        return slots;
+    }
+
+    private findNearestFreeInventorySlot(
+        panel: Phaser.GameObjects.Image, nearX: number, nearY: number,
+        excluding?: Phaser.GameObjects.Image
+    ): { x: number; y: number } | null {
+        const slots    = this.getInventorySlotPositions(panel);
+        const occupied = this.placedFoods.filter(p => p !== excluding)
+            .map(p => ({ x: Math.round(p.x), y: Math.round(p.y) }));
+        let best: { x: number; y: number } | null = null;
+        let bestDist = Infinity;
+        for (const slot of slots) {
+            if (occupied.some(o => Math.abs(o.x - slot.x) < 12 && Math.abs(o.y - slot.y) < 12)) continue;
+            const dist = Math.hypot(nearX - slot.x, nearY - slot.y);
+            if (dist < bestDist) { bestDist = dist; best = slot; }
+        }
+        return best;
+    }
+
+    // ─── VISIBILITY ───────────────────────────────────────────────────────────
+
+    private updateFoodBarVisibility() {
+        if (!this.foodContainer) return;
+        const left  = this.foodViewportX;
+        const right = this.foodViewportX + this.foodViewportW;
+        this.foodContainer.list.forEach(child => {
+            const item   = child as Phaser.GameObjects.Image | Phaser.GameObjects.Text;
+            const worldX = this.foodContainer.x + item.x;
+            const visible = worldX >= left - 50 && worldX <= right + 50;
+            item.setVisible(visible);
+            if (!visible) { item.setAlpha(0); return; }
+            if (worldX < left + 36)       item.setAlpha(Math.max(0.2, (worldX - (left - 50)) / 86));
+            else if (worldX > right - 36) item.setAlpha(Math.max(0.2, ((right + 50) - worldX) / 86));
+            else                          item.setAlpha(1);
+        });
+    }
+
+    // ─── INTRO PLATÓN ─────────────────────────────────────────────────────────
+
+    private showIntroPlaton() {
+        this.isTutorialActive = true;
+        const { width, height } = this.scale;
+
+        this.platon.setTexture('platon-feliz').setScale(0.8)
+            .setPosition(width + 300, height - 250).setAlpha(0).setDepth(10);
+
+        this.tweens.add({
+            targets: this.platon, x: 220, alpha: 1, duration: 850, ease: 'Power2.easeOut',
+            onComplete: () => {
+                const cx = 700, cy = height - 630;
+
+                const txt = this.add.text(cx, cy,
+                    'Este es el nivel 3,\nAlimentos de Origen Animal.\nEn este nivel clasificarás\nlos alimentos de\norigen animal.',
+                    { fontSize: '27px', color: '#000000', fontFamily: 'Gill Sans MT', align: 'left', wordWrap: { width: 400 } }
+                ).setOrigin(0.5).setDepth(12).setAlpha(0);
+
+                const pad = 24;
+                const bx = cx - txt.width / 2 - pad, by = cy - txt.height / 2 - pad;
+                const bw = txt.width + pad * 2,       bh = txt.height + pad * 2;
+
+                const bubble = this.add.graphics().setDepth(11).setAlpha(0);
+                bubble.fillStyle(0xFFFAED, 0.97);
+                bubble.fillTriangle(bx + 40, by + bh, bx + 85, by + bh, bx - 20, by + bh + 58);
+                bubble.fillRoundedRect(bx, by, bw, bh, 18);
+                bubble.lineStyle(4, 0x5E412F, 1);
+                bubble.strokeRoundedRect(bx, by, bw, bh, 18);
+                bubble.beginPath();
+                bubble.moveTo(bx + 40, by + bh); bubble.lineTo(bx - 20, by + bh + 58); bubble.lineTo(bx + 85, by + bh);
+                bubble.strokePath();
+
+                this.tweens.add({ targets: [bubble, txt], alpha: 1, duration: 400, delay: 100 });
+
+                this.time.delayedCall(4500, () => {
+                    this.tweens.add({
+                        targets: [this.platon, txt, bubble], alpha: 0, duration: 500,
+                        onComplete: () => {
+                            bubble.destroy(); txt.destroy();
+                            this.isTutorialActive = false;
+                            this.initWavePools();
+                        }
+                    });
+                });
+            }
+        });
+    }
+
+    // ─── EDUCATIONAL FEEDBACK ─────────────────────────────────────────────────
+
+    private clearToast() {
+        if (this.toastTimer) { this.toastTimer.destroy(); this.toastTimer = undefined; }
+        if (this.toastBg)    { this.tweens.killTweensOf(this.toastBg);    this.toastBg.destroy();    this.toastBg    = undefined; }
+        if (this.toastLabel) { this.tweens.killTweensOf(this.toastLabel); this.toastLabel.destroy(); this.toastLabel = undefined; }
+        if (this.toastTxt)   { this.tweens.killTweensOf(this.toastTxt);   this.toastTxt.destroy();   this.toastTxt   = undefined; }
+    }
+
+    private showEducationalFeedback(itemCat: string, zoneCat: string) {
+        this.clearToast();
+        const msg = getErrorMessage(itemCat, zoneCat);
+        const { width, height } = this.scale;
+        const toastY = height - 130, toastW = 860;
+
+        this.toastBg = this.add.rectangle(width / 2, toastY, toastW, 116, 0x1a100a)
+            .setStrokeStyle(3, 0xf0a000, 1).setDepth(200).setAlpha(0);
+        this.toastLabel = this.add.text(width / 2 - toastW / 2 + 22, toastY - 30, 'Dato nutricional:', {
+            fontSize: '17px', color: '#f0a000', fontFamily: 'Gill Sans MT', fontStyle: 'bold',
+        }).setOrigin(0, 0.5).setDepth(201).setAlpha(0);
+        this.toastTxt = this.add.text(width / 2, toastY + 14, msg, {
+            fontSize: '19px', color: '#ffffff', fontFamily: 'Gill Sans MT',
+            wordWrap: { width: toastW - 48 }, align: 'center',
+        }).setOrigin(0.5, 0.5).setDepth(201).setAlpha(0);
+
+        this.tweens.add({ targets: [this.toastBg, this.toastLabel, this.toastTxt], alpha: 1, duration: 320, ease: 'Power2' });
+
+        this.toastTimer = this.time.delayedCall(6000, () => {
+            const bg = this.toastBg, lbl = this.toastLabel, txt = this.toastTxt;
+            this.toastBg = undefined; this.toastLabel = undefined; this.toastTxt = undefined; this.toastTimer = undefined;
+            this.tweens.add({
+                targets: [bg, lbl, txt], alpha: 0, duration: 350,
+                onComplete: () => { bg?.destroy(); lbl?.destroy(); txt?.destroy(); }
+            });
+        });
+    }
+
+    private shakeWrongFood(food: Phaser.GameObjects.Image) {
+        this.tweens.add({ targets: food, angle: 7, duration: 60, yoyo: true, repeat: 3, ease: 'Linear', onComplete: () => { food.setAngle(0); } });
+    }
+
+    // ─── ANIMATIONS ───────────────────────────────────────────────────────────
+
+    private startSectionIdleAnim(section: Phaser.GameObjects.Image) {
+        const baseY = section.y;
+        this.tweens.add({ targets: section, y: baseY - 9, duration: 900, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
+    }
+
+    private shakeSection() {
+        this.tweens.add({ targets: this.animalSection, angle: 8, duration: 55, yoyo: true, repeat: 4, ease: 'Linear', onComplete: () => { this.animalSection.setAngle(0); } });
+    }
+
+    private mostrarPlaton(esFeliz: boolean) {
+        this.platon.setTexture(esFeliz ? 'platon-feliz' : 'platon-triste');
+        this.tweens.add({
+            targets: this.platon, alpha: 1, y: this.scale.height - 250, duration: 300, ease: 'Back.easeOut',
+            onComplete: () => {
+                this.time.delayedCall(2000, () => {
+                    this.tweens.add({ targets: this.platon, alpha: 0, y: this.scale.height - 200, duration: 300 });
+                });
+            },
+        });
+    }
+
+    // ─── UPDATE ───────────────────────────────────────────────────────────────
+
+    update() {
+        this.updateFoodBarVisibility();
+
+        if (this.dropZone) {
+            this.dropZone.y = this.animalSection.y + this.dzOffY;
+        }
+
+        for (const food of this.placedFoods) {
+            const basket = food.getData('basket') as Phaser.GameObjects.Image | undefined;
+            const relY   = food.getData('slotRelY') as number | undefined;
+            if (basket === undefined || relY === undefined) continue;
+            food.y = basket.y + relY;
+            const texto = food.getData('texto') as Phaser.GameObjects.Text | undefined;
+            if (texto) texto.y = food.y + FOOD_LABEL_OFFSET;
+        }
     }
 }
