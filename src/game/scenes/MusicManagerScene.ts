@@ -1,5 +1,3 @@
-
-
 import * as Phaser from 'phaser';
 
 export class MusicManagerScene extends Phaser.Scene {

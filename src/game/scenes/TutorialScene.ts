@@ -1,6 +1,7 @@
 import * as Phaser from "phaser";
 import { DialogueSystem } from "../systems/dialog/DialogueSystem";
 import { hoverScale } from "../../componentes/HoverScale";
+import { makeResponsiveVolver } from "../../componentes/ResponsiveVolver";
 
 export class TutorialScene extends Phaser.Scene {
     private dialog!: DialogueSystem;
@@ -32,9 +33,7 @@ export class TutorialScene extends Phaser.Scene {
 
         this.load.image("plato", "/assets/Plato/plato.png");
         this.load.image("Fondo-cocina", "/assets/Backgrounds/Fondo_Cocina.png")
-        // Si tienes "btn-Volver" como un spritesheet de 2 frames, debes cargarlo así (reemplaza los valores de frameWidth y frameHeight):
-        // this.load.spritesheet("btn-Volver", "/assets/Buttons/volver.webp", { frameWidth: 100, frameHeight: 50 });
-        this.load.image("btn-Volver", "/assets/Buttons/BtnVolverCafe.webp");
+        this.load.image("btn-Volver", "/assets/Buttons/BtnBack.png");
 
         // Cargar spritesheet de partes del plato
         this.load.spritesheet("partes_plato", "/assets/Plato/Partes_plato.png", {
@@ -93,7 +92,7 @@ export class TutorialScene extends Phaser.Scene {
         this.dialog = new DialogueSystem({
             scene: this,
             x: 50,
-            y: height - 200,
+            y: height - 250, // Más arriba por safe area
             width: width - 850,
         });
 
@@ -117,10 +116,11 @@ export class TutorialScene extends Phaser.Scene {
 
         // 🔙 BOTÓN REGRESAR (oculto por defecto)
 
-        this.btnVolver = this.add.sprite(width * 0.10, height * 0.15, 'btn-Volver')
+        this.btnVolver = this.add.sprite(150, 100, 'btn-Volver')
             .setInteractive()
-            .setScale(0.4)
             .setAlpha(1);
+
+        makeResponsiveVolver(this, this.btnVolver);
 
         hoverScale(this, this.btnVolver, {
             scaleOver: 0.45,

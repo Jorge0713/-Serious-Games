@@ -254,7 +254,7 @@ export class PlatoBalanceadoScene extends Phaser.Scene {
             top = (height - visibleH) / 2;
         }
 
-        const pad = 36;
+        const pad = 80;
         return {
             left: left + pad,
             right: left + visibleW - pad,

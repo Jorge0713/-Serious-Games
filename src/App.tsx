@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import type * as Phaser from 'phaser';
 import HomePage from './ui/pages/HomePage';
 import { TutorialPage } from './ui/components/tutorial';
+import { PreTutorialConceptos } from './ui/components/conceptos/PreTutorialConceptos';
 import type { FoodCategory } from './data/nutritionalInfo';
 
 interface TutorialSection {
@@ -17,6 +18,7 @@ declare global {
     goToNivel1?: () => void;
     goToNivel2?: () => void;
     goToNivel3?: () => void;
+    showPreTutorialConceptos?: () => void;
   }
 }
 
@@ -56,18 +58,21 @@ type PhaserSceneKey = 'Nivel1Scene' | 'Nivel2Scene' | 'Nivel3Scene';
 
 function App() {
   const [showTutorialUI, setShowTutorialUI] = useState(false);
+  const [showConceptosUI, setShowConceptosUI] = useState(false);
   const [currentSectionIndex, setCurrentSectionIndex] = useState(0);
 
   const currentSection = tutorialSections[currentSectionIndex];
 
-  const startPhaserScene = useCallback((sceneKey: PhaserSceneKey) => {
+  const startPhaserScene = useCallback((sceneKey: string) => {
     setShowTutorialUI(false);
+    setShowConceptosUI(false);
 
     const game = window.__phaserGame;
     if (!game) return;
 
     game.input.enabled = true;
     game.scene.stop('TutorialScene');
+    game.scene.stop('PreTutorialConceptosScene');
     game.scene.start(sceneKey);
   }, []);
 
@@ -103,14 +108,15 @@ function App() {
     window.goToNivel1 = startNivel1;
     window.goToNivel2 = startNivel2;
     window.goToNivel3 = startNivel3;
+    window.showPreTutorialConceptos = () => setShowConceptosUI(true);
   }, [startNivel1, startNivel2, startNivel3]);
 
   useEffect(() => {
     const game = window.__phaserGame;
     if (!game) return;
 
-    game.input.enabled = !showTutorialUI;
-  }, [showTutorialUI]);
+    game.input.enabled = !showTutorialUI && !showConceptosUI;
+  }, [showTutorialUI, showConceptosUI]);
 
   return (
     <>
@@ -131,6 +137,21 @@ function App() {
             onPreviousSection={handlePreviousSection}
             onNextSection={handleNextSection}
             onFinishTutorial={startNivel1}
+          />
+        </div>
+      )}
+
+      {showConceptosUI && (
+        <div
+          className="tutorial-overlay"
+          onClick={event => event.stopPropagation()}
+          onPointerDown={event => event.stopPropagation()}
+          onPointerMove={event => event.stopPropagation()}
+          onPointerUp={event => event.stopPropagation()}
+        >
+          <PreTutorialConceptos
+            onBackToMenu={() => startPhaserScene('MainMenu')}
+            onFinish={() => startPhaserScene('CrucigramaSaludableScene')}
           />
         </div>
       )}

@@ -1,4 +1,4 @@
-export type FoodCategory ='fruit' | 'vegetable' | 'legume' | 'cereal' | 'animal';
+export type FoodCategory = 'fruit' | 'vegetable' | 'legume' | 'cereal' | 'animal';
 
 export interface FoodItem {
     id: string;
@@ -404,14 +404,13 @@ export const nutritionalInfo: FoodItem[] = [
         description: 'Destacan por su fácil digestión y alto contenido de antioxidantes. Ricos en potasio y magnesio, son ideales para ayudar a controlar la presión arterial.'
     },
     {
-        id: 'lima_beans',
-        name: 'Lima Beans',
-        nameES: 'Frijol Lima',
+        id: 'feijao_carioca',
+        name: 'Carioca Beans',
+        nameES: 'Frijol Carioca',
         category: 'legume',
         image: '/iconsFood/leguminosas/runner_beans_white.png',
         description: 'Aportan una gran cantidad de manganeso, hierro y fibra. Ayudan a estabilizar los niveles de azúcar en la sangre y proporcionan energía de manera constante.'
     },
-
     // ==========================================
     // CEREALES Y TUBÉRCULOS (cereal)
     // ==========================================
@@ -436,7 +435,7 @@ export const nutritionalInfo: FoodItem[] = [
         name: 'Corn',
         nameES: 'Maíz',
         category: 'cereal',
-        image: '/iconsFood/cereales/corn.png',
+        image: '/iconsFood/cereales/corn_yellow.png',
         description: 'Rico en vitaminas del grupo B y minerales esenciales. Su fibra dietética ayuda al tracto digestivo y sus antioxidantes (luteína) protegen la salud ocular.'
     },
     {
