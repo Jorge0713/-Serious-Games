@@ -447,6 +447,22 @@ export class Nivel2Scene extends Phaser.Scene {
         this.foodContainer = this.add.container(viewportX, 0).setDepth(5);
         this.foodViewportX = viewportX;
         this.foodViewportW = viewportW;
+
+        const btnLeft = this.add.text(barLeft + arrowWidth / 2, stripCenterY, '<', {
+            fontSize: '42px', color: '#ffffff', fontStyle: 'bold',
+            fontFamily: 'Arial, sans-serif', backgroundColor: '#5E412F', padding: { x: 16, y: 8 },
+        }).setOrigin(0.5).setDepth(10).setInteractive({ useHandCursor: true });
+        const btnRight = this.add.text(barLeft + barWidth - arrowWidth / 2, stripCenterY, '>', {
+            fontSize: '42px', color: '#ffffff', fontStyle: 'bold',
+            fontFamily: 'Arial, sans-serif', backgroundColor: '#5E412F', padding: { x: 16, y: 8 },
+        }).setOrigin(0.5).setDepth(10).setInteractive({ useHandCursor: true });
+
+        btnLeft.on('pointerover',  () => btnLeft.setStyle({ backgroundColor: '#76A665' }));
+        btnLeft.on('pointerout',   () => btnLeft.setStyle({ backgroundColor: '#5E412F' }));
+        btnLeft.on('pointerdown',  () => this.scrollFoodBar(FOOD_SCROLL_STEP));
+        btnRight.on('pointerover', () => btnRight.setStyle({ backgroundColor: '#76A665' }));
+        btnRight.on('pointerout',  () => btnRight.setStyle({ backgroundColor: '#5E412F' }));
+        btnRight.on('pointerdown', () => this.scrollFoodBar(-FOOD_SCROLL_STEP));
     }
 
     private populateFoodBar(foods: FoodItem[]) {

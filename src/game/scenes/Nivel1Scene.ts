@@ -118,6 +118,16 @@ export class Nivel1Scene extends Phaser.Scene {
             padding: { x: 20, y: 10 }
         }).setOrigin(0.5);
 
+        // Contador de puntos
+        this.scoreText = this.add.text(width - 100, 100, 'Puntos: 0', {
+            fontSize: '32px',
+            color: '#2ecc71',
+            fontFamily: 'Arial',
+            fontStyle: 'bold',
+            stroke: '#000',
+            strokeThickness: 4
+        }).setOrigin(1, 0).setDepth(20);
+
         createDebugSkipButton(this, {
             label: 'Saltar a Nivel 2',
             nextScene: 'Nivel2Scene',
@@ -748,6 +758,9 @@ export class Nivel1Scene extends Phaser.Scene {
 
                 try { this.sound.play("object_win"); } catch { void 0; }
                 try { this.mostrarPlaton(true); } catch { void 0; }
+
+                this.score += 10;
+                this.scoreText.setText(`Puntos: ${this.score}`);
 
                 if (categoriaItem === 'verdura' || categoriaItem === 'fruta') {
                     this.shakeBasket(categoriaZona === 'verdura' ? this.segmentoVerduras : this.segmentoFrutas);
