@@ -58,6 +58,7 @@ export class Nivel3Scene extends Phaser.Scene {
 
     constructor() { super('Nivel3Scene'); }
 
+    // ── PRELOAD ───────────────────────────────────────────────────────────────
     preload() {
         this.load.image('fondo_cocina3',    '/assets/Backgrounds/Fondo_Cocina.png');
         this.load.image('inventario-animal', '/assets/Plato/inventoryAnimal.webp');
@@ -73,6 +74,7 @@ export class Nivel3Scene extends Phaser.Scene {
         nutritionalInfo.forEach(food => this.load.image(food.id, food.image));
     }
 
+    // ── CREATE ────────────────────────────────────────────────────────────────
     create() {
         const { width, height } = this.scale;
         this.placedFoods    = [];
@@ -271,6 +273,7 @@ export class Nivel3Scene extends Phaser.Scene {
                 onComplete: () => { overlay.destroy(); titleTxt.destroy(); msgTxt.destroy(); platonBig.destroy(); onDone(); }
             });
         });
+
     }
 
     // ─── TIMER ────────────────────────────────────────────────────────────────
@@ -315,7 +318,7 @@ export class Nivel3Scene extends Phaser.Scene {
 
         if (this.timerSeconds <= 20 && !this.urgentMode) {
             this.urgentMode = true;
-            try { (this.tickingSound as any).setRate(1.75); } catch { void 0; }
+            try { (this.tickingSound as Phaser.Sound.WebAudioSound).setRate(1.75); } catch { void 0; }
             if (this.timerWarningText) {
                 this.timerWarningText.setVisible(true).setAlpha(1);
                 this.tweens.add({ targets: this.timerWarningText, alpha: 0, duration: 380, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
@@ -386,22 +389,6 @@ export class Nivel3Scene extends Phaser.Scene {
         this.foodContainer = this.add.container(viewportX, 0).setDepth(5);
         this.foodViewportX = viewportX;
         this.foodViewportW = viewportW;
-
-        const btnLeft = this.add.text(barLeft + arrowWidth / 2, stripCenterY, '<', {
-            fontSize: '42px', color: '#ffffff', fontStyle: 'bold',
-            fontFamily: 'Arial, sans-serif', backgroundColor: '#5E412F', padding: { x: 16, y: 8 },
-        }).setOrigin(0.5).setDepth(10).setInteractive({ useHandCursor: true });
-        const btnRight = this.add.text(barLeft + barWidth - arrowWidth / 2, stripCenterY, '>', {
-            fontSize: '42px', color: '#ffffff', fontStyle: 'bold',
-            fontFamily: 'Arial, sans-serif', backgroundColor: '#5E412F', padding: { x: 16, y: 8 },
-        }).setOrigin(0.5).setDepth(10).setInteractive({ useHandCursor: true });
-
-        btnLeft.on('pointerover',  () => btnLeft.setStyle({ backgroundColor: '#76A665' }));
-        btnLeft.on('pointerout',   () => btnLeft.setStyle({ backgroundColor: '#5E412F' }));
-        btnLeft.on('pointerdown',  () => this.scrollFoodBar(FOOD_SCROLL_STEP));
-        btnRight.on('pointerover', () => btnRight.setStyle({ backgroundColor: '#76A665' }));
-        btnRight.on('pointerout',  () => btnRight.setStyle({ backgroundColor: '#5E412F' }));
-        btnRight.on('pointerdown', () => this.scrollFoodBar(-FOOD_SCROLL_STEP));
     }
 
     private populateFoodBar(foods: FoodItem[]) {

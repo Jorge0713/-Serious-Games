@@ -376,7 +376,7 @@ export class Nivel2Scene extends Phaser.Scene {
 
         if (this.timerSeconds <= 20 && !this.urgentMode) {
             this.urgentMode = true;
-            try { (this.tickingSound as any).setRate(1.75); } catch { void 0; }
+            try { (this.tickingSound as Phaser.Sound.WebAudioSound).setRate(1.75); } catch { void 0; }
             if (this.timerWarningText) {
                 this.timerWarningText.setVisible(true).setAlpha(1);
                 this.tweens.add({ targets: this.timerWarningText, alpha: 0, duration: 380, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
@@ -447,22 +447,6 @@ export class Nivel2Scene extends Phaser.Scene {
         this.foodContainer = this.add.container(viewportX, 0).setDepth(5);
         this.foodViewportX = viewportX;
         this.foodViewportW = viewportW;
-
-        const btnLeft = this.add.text(barLeft + arrowWidth / 2, stripCenterY, '<', {
-            fontSize: '42px', color: '#ffffff', fontStyle: 'bold',
-            fontFamily: 'Arial, sans-serif', backgroundColor: '#5E412F', padding: { x: 16, y: 8 },
-        }).setOrigin(0.5).setDepth(10).setInteractive({ useHandCursor: true });
-        const btnRight = this.add.text(barLeft + barWidth - arrowWidth / 2, stripCenterY, '>', {
-            fontSize: '42px', color: '#ffffff', fontStyle: 'bold',
-            fontFamily: 'Arial, sans-serif', backgroundColor: '#5E412F', padding: { x: 16, y: 8 },
-        }).setOrigin(0.5).setDepth(10).setInteractive({ useHandCursor: true });
-
-        btnLeft.on('pointerover',  () => btnLeft.setStyle({ backgroundColor: '#76A665' }));
-        btnLeft.on('pointerout',   () => btnLeft.setStyle({ backgroundColor: '#5E412F' }));
-        btnLeft.on('pointerdown',  () => this.scrollFoodBar(FOOD_SCROLL_STEP));
-        btnRight.on('pointerover', () => btnRight.setStyle({ backgroundColor: '#76A665' }));
-        btnRight.on('pointerout',  () => btnRight.setStyle({ backgroundColor: '#5E412F' }));
-        btnRight.on('pointerdown', () => this.scrollFoodBar(-FOOD_SCROLL_STEP));
     }
 
     private populateFoodBar(foods: FoodItem[]) {
@@ -726,7 +710,7 @@ export class Nivel2Scene extends Phaser.Scene {
             .setPosition(width + 300, height - 250).setAlpha(0).setDepth(10);
 
         this.tweens.add({
-            targets: this.platon, x: 220, alpha: 1, duration: 850, ease: 'Power2.easeOut',
+            targets: this.platon, x: 300, alpha: 1, duration: 850, ease: 'Power2.easeOut',
             onComplete: () => {
                 const cx = 700, cy = height - 630;
 
