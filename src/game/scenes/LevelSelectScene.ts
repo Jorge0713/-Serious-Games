@@ -72,8 +72,8 @@ const SECTIONS: SectionConfig[] = [
         rightAssetKey: 'roadmap_fruits',
         leftAssetPath: '/iconsFood/verduras/broccoli.png',
         rightAssetPath: '/iconsFood/frutas/apple.png',
-        progressText: '1/8',
-        progressValue: 1 / 8,
+        progressText: '0/8',
+        progressValue: 0 / 8,
         unlocked: true,
         sceneKey: 'Nivel1Scene',
     },
@@ -457,10 +457,10 @@ export class LevelSelectScene extends Phaser.Scene {
             this.drawCurve(route, left, peak, right, COLORS.gray, 8, true);
         }
 
-        const footer = this.add.text(panelX, panelY + 176, 'CONOCER  --->  CLASIFICAR', {
+        const footer = this.add.text(panelX, panelY, 'CONOCER  --->  CLASIFICAR', {
             fontFamily: FONT_MONO,
             fontSize: '18px',
-            color: active ? HEX.mutedInk : HEX.grayDark,
+            color: active ? HEX.mutedInk : HEX.ink,
         }).setOrigin(0.5);
 
         parent.add([panel, route]);
@@ -611,13 +611,13 @@ export class LevelSelectScene extends Phaser.Scene {
             color: HEX.ink,
         }).setOrigin(0.5);
 
-        const kicker = this.add.text(-820, -27, 'NIVEL ACTUAL', {
+        const kicker = this.add.text(-820, -27, 'Nivel Actual:', {
             fontFamily: FONT_DISPLAY,
             fontSize: '30px',
             fontStyle: 'bold',
             color: HEX.ink,
         }).setOrigin(0, 0.5);
-        const current = this.add.text(-820, -3, 'Clasificar', {
+        const current = this.add.text(-640, -27, 'Clasificar', {
             fontFamily: FONT_DISPLAY,
             fontSize: '30px',
             fontStyle: 'bold',

@@ -1,4 +1,4 @@
-import type { ProgresoJugador, SeccionJuego } from '../types/progress.types';
+import type { ProgresoJugador, SeccionJuego } from '../types/progress-types';
 import { obtenerFechaISO } from '../utils/dateUtils';
 
 const NIVELES_DEL_JUEGO = [1, 2, 3];

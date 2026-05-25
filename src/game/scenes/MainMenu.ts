@@ -1,7 +1,7 @@
 import * as Phaser from 'phaser';
 import { PrefabButtons } from '../../componentes/PrefabButtons';
 import { PlayerService } from '../../services/PlayerService';
-import type { Sexo } from '../../types/player.types';
+import type { Sexo } from '../../types/player-types';
 
 const WIDTH = 1920;
 const HEIGHT = 1080;
@@ -165,7 +165,7 @@ export class MainMenu extends Phaser.Scene {
         context.fillRect(0, 0, WIDTH, HEIGHT);
         this.textures.addCanvas(key, canvas);
 
-        
+
     }
 
     private createDotTexture(): void {
@@ -297,7 +297,7 @@ export class MainMenu extends Phaser.Scene {
     private createTitleStack(): void {
         const logo = this.add.container(WIDTH / 2, 482).setDepth(6);
         logo.add([
-            this.createLogoLayer(12, 12, 'COLORS.cereales' ),
+            this.createLogoLayer(12, 12, 'COLORS.cereales'),
             this.createLogoLayer(6, 6, '#7AD3A0'),
             this.createLogoLayer(0, 0, '#FFFFFF'),
         ]);
@@ -413,6 +413,9 @@ export class MainMenu extends Phaser.Scene {
 
     private createSaveAndPlayButton(): HTMLButtonElement {
         const button = this.createFormButton('GUARDAR Y JUGAR', 'save');
+        button.addEventListener('click', () => {
+            this.scene.start("TutorialScene")
+        })
         button.type = 'submit';
         return button;
     }
@@ -454,7 +457,7 @@ export class MainMenu extends Phaser.Scene {
         button.style.color = style.color;
         button.style.height = style.height;
         button.style.border = '0';
-        button.style.backgroundColor = 'transparent';  
+        button.style.backgroundColor = 'transparent';
         button.style.backgroundImage = `url("${style.backgroundImage}")`;
         button.style.backgroundRepeat = 'no-repeat';
         button.style.backgroundPosition = 'center';

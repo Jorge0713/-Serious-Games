@@ -1,5 +1,7 @@
 import * as Phaser from "phaser";
 import { FONT_DISPLAY } from "../../../config/gameFonts";
+import { Jugador } from "../../systems/dialog/DialogueSystem";
+
 
 type DialogueConfig = {
   scene: Phaser.Scene;

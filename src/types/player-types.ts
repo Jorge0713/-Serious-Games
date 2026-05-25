@@ -1,4 +1,4 @@
-import type { ProgresoJugador } from './progress.types';
+import type { ProgresoJugador } from './progress-types';
 
 export type Sexo = 'masculino' | 'femenino';
 

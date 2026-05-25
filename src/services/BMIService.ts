@@ -1,5 +1,5 @@
 import type { DatosParaIMC, ResultadoIMC } from '../types/bmi.types';
-import type { Sexo } from '../types/player.types';
+import type { Sexo } from '../types/player-types';
 
 const NORMA_REFERENCIA = 'NOM-043-SSA2-2012' as const;
 const AVISO_EDUCATIVO = 'Resultado educativo basado en la NOM-043-SSA2-2012. No sustituye una valoración médica o nutricional.';

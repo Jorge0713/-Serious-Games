@@ -1,4 +1,4 @@
-import type { NormaReferencia, Sexo } from './player.types';
+import type { NormaReferencia, Sexo } from './player-types';
 
 export type DatosParaIMC = {
     edad: number;

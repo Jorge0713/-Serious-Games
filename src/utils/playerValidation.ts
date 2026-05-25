@@ -1,4 +1,4 @@
-import type { DatosAntropometricosEntrada, DatosRegistroJugador, Sexo } from '../types/player.types';
+import type { DatosAntropometricosEntrada, DatosRegistroJugador, Sexo } from '../types/player-types';
 
 export type ResultadoValidacion = {
     valido: boolean;

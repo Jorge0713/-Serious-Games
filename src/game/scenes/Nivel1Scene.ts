@@ -56,7 +56,7 @@ export class Nivel1Scene extends Phaser.Scene {
     private urgentMode = false;
 
     // Lives
-    private lives = 2;
+    private lives = 3;
     private livesText!: Phaser.GameObjects.Text;
 
     // Basket drop zones (synced every frame to follow bobbing baskets)
@@ -270,7 +270,7 @@ export class Nivel1Scene extends Phaser.Scene {
             fontSize: '16px', color: '#ffffff', fontFamily: 'Arial', fontStyle: 'bold',
         }).setOrigin(0, 0.5).setDepth(20);
 
-        this.livesText = this.add.text(visibleLeft + 220, visibleTop + 90, '♥ ♥', {
+        this.livesText = this.add.text(visibleLeft + 220, visibleTop + 90, '♥ ♥ ♥', {
             fontSize: '30px', color: '#ff4444', fontFamily: 'Arial', fontStyle: 'bold',
             stroke: '#000000', strokeThickness: 3,
         }).setOrigin(0, 0.5).setDepth(20);

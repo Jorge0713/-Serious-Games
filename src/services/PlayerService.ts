@@ -6,8 +6,8 @@ import type {
     DatosRegistroJugador,
     Jugador,
     MedicionAntropometrica,
-} from '../types/player.types';
-import type { ProgresoJugador } from '../types/progress.types';
+} from '../types/player-types';
+import type { ProgresoJugador } from '../types/progress-types';
 import { obtenerFechaISO } from '../utils/dateUtils';
 import { generarIdJugador } from '../utils/idUtils';
 import { validarDatosAntropometricos, validarDatosJugador } from '../utils/playerValidation';
