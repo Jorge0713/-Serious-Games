@@ -422,7 +422,7 @@ export class Nivel1Scene extends Phaser.Scene {
         return { foods: Phaser.Utils.Array.Shuffle(mixed) as FoodItem[], correctCount };
     }
 
-    private clearPlacedFoods(onDone: () => void) {
+    /* private clearPlacedFoods(onDone: () => void) {
         if (this.placedFoods.length === 0) { onDone(); return; }
 
         // Stop per-frame Y sync before tweening so there's no conflict
@@ -447,7 +447,7 @@ export class Nivel1Scene extends Phaser.Scene {
                 onDone();
             }
         });
-    }
+    } */
 
     private clearFoodBar() {
         if (!this.foodContainer) return;

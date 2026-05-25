@@ -901,8 +901,8 @@ export class PlatoBalanceadoScene extends Phaser.Scene {
             }
         });
 
-        let msg = '';
-        let color = PALETTE.verdePrincipalHex;
+        let msg;
+        let color;
         if (faltantes.length === 0 && excesos.length === 0) {
             msg = `¡Plato equilibrado! Score ${score}/100. Excelente combinación de grupos.`;
             color = PALETTE.verdePrincipalHex;
