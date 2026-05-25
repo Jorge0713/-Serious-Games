@@ -1,11 +1,10 @@
 import * as Phaser from 'phaser';
 import { PrefabButtons } from '../../componentes/PrefabButtons';
 import { FONT_DISPLAY, FONT_MONO } from '../../config/gameFonts';
+import { PlayerService } from '../../services/PlayerService';
 
 const WIDTH = 1920;
 const HEIGHT = 1080;
-const ENABLE_LEVEL_START = false;
-
 const COLORS = {
     bg: 0xf2eadb,
     paper: 0xfffbf0,
@@ -37,7 +36,6 @@ const HEX = {
 };
 
 const LOCKED_MESSAGE = 'Completa la sección anterior para desbloquear esta sección.';
-const PENDING_CONNECTION_MESSAGE = 'Sección activa lista. Conexión al nivel pendiente.';
 
 type SectionIndex = 1 | 2 | 3;
 
@@ -126,6 +124,31 @@ export class LevelSelectScene extends Phaser.Scene {
         super('LevelSelectScene');
     }
 
+    private getProgressState() {
+        const jugador = PlayerService.obtenerJugadorActivo();
+        if (jugador) {
+            const completados = jugador.progreso.nivelesCompletados || [];
+            return {
+                nivel1Done: completados.includes(1),
+                nivel2Done: completados.includes(2),
+                nivel3Done: completados.includes(3),
+            };
+        }
+        
+        return {
+            nivel1Done: Boolean(this.registry.get('nivel1Completado')),
+            nivel2Done: Boolean(this.registry.get('nivel2Completado')),
+            nivel3Done: Boolean(this.registry.get('nivel3Completado')),
+        };
+    }
+
+    private getActiveSection(): SectionIndex {
+        const { nivel1Done, nivel2Done } = this.getProgressState();
+        if (!nivel1Done) return 1;
+        if (!nivel2Done) return 2;
+        return 3;
+    }
+
     preload(): void {
         PrefabButtons.preload(this);
 
@@ -161,6 +184,7 @@ export class LevelSelectScene extends Phaser.Scene {
         this.createHeader();
         this.createCards();
         this.createBottomHud();
+        this.createExtraButtons();
         this.createCrtOverlay();
         this.refreshTextAfterFontsLoad();
     }
@@ -236,6 +260,9 @@ export class LevelSelectScene extends Phaser.Scene {
     }
 
     private createActiveSectionPanel(): void {
+        const activeIdx = this.getActiveSection();
+        const SECTION_TOPICS = ['Verduras vs Frutas', 'Cereales y Leguminosas', 'Origen animal vs Chatarra'];
+
         const panel = this.add.container(1758, 75).setDepth(20);
 
         const shadow = this.add.rectangle(8, 8, 260, 110, COLORS.ink, 1);
@@ -251,7 +278,7 @@ export class LevelSelectScene extends Phaser.Scene {
         panel.add([shadow, bg, title]);
 
         [1, 2, 3].forEach((value, index) => {
-            const active = value === 1;
+            const active = value === activeIdx;
             const x = -64 + index * 64;
             const chip = this.add.rectangle(x, -7, 46, 38, active ? COLORS.green : COLORS.white, 1)
                 .setStrokeStyle(3, active ? COLORS.ink : COLORS.gray);
@@ -264,15 +291,16 @@ export class LevelSelectScene extends Phaser.Scene {
             panel.add([chip, chipText]);
         });
 
-        const topic = this.add.text(0, 34, 'Verduras vs Frutas', {
+        const topic = this.add.text(0, 34, SECTION_TOPICS[activeIdx - 1], {
             fontFamily: FONT_MONO,
-            fontSize: '22px',
+            fontSize: '18px',
             color: HEX.ink,
         }).setOrigin(0.5);
         panel.add(topic);
     }
 
     private createCards(): void {
+        const { nivel1Done, nivel2Done, nivel3Done } = this.getProgressState();
         const cardWidth = 588;
         const cardHeight = 720;
         const top = 158;
@@ -281,7 +309,12 @@ export class LevelSelectScene extends Phaser.Scene {
 
         SECTIONS.forEach((section, index) => {
             const x = left + index * (cardWidth + gap);
-            this.createSectionCard(section, x, top, cardWidth, cardHeight);
+            // El usuario requirió que TODOS los niveles estén bloqueados por defecto 
+            // hasta que sean completados. Sólo se puede acceder al nivel activo a través del botón Continuar.
+            const isUnlocked = section.index === 1 ? nivel1Done
+                : section.index === 2 ? nivel2Done
+                : nivel3Done;
+            this.createSectionCard({ ...section, unlocked: isUnlocked }, x, top, cardWidth, cardHeight);
         });
     }
 
@@ -597,7 +630,30 @@ export class LevelSelectScene extends Phaser.Scene {
             color: HEX.ink,
         }).setOrigin(0, 0.5);
 
-        const continueButton = PrefabButtons.continuar(this, 760, 0, () => window.showTutorial?.(), {
+        const continueButton = PrefabButtons.continuar(this, 760, 0, () => {
+            const { nivel1Done, nivel2Done, nivel3Done } = this.getProgressState();
+            if (!nivel1Done) {
+                window.showTutorial?.(['vegetable', 'fruit'], {
+                    nextScene: 'Nivel1Scene',
+                    title: 'Verduras y Frutas',
+                    finishLabel: 'Empezar Nivel 1',
+                });
+            } else if (!nivel2Done) {
+                window.showTutorial?.(['legume', 'cereal'], {
+                    nextScene: 'Nivel2Scene',
+                    title: 'Leguminosas y Cereales',
+                    finishLabel: 'Empezar Nivel 2',
+                });
+            } else if (!nivel3Done) {
+                window.showTutorial?.(['animal'], {
+                    nextScene: 'Nivel3Scene',
+                    title: 'Origen Animal',
+                    finishLabel: 'Empezar Nivel 3',
+                });
+            } else {
+                this.scene.start('PlatoBalanceadoScene');
+            }
+        }, {
             text: 'CONTINUAR >',
             width: 300,
             height: 76,
@@ -630,18 +686,77 @@ export class LevelSelectScene extends Phaser.Scene {
         hud.add([shadow, bg, levelCircle, levelInner, levelText, kicker, current, detail, continueButton]);
     }
 
+    private createExtraButtons(): void {
+        const y = 910;
+        
+        PrefabButtons.continuar(this, WIDTH / 2 + 650, y, () => {
+            this.scene.start('PlatoBalanceadoScene');
+        }, {
+            text: 'Jugar Plato Balanceado',
+            width: 380,
+            height: 60,
+            fontSize: '22px'
+        });
+
+        PrefabButtons.secundario(this, WIDTH / 2 - 250, y, () => {
+            window.showTutorial?.(['vegetable', 'fruit'], {
+                nextScene: 'LevelSelectScene',
+                title: 'Verduras y Frutas',
+                finishLabel: 'Volver al mapa',
+            });
+        }, { text: 'Tut. Frutas', width: 200, height: 60, fontSize: '20px' });
+
+        PrefabButtons.secundario(this, WIDTH / 2, y, () => {
+            window.showTutorial?.(['legume', 'cereal'], {
+                nextScene: 'LevelSelectScene',
+                title: 'Leguminosas y Cereales',
+                finishLabel: 'Volver al mapa',
+            });
+        }, { text: 'Tut. Cereales', width: 220, height: 60, fontSize: '20px' });
+
+        PrefabButtons.secundario(this, WIDTH / 2 + 250, y, () => {
+            window.showTutorial?.(['animal'], {
+                nextScene: 'LevelSelectScene',
+                title: 'Origen Animal',
+                finishLabel: 'Volver al mapa',
+            });
+        }, { text: 'Tut. Animal', width: 200, height: 60, fontSize: '20px' });
+    }
+
     private handleSectionSelection(section: SectionConfig): void {
         if (!section.unlocked) {
             this.showToast(LOCKED_MESSAGE);
             return;
         }
 
-        if (!ENABLE_LEVEL_START) {
-            this.showToast(PENDING_CONNECTION_MESSAGE);
-            return;
-        }
+        const progress = this.getProgressState();
+        const done = section.index === 1 ? progress.nivel1Done
+                   : section.index === 2 ? progress.nivel2Done
+                   : progress.nivel3Done;
 
-        this.scene.start(section.sceneKey);
+        if (!done) {
+            if (section.index === 1) {
+                window.showTutorial?.(['vegetable', 'fruit'], {
+                    nextScene: 'Nivel1Scene',
+                    title: 'Verduras y Frutas',
+                    finishLabel: 'Empezar Nivel 1',
+                });
+            } else if (section.index === 2) {
+                window.showTutorial?.(['legume', 'cereal'], {
+                    nextScene: 'Nivel2Scene',
+                    title: 'Leguminosas y Cereales',
+                    finishLabel: 'Empezar Nivel 2',
+                });
+            } else if (section.index === 3) {
+                window.showTutorial?.(['animal'], {
+                    nextScene: 'Nivel3Scene',
+                    title: 'Origen Animal',
+                    finishLabel: 'Empezar Nivel 3',
+                });
+            }
+        } else {
+            this.scene.start(section.sceneKey);
+        }
     }
 
     private showToast(message: string): void {

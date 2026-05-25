@@ -7,6 +7,7 @@ import { getErrorMessage } from '../../data/errorMessages';
 import { FONT_DISPLAY } from '../../config/gameFonts';
 import { LEVEL_SELECT_HEX as HEX } from '../../config/gameColors';
 import { PrefabButtons } from '../../componentes/PrefabButtons';
+import { PlayerService } from '../../services/PlayerService';
 
 const FOOD_ITEM_SIZE    = 70;
 const FOOD_ITEM_SPACING = 125;
@@ -168,6 +169,16 @@ export class Nivel3Scene extends Phaser.Scene {
         this.txtTiempo = this.add.text(visibleLeft + visibleWidth - 110, visibleTop + 60, 'TIEMPO', {
             fontSize: '16px', color: '#ffffff', fontFamily: 'Arial', fontStyle: 'bold',
         }).setOrigin(0.5).setDepth(20);
+
+        // BOTÓN PAUSA
+        PrefabButtons.icono(this, visibleLeft + 60, visibleTop + 60, () => {
+            this.scene.pause();
+            this.scene.launch('PauseScene', { previousScene: this.scene.key });
+        }, {
+            text: 'II',
+            fontSize: '28px'
+        }).setDepth(20);
+
         this.timerText = this.add.text(visibleLeft + visibleWidth - 110, visibleTop + 90, '60', {
             fontSize: '38px', color: '#ffffff', fontFamily: 'Arial',
             fontStyle: 'bold', stroke: '#5E412F', strokeThickness: 5,
@@ -223,8 +234,11 @@ export class Nivel3Scene extends Phaser.Scene {
     // ─── WAVE SYSTEM ──────────────────────────────────────────────────────────
 
     private createBackButton(): void {
-        PrefabButtons.volver(this, 110, 90, () => {
-            this.returnToFoodGrid();
+        PrefabButtons.continuar(this, this.scale.width / 2, this.scale.height / 2 + 190, () => {
+            this.scene.start('PreTutorialConceptosScene', {
+                nextLevel: 'CrucigramaSaludableScene',
+                finishLabel: 'Ir al crucigrama'
+            });
         }, {
             text: '< Volver',
             width: 150,
@@ -235,21 +249,7 @@ export class Nivel3Scene extends Phaser.Scene {
         });
     }
 
-    private returnToFoodGrid(): void {
-        this.stopTimer();
 
-        if (window.showTutorial) {
-            this.scene.pause();
-            window.showTutorial(['animal'], {
-                title: 'Origen animal',
-                nextScene: 'Nivel3Scene',
-                finishLabel: 'Volver al Nivel 3',
-            });
-            return;
-        }
-
-        this.scene.start('LevelSelectScene');
-    }
 
     private initWavePools() {
         const allAnimal = nutritionalInfo.filter(f => f.category === 'animal');
@@ -381,10 +381,21 @@ export class Nivel3Scene extends Phaser.Scene {
         this.stopTimer();
 
         if (this.remainingAnimal.length === 0) {
+            this.registry.set('nivel3Completado', true);
+            
+            const jugador = PlayerService.obtenerJugadorActivo();
+            if (jugador) {
+                const nuevosNiveles = new Set([...jugador.progreso.nivelesCompletados, 3]);
+                PlayerService.actualizarProgreso(jugador.id, {
+                    ...jugador.progreso,
+                    nivelesCompletados: Array.from(nuevosNiveles)
+                });
+            }
+
             this.time.delayedCall(1000, () => showLevelCompleteOverlay(this, {
                 title: '¡NIVEL COMPLETADO!',
-                message: 'Identificaste los alimentos de origen animal. Ahora repasaremos conceptos clave antes del siguiente reto.',
-                buttonLabel: 'Ver conceptos',
+                message: '¡Completaste los 3 niveles! Es hora de repasar los conceptos.',
+                buttonLabel: 'Ir a Conceptos',
                 nextScene: 'PreTutorialConceptosScene',
                 soundKey: 'level_win',
                 clickSoundKey: 'sonido-click',
@@ -498,8 +509,15 @@ export class Nivel3Scene extends Phaser.Scene {
         this.mostrarPlaton(false);
 
         // Save checkpoint so wave 2+ restarts from the same wave
+        // Use current placedFoods (not wave-start snapshot) so basket persists on restart
         if (this.waveNumber >= 2 && this.waveCheckpoint) {
-            this.registry.set('nivel3_checkpoint', this.waveCheckpoint);
+            this.registry.set('nivel3_checkpoint', {
+                ...this.waveCheckpoint,
+                savedInventory: this.placedFoods.map(f => ({
+                    id: f.texture.key,
+                    categoria: f.getData('categoria') as string,
+                })),
+            });
         }
 
         const { width, height } = this.scale;

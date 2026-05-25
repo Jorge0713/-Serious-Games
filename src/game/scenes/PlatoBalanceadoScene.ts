@@ -1,6 +1,7 @@
 import * as Phaser from 'phaser';
 import { createDebugSkipButton } from '../systems/DebugSkipButton';
 import { FONT_DISPLAY } from '../../config/gameFonts';
+import { PrefabButtons } from "../../componentes/PrefabButtons";
 import { nutritionalInfo } from '../../data/nutritionalInfo';
 import type { FoodItem } from '../../data/nutritionalInfo';
 
@@ -177,6 +178,15 @@ export class PlatoBalanceadoScene extends Phaser.Scene {
             x: this.safeArea.left + 8,
             y: this.safeArea.top + 8,
         });
+
+        // BOTÓN PAUSA
+        PrefabButtons.icono(this, this.safeArea.right - 8, this.safeArea.top + 8, () => {
+            this.scene.pause();
+            this.scene.launch('PauseScene', { previousScene: this.scene.key });
+        }, {
+            text: 'II',
+            fontSize: '28px'
+        }).setDepth(50);
     }
 
     // ─── ESTADO ───────────────────────────────────────────────────────────────
