@@ -11,10 +11,19 @@ interface TutorialSection {
   categories: FoodCategory[];
 }
 
+interface TutorialRouteOptions {
+  title?: string;
+  nextScene?: string;
+  finishLabel?: string;
+}
+
 declare global {
   interface Window {
     __phaserGame?: Phaser.Game;
-    showTutorial?: (categories: FoodCategory | FoodCategory[]) => void;
+    showTutorial?: (
+      categories?: FoodCategory | FoodCategory[],
+      options?: TutorialRouteOptions
+    ) => void;
     goToNivel1?: () => void;
     goToNivel2?: () => void;
     goToNivel3?: () => void;
@@ -22,46 +31,84 @@ declare global {
   }
 }
 
-const tutorialSections: TutorialSection[] = [
+const defaultTutorialSections: TutorialSection[] = [
   {
     id: 'frutasVerduras',
     title: 'Frutas y verduras',
-    categories: ['vegetable', 'fruit']
+    categories: ['vegetable', 'fruit'],
   },
   {
     id: 'cereales',
     title: 'Cereales',
-    categories: ['cereal']
+    categories: ['cereal'],
   },
   {
     id: 'origenAnimalLeguminosas',
     title: 'Origen animal y leguminosas',
-    categories: ['animal', 'legume']
-  }
+    categories: ['animal', 'legume'],
+  },
 ];
 
-const getSectionIndexFromCategories = (categories: FoodCategory | FoodCategory[]) => {
-  const selectedCategories = Array.isArray(categories) ? categories : [categories];
+const normalizeCategories = (
+  categories: FoodCategory | FoodCategory[] = ['vegetable', 'fruit']
+): FoodCategory[] => (Array.isArray(categories) ? categories : [categories]);
 
-  if (selectedCategories.some(category => category === 'animal' || category === 'legume')) {
-    return 2;
+const getDefaultTitle = (categories: FoodCategory[]): string => {
+  if (categories.includes('vegetable') && categories.includes('fruit')) {
+    return 'Verduras y frutas';
   }
 
-  if (selectedCategories.includes('cereal')) {
-    return 1;
+  if (categories.includes('legume') && categories.includes('cereal')) {
+    return 'Leguminosas y cereales';
   }
 
-  return 0;
+  if (categories.includes('animal') && categories.includes('legume')) {
+    return 'Origen animal y leguminosas';
+  }
+
+  if (categories.includes('animal')) {
+    return 'Origen animal';
+  }
+
+  if (categories.includes('cereal')) {
+    return 'Cereales';
+  }
+
+  if (categories.includes('legume')) {
+    return 'Leguminosas';
+  }
+
+  return 'Frutas y verduras';
 };
 
-// type PhaserSceneKey = 'Nivel1Scene' | 'Nivel2Scene' | 'Nivel3Scene';
+const getDefaultNextScene = (categories: FoodCategory[]): string => {
+  if (categories.includes('animal')) {
+    return 'Nivel3Scene';
+  }
+
+  if (categories.includes('legume') || categories.includes('cereal')) {
+    return 'Nivel2Scene';
+  }
+
+  return 'Nivel1Scene';
+};
+
+const getDefaultFinishLabel = (sceneKey: string): string => {
+  if (sceneKey === 'Nivel2Scene') return 'Ir al Nivel 2';
+  if (sceneKey === 'Nivel3Scene') return 'Ir al Nivel 3';
+
+  return 'Ir al Nivel 1';
+};
 
 function App() {
   const [showTutorialUI, setShowTutorialUI] = useState(false);
   const [showConceptosUI, setShowConceptosUI] = useState(false);
   const [currentSectionIndex, setCurrentSectionIndex] = useState(0);
+  const [activeTutorialSections, setActiveTutorialSections] = useState<TutorialSection[]>(defaultTutorialSections);
+  const [tutorialNextScene, setTutorialNextScene] = useState('Nivel1Scene');
+  const [tutorialFinishLabel, setTutorialFinishLabel] = useState(getDefaultFinishLabel('Nivel1Scene'));
 
-  const currentSection = tutorialSections[currentSectionIndex];
+  const currentSection = activeTutorialSections[currentSectionIndex] ?? activeTutorialSections[0] ?? defaultTutorialSections[0];
 
   const startPhaserScene = useCallback((sceneKey: string) => {
     setShowTutorialUI(false);
@@ -72,6 +119,7 @@ function App() {
 
     game.input.enabled = true;
     game.scene.stop('TutorialScene');
+    game.scene.stop('LevelSelectScene');
     game.scene.stop('PreTutorialConceptosScene');
     game.scene.start(sceneKey);
   }, []);
@@ -88,20 +136,35 @@ function App() {
     startPhaserScene('Nivel3Scene');
   }, [startPhaserScene]);
 
+  const finishTutorial = useCallback(() => {
+    startPhaserScene(tutorialNextScene);
+  }, [startPhaserScene, tutorialNextScene]);
+
   const handlePreviousSection = () => {
     setCurrentSectionIndex(index => Math.max(0, index - 1));
   };
 
   const handleNextSection = () => {
-    setCurrentSectionIndex(index => Math.min(tutorialSections.length - 1, index + 1));
+    setCurrentSectionIndex(index => Math.min(activeTutorialSections.length - 1, index + 1));
   };
 
   useEffect(() => {
-    window.showTutorial = (categories: FoodCategory | FoodCategory[]) => {
-      console.log("ShowTutorial llamado con categorías:", categories);
-      const index = getSectionIndexFromCategories(categories); 
-      console.log('section index: ',index )
-      setCurrentSectionIndex(index);
+    window.showTutorial = (
+      categories: FoodCategory | FoodCategory[] = ['vegetable', 'fruit'],
+      options: TutorialRouteOptions = {}
+    ) => {
+      const selectedCategories = normalizeCategories(categories);
+      const nextScene = options.nextScene ?? getDefaultNextScene(selectedCategories);
+      const section: TutorialSection = {
+        id: selectedCategories.join('_'),
+        title: options.title ?? getDefaultTitle(selectedCategories),
+        categories: selectedCategories,
+      };
+
+      setActiveTutorialSections([section]);
+      setCurrentSectionIndex(0);
+      setTutorialNextScene(nextScene);
+      setTutorialFinishLabel(options.finishLabel ?? getDefaultFinishLabel(nextScene));
       setShowTutorialUI(true);
     };
 
@@ -133,10 +196,11 @@ function App() {
             categories={currentSection.categories}
             title={currentSection.title}
             currentSectionIndex={currentSectionIndex}
-            totalSections={tutorialSections.length}
+            totalSections={activeTutorialSections.length}
+            finishLabel={tutorialFinishLabel}
             onPreviousSection={handlePreviousSection}
             onNextSection={handleNextSection}
-            onFinishTutorial={startNivel1}
+            onFinishTutorial={finishTutorial}
           />
         </div>
       )}

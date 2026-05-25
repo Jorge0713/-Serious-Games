@@ -4,6 +4,9 @@ import { showLevelCompleteOverlay } from '../systems/LevelCompleteOverlay';
 import { nutritionalInfo } from '../../data/nutritionalInfo';
 import type { FoodItem } from '../../data/nutritionalInfo';
 import { getErrorMessage } from '../../data/errorMessages';
+import { FONT_DISPLAY } from '../../config/gameFonts';
+import { LEVEL_SELECT_HEX as HEX } from '../../config/gameColors';
+import { PrefabButtons } from '../../componentes/PrefabButtons';
 
 const FOOD_ITEM_SIZE       = 70;
 const FOOD_ITEM_SPACING    = 125;
@@ -68,6 +71,7 @@ export class Nivel2Scene extends Phaser.Scene {
     private toastTimer?: Phaser.Time.TimerEvent;
 
     // UI Elements for resizing
+    private txtInstruccionesShadow?: Phaser.GameObjects.Text;
     private txtInstrucciones!: Phaser.GameObjects.Text;
     private txtTiempo!: Phaser.GameObjects.Text;
     private txtVidas!: Phaser.GameObjects.Text;
@@ -97,6 +101,7 @@ export class Nivel2Scene extends Phaser.Scene {
         this.load.audio('sonido-click', '/Sound/Click.mp3');
         this.load.audio('carta-sonido', '/Sound/CartaSound.mp3');
         this.load.audio('reloj-tic',    '/Sound/Clock.mp3');
+        PrefabButtons.preload(this);
         nutritionalInfo.forEach(food => this.load.image(food.id, food.image));
     }
 
@@ -119,14 +124,32 @@ export class Nivel2Scene extends Phaser.Scene {
             .setScale(0.5).setDisplaySize(width, height);
         void this.fondo_cocina;
 
-        this.txtInstrucciones = this.add.text(width / 2, visibleTop + 75, 'Arrastra los cereales y leguminosas a su canasta', {
-            fontSize: '32px', color: '#000', fontFamily: 'Arial, sans-serif',
-            backgroundColor: 'rgba(255,255,255,0.7)', padding: { x: 20, y: 10 },
-        }).setOrigin(0.5);
+        this.txtInstruccionesShadow = this.add.text(width / 2 + 4, visibleTop + 80, 'Arrastra los alimentos a su seccion', {
+            fontFamily: FONT_DISPLAY,
+            fontSize: '56px',
+            fontStyle: 'bold',
+            color: '#77D39D',
+            stroke: HEX.ink,
+            strokeThickness: 4,
+        }).setOrigin(0.5).setDepth(18);
+
+        this.txtInstrucciones = this.add.text(width / 2, visibleTop + 75, 'Arrastra los alimentos a su seccion', {
+            fontFamily: FONT_DISPLAY,
+            fontSize: '56px',
+            fontStyle: 'bold',
+            color: HEX.white,
+            stroke: HEX.ink,
+            strokeThickness: 4,
+        }).setOrigin(0.5).setDepth(19);
 
         createDebugSkipButton(this, {
-            label: 'Saltar a Nivel 3', nextScene: 'Nivel3Scene', soundKey: 'sonido-click',
+            label: 'Saltar a Nivel 3',
+            nextScene: 'Nivel3Scene',
+            soundKey: 'sonido-click',
+            x: visibleLeft + 16,
+            y: visibleTop + 150,
         });
+        this.createBackButton();
 
         // CANASTAS
         const escalaCanasta  = 0.60;
@@ -173,19 +196,23 @@ export class Nivel2Scene extends Phaser.Scene {
         this.zonaBordeLeguminosas.setData('snapToZone', this.zonaLeguminosas);
 
         // LABELS
-        const tipStyle: Phaser.Types.GameObjects.Text.TextStyle = {
-            fontSize: '22px', color: '#ffffff', fontFamily: 'Arial',
-            fontStyle: 'bold', stroke: '#5E412F', strokeThickness: 5,
+        const basketLabelStyle: Phaser.Types.GameObjects.Text.TextStyle = {
+            fontFamily: FONT_DISPLAY,
+            fontSize: '36px',
+            fontStyle: 'bold',
+            color: HEX.white,
+            stroke: HEX.ink,
+            strokeThickness: 4,
         };
         this.lblCereales = this.add.text(
             segmentoCereales.x,
             segmentoCereales.y + segmentoCereales.displayHeight / 2 + 12,
-            'TU CANASTA DE CEREALES', tipStyle
+            'TU CANASTA DE CEREALES', basketLabelStyle
         ).setOrigin(0.5).setDepth(3);
         this.lblLeguminosas = this.add.text(
             segmentoLeguminosas.x,
             segmentoLeguminosas.y + segmentoLeguminosas.displayHeight / 2 + 12,
-            'TU CANASTA DE LEGUMINOSAS', tipStyle
+            'TU CANASTA DE LEGUMINOSAS', basketLabelStyle
         ).setOrigin(0.5).setDepth(3);
 
         this.startBasketIdleAnim(this.segmentoCereales,    0);
@@ -251,6 +278,35 @@ export class Nivel2Scene extends Phaser.Scene {
     }
 
     // ─── WAVE SYSTEM ──────────────────────────────────────────────────────────
+
+    private createBackButton(): void {
+        PrefabButtons.volver(this, 110, 90, () => {
+            this.returnToFoodGrid();
+        }, {
+            text: '< Volver',
+            width: 150,
+            height: 90,
+            fontSize: 30,
+            clickSoundKey: 'sonido-click',
+            depth: 20,
+        });
+    }
+
+    private returnToFoodGrid(): void {
+        this.stopTimer();
+
+        if (window.showTutorial) {
+            this.scene.pause();
+            window.showTutorial(['legume', 'cereal'], {
+                title: 'Leguminosas y cereales',
+                nextScene: 'Nivel2Scene',
+                finishLabel: 'Volver al Nivel 2',
+            });
+            return;
+        }
+
+        this.scene.start('LevelSelectScene');
+    }
 
     private initWavePools() {
         const allCereales    = nutritionalInfo.filter(f => f.category === 'cereal');
@@ -974,7 +1030,8 @@ export class Nivel2Scene extends Phaser.Scene {
         const visibleWidth = window.innerWidth / screenScale;
         const visibleBottom = visibleTop + window.innerHeight / screenScale;
 
-        if (this.txtInstrucciones) this.txtInstrucciones.setY(visibleTop + 75);
+        if (this.txtInstruccionesShadow) this.txtInstruccionesShadow.setPosition(width / 2 + 4, visibleTop + 80);
+        if (this.txtInstrucciones) this.txtInstrucciones.setPosition(width / 2, visibleTop + 75);
         
         if (this.txtTiempo) {
             this.txtTiempo.setPosition(visibleLeft + visibleWidth - 110, visibleTop + 60);

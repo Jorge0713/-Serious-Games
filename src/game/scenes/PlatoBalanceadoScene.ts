@@ -1,5 +1,6 @@
 import * as Phaser from 'phaser';
 import { createDebugSkipButton } from '../systems/DebugSkipButton';
+import { FONT_DISPLAY } from '../../config/gameFonts';
 import { nutritionalInfo } from '../../data/nutritionalInfo';
 import type { FoodItem } from '../../data/nutritionalInfo';
 
@@ -17,7 +18,7 @@ const PALETTE = {
     terracotaHex: '#D2691E',
 };
 
-const SCENE_FONT = '"Pixelify Sans", Arial, sans-serif';
+const SCENE_FONT = FONT_DISPLAY;
 
 // ─── Tipos ───────────────────────────────────────────────────────────────────
 

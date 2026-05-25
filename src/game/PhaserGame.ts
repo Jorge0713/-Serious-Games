@@ -5,6 +5,7 @@ import { TutorialScene } from './scenes/TutorialScene'
 import { Nivel1Scene } from './scenes/Nivel1Scene'
 import { Nivel2Scene } from './scenes/Nivel2Scene'
 import { Nivel3Scene } from './scenes/Nivel3Scene'
+import { LevelSelectScene } from './scenes/LevelSelectScene'
 import { PreTutorialConceptosScene } from './scenes/PreTutorialConceptosScene'
 import { CrucigramaSaludableScene } from './scenes/CrucigramaSaludableScene'
 
@@ -16,7 +17,7 @@ export const createGame = (parent: HTMLElement): Phaser.Game => {
         type: Phaser.AUTO,
         parent,
         backgroundColor: '#000000',
-        scene: [MainMenu, MusicManagerScene, TutorialScene, Nivel1Scene, Nivel2Scene, Nivel3Scene, PreTutorialConceptosScene, PlatoBalanceadoScene, CrucigramaSaludableScene],
+        scene: [MainMenu, MusicManagerScene, TutorialScene, Nivel1Scene, Nivel2Scene, Nivel3Scene, LevelSelectScene, PreTutorialConceptosScene, PlatoBalanceadoScene, CrucigramaSaludableScene],
         scale: {
             mode: Phaser.Scale.ENVELOP,
             autoCenter: Phaser.Scale.CENTER_BOTH,

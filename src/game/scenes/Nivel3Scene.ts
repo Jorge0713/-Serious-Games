@@ -4,6 +4,9 @@ import { showLevelCompleteOverlay } from '../systems/LevelCompleteOverlay';
 import { nutritionalInfo } from '../../data/nutritionalInfo';
 import type { FoodItem } from '../../data/nutritionalInfo';
 import { getErrorMessage } from '../../data/errorMessages';
+import { FONT_DISPLAY } from '../../config/gameFonts';
+import { LEVEL_SELECT_HEX as HEX } from '../../config/gameColors';
+import { PrefabButtons } from '../../componentes/PrefabButtons';
 
 const FOOD_ITEM_SIZE    = 70;
 const FOOD_ITEM_SPACING = 125;
@@ -59,6 +62,7 @@ export class Nivel3Scene extends Phaser.Scene {
     private toastTimer?: Phaser.Time.TimerEvent;
 
     // UI Elements for resizing
+    private txtInstruccionesShadow?: Phaser.GameObjects.Text;
     private txtInstrucciones!: Phaser.GameObjects.Text;
     private txtTiempo!: Phaser.GameObjects.Text;
     private txtVidas!: Phaser.GameObjects.Text;
@@ -88,6 +92,7 @@ export class Nivel3Scene extends Phaser.Scene {
         this.load.audio('sonido-click', '/Sound/Click.mp3');
         this.load.audio('carta-sonido', '/Sound/CartaSound.mp3');
         this.load.audio('reloj-tic',    '/Sound/Clock.mp3');
+        PrefabButtons.preload(this);
         nutritionalInfo.forEach(food => this.load.image(food.id, food.image));
     }
 
@@ -109,21 +114,28 @@ export class Nivel3Scene extends Phaser.Scene {
 
         this.add.image(width / 2, height / 2, 'fondo_cocina3').setDisplaySize(width, height);
 
-        this.txtInstrucciones = this.add.text(width / 2, visibleTop + 75, '¡Arrastra los alimentos de origen animal a su canasta!', {
-            fontSize: '32px', color: '#000', fontFamily: 'Arial, sans-serif',
-            backgroundColor: 'rgba(255,255,255,0.7)', padding: { x: 20, y: 10 },
-        }).setOrigin(0.5);
+        this.txtInstrucciones = this.add.text(width / 2, visibleTop + 75, 'Arrastra los alimentos a su seccion', {
+            fontFamily: FONT_DISPLAY,
+            fontSize: '56px',
+            fontStyle: 'bold',
+            color: HEX.white,
+            stroke: HEX.ink,
+            strokeThickness: 4,
+        }).setOrigin(0.5).setDepth(19);
 
-        const btnVolver = this.add.text(visibleLeft + 16, visibleTop + 16, '← Volver', {
-            fontSize: '19px', color: '#fff', backgroundColor: '#c0392b',
-            padding: { x: 12, y: 7 }, fontFamily: 'Arial',
-        }).setInteractive({ useHandCursor: true }).setDepth(10);
-        btnVolver.on('pointerover', () => btnVolver.setStyle({ backgroundColor: '#922b21' }));
-        btnVolver.on('pointerout',  () => btnVolver.setStyle({ backgroundColor: '#c0392b' }));
-        btnVolver.on('pointerdown', () => this.scene.start('MainMenu'));
+        this.createBackButton();
+
+        this.txtInstruccionesShadow = this.add.text(width / 2 + 4, visibleTop + 80, 'Arrastra los alimentos a su seccion', {
+            fontFamily: FONT_DISPLAY,
+            fontSize: '56px',
+            fontStyle: 'bold',
+            color: '#77D39D',
+            stroke: HEX.ink,
+            strokeThickness: 4,
+        }).setOrigin(0.5).setDepth(18);
 
         createDebugSkipButton(this, {
-            label: 'Saltar a conceptos', nextScene: 'PreTutorialConceptosScene', x: visibleLeft + 16, y: visibleTop + 58,
+            label: 'Saltar a conceptos', nextScene: 'PreTutorialConceptosScene', x: visibleLeft + 16, y: visibleTop + 150,
         });
 
         // SECCIÓN ANIMAL
@@ -135,8 +147,12 @@ export class Nivel3Scene extends Phaser.Scene {
 
         this.lblAnimal = this.add.text(width / 2, canastaCentroY + this.animalSection.displayHeight / 2 + 40,
             'TU CANASTA DE ORIGEN ANIMAL', {
-                fontSize: '22px', color: '#ffffff', fontFamily: 'Arial',
-                fontStyle: 'bold', stroke: '#5E412F', strokeThickness: 5,
+                fontFamily: FONT_DISPLAY,
+                fontSize: '36px',
+                fontStyle: 'bold',
+                color: HEX.white,
+                stroke: HEX.ink,
+                strokeThickness: 4,
             }
         ).setOrigin(0.5).setDepth(3);
 
@@ -205,6 +221,35 @@ export class Nivel3Scene extends Phaser.Scene {
     }
 
     // ─── WAVE SYSTEM ──────────────────────────────────────────────────────────
+
+    private createBackButton(): void {
+        PrefabButtons.volver(this, 110, 90, () => {
+            this.returnToFoodGrid();
+        }, {
+            text: '< Volver',
+            width: 150,
+            height: 90,
+            fontSize: 30,
+            clickSoundKey: 'sonido-click',
+            depth: 20,
+        });
+    }
+
+    private returnToFoodGrid(): void {
+        this.stopTimer();
+
+        if (window.showTutorial) {
+            this.scene.pause();
+            window.showTutorial(['animal'], {
+                title: 'Origen animal',
+                nextScene: 'Nivel3Scene',
+                finishLabel: 'Volver al Nivel 3',
+            });
+            return;
+        }
+
+        this.scene.start('LevelSelectScene');
+    }
 
     private initWavePools() {
         const allAnimal = nutritionalInfo.filter(f => f.category === 'animal');
@@ -891,7 +936,8 @@ export class Nivel3Scene extends Phaser.Scene {
         const visibleWidth = window.innerWidth / screenScale;
         const visibleBottom = visibleTop + window.innerHeight / screenScale;
 
-        if (this.txtInstrucciones) this.txtInstrucciones.setY(visibleTop + 75);
+        if (this.txtInstruccionesShadow) this.txtInstruccionesShadow.setPosition(width / 2 + 4, visibleTop + 80);
+        if (this.txtInstrucciones) this.txtInstrucciones.setPosition(width / 2, visibleTop + 75);
         
         if (this.txtTiempo) {
             this.txtTiempo.setPosition(visibleLeft + visibleWidth - 110, visibleTop + 60);

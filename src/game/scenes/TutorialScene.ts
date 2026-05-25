@@ -1,85 +1,104 @@
 import * as Phaser from "phaser";
-import { DialogueSystem } from "../systems/dialog/DialogueSystem";
-import { hoverScale } from "../../componentes/HoverScale";
-import { makeResponsiveVolver } from "../../componentes/ResponsiveVolver";
+import { PrefabButtons } from "../../componentes/PrefabButtons";
+import { PlatonSpeechBubble } from "../systems/dialog/PlatonSpeechBubble";
+
+
+type PlateZoneId = "verduras" | "frutas" | "cereales" | "leguminosas" | "animal";
+
+type PlateZoneDialog = {
+    title: string;
+    text: string;
+};
+
+const INITIAL_DIALOG = "Hola aventurero. Soy Platon. Frente a ti esta el Plato del Bien Comer. Pasa el cursor sobre cada seccion para conocer sus grupos de alimentos.";
+const TUTORIAL_KITCHEN_BACKGROUND_ALPHA = 1;
+const TUTORIAL_SCRIM_CENTER_ALPHA = 0.18;
+const TUTORIAL_SCRIM_EDGE_ALPHA = 0.45;
+const DIALOG_X_MAX = 620;                 // tope horizontal (px) — sube/baja este número
+const DIALOG_X_RATIO = 0.32;              // fracción del ancho de pantalla
+const DIALOG_Y_OFFSET_FROM_BOTTOM = 600;  // px arriba del borde inferior
+const DIALOG_WRAP_WIDTH_MAX = 520;        // ancho máximo del texto
+const DIALOG_WRAP_WIDTH_MIN = 370;        // ancho mínimo del texto
+const DIALOG_WRAP_RATIO = 0.28;           // fracción del ancho para el wrap
+const DIALOG_DEV_MODE = false;
+const DIALOG_NUDGE_STEP = 10;
+
+const PLATE_ZONE_DIALOGS: Record<PlateZoneId, PlateZoneDialog> = {
+    verduras: {
+        title: "Verduras",
+        text: "Las verduras aportan vitaminas, minerales y fibra. Ayudan a mantener una alimentacion equilibrada y deben consumirse con frecuencia.",
+    },
+    frutas: {   
+        title: "Frutas",
+        text: "Las frutas aportan vitaminas, minerales, agua y fibra. Son una buena opcion natural para complementar la alimentacion diaria.",
+    },
+    cereales: {
+        title: "Cereales",
+        text: "Los cereales aportan energia principalmente en forma de carbohidratos. Algunos ejemplos son tortilla, arroz, pan, pasta y avena.",
+    },
+    leguminosas: {
+        title: "Leguminosas",
+        text: "Las leguminosas aportan proteina vegetal, fibra y energia. Algunos ejemplos son frijoles, lentejas, habas y garbanzos.",
+    },
+    animal: {
+        title: "Alimentos de origen animal",
+        text: "Los alimentos de origen animal aportan proteinas y otros nutrimentos importantes. Algunos ejemplos son huevo, leche, pescado, pollo y carne.",
+    },
+};
 
 export class TutorialScene extends Phaser.Scene {
-    private dialog!: DialogueSystem;
-    private step = 0;
-
+    private speechBubble!: PlatonSpeechBubble;
     private platon!: Phaser.GameObjects.Sprite;
     private plato!: Phaser.GameObjects.Image;
-    private fondo_cocina!: Phaser.GameObjects.Image;
-
-    // Estados interactivos
-    private isExpanded = false;
-    private activeSection: string | null = null;
-    private expandedSprites: Phaser.GameObjects.Sprite[] = [];
-    private btnVolver!: Phaser.GameObjects.Image;
-
-    // Audios
+    private activeSection: PlateZoneId | null = null;
     private hoverSound!: Phaser.Sound.BaseSound;
     private clickSound!: Phaser.Sound.BaseSound;
+    private initialDialogTimer?: Phaser.Time.TimerEvent;
+    private dialogX = 0;
+    private dialogY = 0;
+    private dialogWrapWidth = DIALOG_WRAP_WIDTH_MAX;
+    private currentDialogText: string | null = null;
 
     constructor() {
         super("TutorialScene");
     }
 
     preload() {
+
         this.load.spritesheet("platon", "/assets/Platon/platon.png", {
             frameWidth: 291,
             frameHeight: 256
         });
 
+
         this.load.image("plato", "/assets/Plato/plato.png");
-        this.load.image("Fondo-cocina", "/assets/Backgrounds/Fondo_Cocina.png")
-        this.load.image("btn-Volver", "/assets/Buttons/BtnBack.png");
+        this.load.image("Fondo-cocina", "/assets/Backgrounds/Fondo_Cocina.png");
+        PrefabButtons.preload(this);
 
-        // Cargar spritesheet de partes del plato
-        this.load.spritesheet("partes_plato", "/assets/Plato/Partes_plato.png", {
-            frameWidth: 512,
-            frameHeight: 512
-        });
-
-        // Cargar sonidos
-        this.load.audio("Hover", "/Sound/hiverSound.mp3");
+        this.load.audio("Hover", "/Sound/hoverSound.mp3");
         this.load.audio("Click", "/Sound/Click.mp3");
-
     }
 
     create() {
         const { width, height } = this.scale;
 
-        // 🔊 Inicializar sonidos
         this.hoverSound = this.sound.add("Hover", { volume: 0.2 });
         this.clickSound = this.sound.add("Click", { volume: 0.3 });
 
-        // 🎨 Fondo
-        this.fondo_cocina = this.add.image(
-            width / 2,
-            height / 2,
-            "Fondo-cocina"
-        ).setScale(0.5).setDisplaySize(width, height);
-        // Evitar error de TypeScript - variable asignada
-        void this.fondo_cocina;
-        // 🍽️ Plato (centrado)
+        this.createKitchenBackground();
+
         this.plato = this.add.image(
             width * 0.65,
             height / 2,
             "plato"
         ).setScale(0.3);
 
-        // Evitar error de TypeScript - variable asignada
-        void this.plato;
-
-        // 🧍 Platón (lado izquierdo)
         this.platon = this.add.sprite(
-            width * 0.15,
-            height * 0.65,
+            width * 0.17,
+            height * 0.765,
             "platon"
-        ).setScale(1.3);
+        ).setScale(2);
 
-        // Animación de saludo
         this.anims.create({
             key: "wave",
             frames: this.anims.generateFrameNumbers("platon", { start: 0, end: 15 }),
@@ -88,400 +107,222 @@ export class TutorialScene extends Phaser.Scene {
         });
         this.platon.play("wave");
 
-        // 💬 Sistema de diálogo
-        this.dialog = new DialogueSystem({
-            scene: this,
-            x: 50,
-            y: height - 250, // Más arriba por safe area
-            width: width - 850,
-        });
+        this.speechBubble = new PlatonSpeechBubble(this);
+        this.recomputeDialogLayout();
 
-        // ▶️ Iniciar tutorial base
-        this.showStep();
-
-        // 🖱️ Input principal para avanzar el diálogo
-        // Solo permitimos avanzar el diálogo si NO estamos en el modo expandido interactivo
-        this.input.on("pointerdown", () => {
-            // Si el tutorial ya terminó sus pasos iniciales, evitamos que avance para poder jugar con el plato
-            if (this.isExpanded || this.step >= 5) return;
-
-            this.dialog.next(() => {
-                this.step++;
-                this.showStep();
-            });
-        });
-
-        // 🔧 CREAR ZONAS INTERACTIVAS SOBRE EL PLATO
+        this.showInitialDialog();
         this.createInteractiveZones();
+        this.createBackButton();
+        this.createNextButton();
+        this.setupDialogNudge();
+    }
 
-        // 🔙 BOTÓN REGRESAR (oculto por defecto)
+    private createKitchenBackground(): void {
+        const { width, height } = this.scale;
 
-        this.btnVolver = this.add.sprite(150, 100, 'btn-Volver')
-            .setInteractive()
-            .setAlpha(1);
+        // Capa 1: rectángulo crema sólido
+        this.add.rectangle(width / 2, height / 2, width, height, 0xfffbf0, 1)
+            .setDepth(-3);
 
-        makeResponsiveVolver(this, this.btnVolver);
+        // Capa 2: imagen de cocina con opacidad ajustable
+        this.add.image(width / 2, height / 2, "Fondo-cocina")
+            .setDisplaySize(width, height)
+            .setAlpha(TUTORIAL_KITCHEN_BACKGROUND_ALPHA)
+            .setDepth(-2);
 
-        hoverScale(this, this.btnVolver, {
-            scaleOver: 0.45,
-            duration: 150,
-            hoverSound: this.hoverSound
+        // Capa 3: scrim radial crema (claro al centro, más opaco en los bordes)
+        this.createScrimTexture();
+        this.add.image(width / 2, height / 2, "tutorial_scrim")
+            .setDisplaySize(width, height)
+            .setDepth(-1);
+    }
+
+    private createScrimTexture(): void {
+        const key = "tutorial_scrim";
+        if (this.textures.exists(key)) {
+            this.textures.remove(key);
+        }
+
+        const { width, height } = this.scale;
+        const canvas = document.createElement("canvas");
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) return;
+
+        const gradient = ctx.createRadialGradient(
+            width / 2, height / 2, 120,
+            width / 2, height / 2, Math.max(width, height) * 0.6,
+        );
+        gradient.addColorStop(0, `rgba(255, 251, 240, ${TUTORIAL_SCRIM_CENTER_ALPHA})`);
+        gradient.addColorStop(1, `rgba(255, 251, 240, ${TUTORIAL_SCRIM_EDGE_ALPHA})`);
+        ctx.fillStyle = gradient;
+        ctx.fillRect(0, 0, width, height);
+        this.textures.addCanvas(key, canvas);
+    }
+
+    private recomputeDialogLayout(): void {
+        const { width, height } = this.scale;
+        this.dialogX = Math.min(width * DIALOG_X_RATIO, DIALOG_X_MAX);
+        this.dialogY = height - DIALOG_Y_OFFSET_FROM_BOTTOM;
+        this.dialogWrapWidth = Math.min(
+            DIALOG_WRAP_WIDTH_MAX,
+            Math.max(DIALOG_WRAP_WIDTH_MIN, width * DIALOG_WRAP_RATIO),
+        );
+    }
+
+    private setupDialogNudge(): void {
+        if (!DIALOG_DEV_MODE) return;
+
+        const nudge = (dx: number, dy: number) => {
+            this.dialogX += dx;
+            this.dialogY += dy;
+            console.log(`[Diálogo] X=${this.dialogX}  Y=${this.dialogY}`);
+            if (this.currentDialogText) {
+                this.refreshDialogPosition(this.currentDialogText);
+            }
+        };
+
+        this.input.keyboard?.on("keydown-LEFT", () => nudge(-DIALOG_NUDGE_STEP, 0));
+        this.input.keyboard?.on("keydown-RIGHT", () => nudge(DIALOG_NUDGE_STEP, 0));
+        this.input.keyboard?.on("keydown-UP", () => nudge(0, -DIALOG_NUDGE_STEP));
+        this.input.keyboard?.on("keydown-DOWN", () => nudge(0, DIALOG_NUDGE_STEP));
+    }
+
+    private refreshDialogPosition(text: string): void {
+        this.speechBubble.show({
+            x: this.dialogX,
+            y: this.dialogY,
+            text,
+            wordWrapWidth: this.dialogWrapWidth,
         });
+    }
 
-        this.btnVolver.on("pointerdown", () => {
-            this.clickSound.play();
-        });
-
-        this.btnVolver.on("pointerup", () => {
-            // Lógica de navegación:
-            if (this.isExpanded || this.activeSection) {
-                this.restorePlate();
-            } else {
-                this.scene.start('MainMenu');
+    private showInitialDialog(): void {
+        this.showSpeechBubble(INITIAL_DIALOG);
+        this.initialDialogTimer = this.time.delayedCall(6000, () => {
+            if (!this.activeSection) {
+                this.hideDialog();
             }
         });
     }
-    /**
-     * Crea zonas geométricas transparentes sobre la imagen del plato.
-     */
-    private createInteractiveZones() {
+
+    private createBackButton(): void {
+        PrefabButtons.volver(this, 150, 100, () => {
+            this.scene.start("MainMenu");
+        }, {
+            text: "< Volver",
+            width: 200,
+            height: 100,
+            fontSize: 30,
+            hoverSound: this.hoverSound,
+            clickSound: this.clickSound,
+            depth: 20,
+        });
+    }
+    private createNextButton(): void {
+        PrefabButtons.continuar(this, 1700, 100, () => {
+            this.scene.start("LevelSelectScene");
+        }, {
+            text: 'Siguiente >',
+            width: 200,
+            height: 100,
+            fontSize: 30,
+            hoverSound: this.hoverSound,
+            clickSound: this.clickSound,
+            depth: 20,
+        });
+    }
+
+    private createInteractiveZones(): void {
         const px = this.plato.x;
         const py = this.plato.y;
+        const pw = 2963 * 0.3;
+        const ph = 1828 * 0.3;
 
-        // Dimensiones exactas visuales del plato (ancho original 2963 x escala 0.3)
-        const pw = 2963 * 0.3; // ~888.9
-        const ph = 1828 * 0.3; // ~548.4
+        const zonesConfig: Array<{
+            id: PlateZoneId;
+            ox: number;
+            oy: number;
+            w: number;
+            h: number;
+        }> = [
+                { id: "verduras", ox: -pw / 4, oy: -ph / 2.9, w: pw / 2.2, h: ph / 2 },
+                { id: "frutas", ox: pw / 4, oy: -ph / 3, w: pw / 1.9, h: ph / 2 },
+                { id: "cereales", ox: -pw / 5, oy: ph / 6, w: pw / 3, h: ph / 2 },
+                { id: "leguminosas", ox: 20, oy: ph / 6, w: pw / 13, h: ph / 2 },
+                { id: "animal", ox: pw / 4.5, oy: ph / 6, w: pw / 3, h: ph / 2 },
+            ];
 
-        // Dividimos el plato sin superposiciones (overlap):
-        // - Mitad superior: dividida en 2 (Verduras, Frutas)
-        // - Mitad inferior: dividida en 3 (Cereales, Leguminosas, Animal)
-        // Nota: El frame 2 está vacío, así que Cereales es 3, Leguminosas es 4, Animal es 5.
-        const zonesConfig = [
-            // Top half (2 columnas)
-            { id: "verduras", ox: -pw / 4, oy: -ph / 2.9, w: pw / 2.2, h: ph / 2, frame: 0, msg: "¡Aprende sobre frutas y verduras!", color: 0x00ff00 },
-            { id: "frutas", ox: pw / 4, oy: -ph / 3, w: pw / 1.9, h: ph / 2, frame: 1, msg: "¡Aprende sobre frutas y verduras!", color: 0xff0000 },
+        zonesConfig.forEach(zoneConfig => {
+            const zone = this.add.zone(
+                px + zoneConfig.ox,
+                py + zoneConfig.oy,
+                zoneConfig.w,
+                zoneConfig.h
+            ).setInteractive({ useHandCursor: true });
 
-            // Bottom half (3 columnas)
-            { id: "cereales", ox: -pw / 5, oy: ph / 6, w: pw / 3, h: ph / 2, frame: 3, msg: "¡Conoce los cereales y tubérculos!", color: 0xffff00 },
-            { id: "leguminosas", ox: 20, oy: ph / 6, w: pw / 13, h: ph / 2, frame: 4, msg: "¡Descubre las leguminosas!", color: 0xff8800 },
-            { id: "animal", ox: pw / 4.5, oy: ph / 6, w: pw / 3, h: ph / 2, frame: 5, msg: "¡Conoce los alimentos de origen animal!", color: 0x0000ff }
-        ];
-
-        // Añadir gráficos para debug visual
-        // const debugGraphics = this.add.graphics();
-        // NOTA: Para ocultarlos cuando ya no los necesites, simplemente comenta la línea de fillRect o limpia los gráficos.
-
-        zonesConfig.forEach(z => {
-            const zone = this.add.zone(px + z.ox, py + z.oy, z.w, z.h)
-                .setInteractive({ useHandCursor: true });
-
-            // DIBUJAR AREA DE DEBUG
-            //debugGraphics.fillStyle(z.color, 0.4); // Color con 40% de opacidad
-            //debugGraphics.fillRect(zone.x - zone.width / 2, zone.y - zone.height / 2, zone.width, zone.height);
-
-            // LÓGICA DE HOVER (ENTER)
             zone.on("pointerover", () => {
-                if (this.isExpanded) return;
-
-                this.activeSection = z.id;
+                this.activeSection = zoneConfig.id;
+                this.initialDialogTimer?.remove(false);
                 this.hoverSound.play();
-
-                // Efecto visual: Glow (tintado) y escala
-                this.plato.setTint(0xddffdd);
-                this.tweens.add({
-                    targets: this.plato,
-                    scale: 0.33, // Ligeramente mayor que 0.3
-                    duration: 150,
-                    ease: "Power1"
-                });
-
-                // Actualizar texto del globo dinámicamente
-                // Si quieres que el texto aparezca letra por letra, usa show(). 
-                // Para inmediatez, usamos show con speed 0 o mostramos el texto completo.
-                this.dialog.show(z.msg, 0);
+                this.applyPlateHover();
+                this.showPlateZoneDialog(zoneConfig.id);
             });
 
-            // LÓGICA DE HOVER (EXIT)
             zone.on("pointerout", () => {
-                if (this.isExpanded) return;
-                if (this.activeSection === z.id) {
+                if (this.activeSection === zoneConfig.id) {
                     this.activeSection = null;
                 }
 
-                // Restaurar plato
-                this.plato.clearTint();
-                this.tweens.add({
-                    targets: this.plato,
-                    scale: 0.3,
-                    duration: 150,
-                    ease: "Power1"
-                });
-
-                // Volver a texto por defecto
-                this.dialog.show("Haz clic en una sección del plato para explorarla más a fondo.", 0);
+                this.clearPlateHover();
+                this.hideDialog();
             });
 
-            // LÓGICA DE CLICK
             zone.on("pointerdown", () => {
-                if (this.isExpanded) return;
                 this.clickSound.play();
-                this.expandSection(z.id);
+                this.showPlateZoneDialog(zoneConfig.id);
             });
         });
     }
 
-    /**
-     * Expande la sección clickeada mostrando los módulos grandes
-     */
-    private expandSection(sectionId: string) {
-        this.isExpanded = true;
+    private showPlateZoneDialog(zoneId: PlateZoneId): void {
+        const dialog = PLATE_ZONE_DIALOGS[zoneId];
+        this.showSpeechBubble(`${dialog.title}\n${dialog.text}`);
+    }
 
-        // Ocultar plato original (fade out y scale down)
+    private hideDialog(): void {
+        this.currentDialogText = null;
+        this.speechBubble.hide(150);
+    }
+
+    private showSpeechBubble(text: string): void {
+        this.currentDialogText = text;
+        this.speechBubble.show({
+            x: this.dialogX,
+            y: this.dialogY,
+            text,
+            wordWrapWidth: this.dialogWrapWidth,
+        });
+    }
+
+    private applyPlateHover(): void {
+        this.plato.setTint(0xddffdd);
         this.tweens.add({
             targets: this.plato,
-            alpha: 0,
-            scale: 0,
-            duration: 300,
-            ease: "Power2"
-        });
-
-        const { width, height } = this.scale;
-        const centerY = height / 2;
-
-        // Caso Verduras / Frutas
-        if (sectionId === "verduras" || sectionId === "frutas") {
-            // Verduras a la izquierda
-            const verduraSprite = this.add.sprite(-200, centerY, "partes_plato", 0).setScale(0.8).setInteractive({ useHandCursor: true });
-            // Frutas a la derecha
-            const frutaSprite = this.add.sprite(width + 200, centerY, "partes_plato", 1).setScale(0.8).setInteractive({ useHandCursor: true });
-
-            this.expandedSprites.push(verduraSprite, frutaSprite);
-
-            // Animación de entrada
-            this.tweens.add({
-                targets: verduraSprite,
-                x: width * 0.62,
-                duration: 500,
-                ease: "Back.easeOut"
-            });
-
-            this.tweens.add({
-                targets: frutaSprite,
-                x: width * 0.78,
-                duration: 500,
-                ease: "Back.easeOut"
-            });
-
-            verduraSprite.on('pointerover', () => {
-                this.hoverSound.play();
-            })
-
-            verduraSprite.on('pointerout', () => {
-                this.hoverSound.play();
-            })
-
-            verduraSprite.on('pointerdown', () => {
-                this.hoverSound.play();
-                // Llamar al callback global para mostrar el tutorial de React
-                const showTutorial = window.showTutorial
-                if (showTutorial) {
-                    showTutorial(['vegetable', 'fruit'])
-                } else {
-                    // Si no está disponible, ir a la escena de tutorial existente
-                    this.scene.start('TutorialScene')
-                }
-            })
-
-            frutaSprite.on('pointerover', () => {
-                this.hoverSound.play();
-            })
-
-            frutaSprite.on('pointerout', () => {
-                this.hoverSound.play();
-            })
-
-            frutaSprite.on('pointerdown', () => {
-                this.hoverSound.play();
-                // Llamar al callback global para mostrar el tutorial de React
-                const showTutorial = window.showTutorial
-                if (showTutorial) {
-                    showTutorial(['fruit', 'vegetable'])
-                } else {
-                    // Si no está disponible, ir a la escena de tutorial existente
-                    this.scene.start('TutorialScene')
-                }
-            })
-        }
-        // Caso Cereales, Leguminosas, Animal
-        else if (sectionId === "cereales") {
-            const cerealSprite = this.add.sprite(width * 0.65, centerY, "partes_plato", 3).setScale(0.8).setInteractive({ useHandCursor: true });
-
-            this.expandedSprites.push(cerealSprite);
-
-            this.tweens.add({
-                targets: cerealSprite,
-                scale: 0.9,
-                alpha: 1,
-                duration: 500,
-                ease: "Back.easeOut"
-            });
-
-            cerealSprite.on('pointerover', () => {
-                this.hoverSound.play();
-            })
-
-            cerealSprite.on('pointerout', () => {
-                this.hoverSound.play();
-            })
-
-            cerealSprite.on('pointerdown', () => {
-                this.hoverSound.play();
-                // Llamar al callback global para mostrar el tutorial de React
-                const showTutorial = window.showTutorial
-                if (showTutorial) {
-                    showTutorial('cereal')
-                } else {
-                    // Si no está disponible, ir a la escena de tutorial existente
-                    this.scene.start('TutorialScene')
-                }
-            })
-        }
-
-        else if (sectionId === "animal") {
-            const animalSprite = this.add.sprite(width * 0.65, centerY, "partes_plato", 5).setScale(0.8).setInteractive({ useHandCursor: true });
-
-            this.expandedSprites.push(animalSprite);
-
-            this.tweens.add({
-                targets: animalSprite,
-                scale: 0.9,
-                alpha: 1,
-                duration: 500,
-                ease: "Back.easeOut"
-            });
-
-            animalSprite.on('pointerover', () => {
-                this.hoverSound.play();
-            })
-
-            animalSprite.on('pointerout', () => {
-                this.hoverSound.play();
-            })
-
-            animalSprite.on('pointerdown', () => {
-                this.hoverSound.play();
-                // Llamar al callback global para mostrar el tutorial de React
-                const showTutorial = window.showTutorial
-                if (showTutorial) {
-                    showTutorial('animal')
-                } else {
-                    // Si no está disponible, ir a la escena de tutorial existente
-                    this.scene.start('TutorialScene')
-                }
-            })
-        }
-
-        else {
-            // Mostrar módulo centrado
-            const legumeSprite = this.add.sprite(width * 0.65, centerY, "partes_plato", 4).setScale(0.8).setInteractive({ useHandCursor: true });
-
-            this.expandedSprites.push(legumeSprite);
-
-            this.tweens.add({
-                targets: legumeSprite,
-                scale: 0.9,
-                alpha: 1,
-                duration: 500,
-                ease: "Back.easeOut"
-            });
-
-            legumeSprite.on('pointerover', () => {
-                this.hoverSound.play();
-            })
-
-            legumeSprite.on('pointerout', () => {
-                this.hoverSound.play();
-            })
-
-            legumeSprite.on('pointerdown', () => {
-                this.hoverSound.play();
-                // Llamar al callback global para mostrar el tutorial de React
-                const showTutorial = window.showTutorial
-                if (showTutorial) {
-                    showTutorial('legume')
-                } else {
-                    // Si no está disponible, ir a la escena de tutorial existente
-                    this.scene.start('TutorialScene')
-                }
-            })
-        }
-
-        // Mostrar botón de volver
-        this.tweens.add({
-            targets: this.btnVolver,
-            alpha: 1,
-            duration: 300,
-            ease: "Back.easeOut"
+            scale: 0.33,
+            duration: 150,
+            ease: "Power1"
         });
     }
 
-    /**
-     * Restaura el plato a su estado inicial
-     */
-    private restorePlate() {
-        this.clickSound.play();
-
-        // Destruir sprites expandidos
-        this.expandedSprites.forEach(sprite => {
-            this.tweens.add({
-                targets: sprite,
-                alpha: 0,
-                scale: 0,
-                duration: 300,
-                onComplete: () => sprite.destroy()
-            });
-        });
-        this.expandedSprites = [];
-
-        // Ocultar botón de volver
-        this.tweens.add({
-            targets: this.btnVolver,
-            alpha: 1,
-            duration: 300,
-            ease: "Power2"
-        });
-        // Restaurar plato principal
+    private clearPlateHover(): void {
         this.plato.clearTint();
         this.tweens.add({
             targets: this.plato,
-            alpha: 1,
             scale: 0.3,
-            duration: 500,
-            ease: "Back.easeOut",
-            onComplete: () => {
-                this.isExpanded = false;
-                this.activeSection = null;
-            }
+            duration: 150,
+            ease: "Power1"
         });
-
-        // Restaurar texto
-        this.dialog.show("¡Explora otra sección del plato!", 0);
-    }
-
-    private showStep() {
-        const steps = [
-            "¡Hola aventurero! Soy Platón🍽️, tu guía en esta misión saludable. Frente a ti está el Plato del Bien Comer.",
-            "Este plato nos ayuda a comer de mejor manera y poder mantener una vida saludable!🫂",
-            "El Plato del Bien Comer divide los alimentos en tres grupos principales: verduras y frutas, cereales, y leguminosas con alimentos de origen animal.",
-            "La idea principal no es comer solo un grupo, sino combinar los tres en proporciones adecuadas.",
-            "¡Ahora es tu turno! Pasa el mouse sobre el plato para explorarlo e interactuar con sus secciones.😉"
-        ];
-
-        if (this.step < steps.length) {
-            this.dialog.show(steps[this.step], 500);
-        } else {
-            // Cuando termina el tutorial introductorio, dejamos que el usuario interactúe
-            // El paso 4 es el último y da la instrucción de interactuar.
-        }
     }
 }

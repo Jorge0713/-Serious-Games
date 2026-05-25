@@ -9,6 +9,7 @@ interface FoodGridProps {
     title?: string;
     currentSectionIndex: number;
     totalSections: number;
+    finishLabel?: string;
     onPreviousSection: () => void;
     onNextSection: () => void;
     onFinishTutorial: () => void;
@@ -90,6 +91,49 @@ const getFoodFacts = (food: FoodItem) => {
     };
 };
 
+const formatNutritionValue = (value: number | undefined | null, unit: string): string => {
+    if (value === undefined || value === null) {
+        return 'N/D';
+    }
+
+    return `${value} ${unit}`;
+};
+
+const getRecommendedPortion = (food: FoodItem): string => (
+    food.recommendedPortion ??
+    (food.portionGrams !== undefined && food.portionGrams !== null
+        ? `${food.portionGrams} g`
+        : 'N/D')
+);
+
+const NutritionSummaryPanel: React.FC<{ food: FoodItem }> = ({ food }) => {
+    const nutrientCards = [
+        { label: 'Calorías', value: formatNutritionValue(food.calories, 'kcal') },
+        { label: 'Carbohidratos', value: formatNutritionValue(food.carbs, 'g') },
+        { label: 'Proteínas', value: formatNutritionValue(food.protein, 'g') },
+        { label: 'Grasas', value: formatNutritionValue(food.fat, 'g') },
+        { label: 'Fibra', value: formatNutritionValue(food.fiber, 'g') }
+    ];
+
+    return (
+        <section className="nutrition-summary-panel" aria-label="Resumen nutricional">
+            <div className="nutrition-summary-header">
+                <h3>RESUMEN NUTRICIONAL</h3>
+                <p>Porción recomendada: {getRecommendedPortion(food)}</p>
+            </div>
+
+            <div className="nutrition-card-grid">
+                {nutrientCards.map(card => (
+                    <div className="nutrition-card" key={card.label}>
+                        <span className="nutrition-card-label">{card.label}</span>
+                        <strong className="nutrition-card-value">{card.value}</strong>
+                    </div>
+                ))}
+            </div>
+        </section>
+    );
+};
+
 const FoodSectionExplorer: React.FC<FoodSectionExplorerProps> = ({ category, items }) => {
     const [activeFoodId, setActiveFoodId] = useState<string | null>(items[0]?.id ?? null);
     const trackRef = useRef<HTMLDivElement>(null);
@@ -160,6 +204,8 @@ const FoodSectionExplorer: React.FC<FoodSectionExplorerProps> = ({ category, ite
                             );
                         })}
                     </div>
+
+                    <NutritionSummaryPanel food={activeFood} />
                 </div>
 
                 <aside className="food-spotlight" key={activeFood.id}>
@@ -217,6 +263,7 @@ export const FoodGrid: React.FC<FoodGridProps> = ({
     title = 'Frutas y verduras',
     currentSectionIndex,
     totalSections,
+    finishLabel = 'Ir al Nivel 1',
     onPreviousSection,
     onNextSection,
     onFinishTutorial
@@ -282,9 +329,11 @@ export const FoodGrid: React.FC<FoodGridProps> = ({
 
                 <button
                     className={`btn-next ${isLastSection ? 'is-final' : ''}`}
+                    data-label={isLastSection ? finishLabel : undefined}
+                    aria-label={isLastSection ? finishLabel : 'Siguiente seccion'}
                     onClick={isLastSection ? onFinishTutorial : onNextSection}
                 >
-                    {isLastSection ? 'Ir al Nivel 1' : 'Siguiente sección →'}
+                    {isLastSection ? finishLabel : 'Siguiente sección →'}
                 </button>
             </main>
         </div>
