@@ -31,6 +31,14 @@ export class Nivel3Scene extends Phaser.Scene {
     private junkPool:        FoodItem[] = [];
     private waveInProgress = false;
 
+    // Wave checkpoint for game-over restart
+    private waveCheckpoint: {
+        waveNumber: number;
+        remainingAnimal: FoodItem[];
+        junkPool: FoodItem[];
+        savedInventory?: { id: string, categoria: string }[];
+    } | null = null;
+
     // Timer
     private timerSeconds = WAVE_TIME_NORMAL;
     private timerEvent?: Phaser.Time.TimerEvent;
@@ -184,7 +192,28 @@ export class Nivel3Scene extends Phaser.Scene {
         this.setupDragDrop();
 
         this.events.once('shutdown', () => this.stopTimer());
-        if (this.registry.get('introCompleted_Nivel3')) {
+
+        // Check for wave checkpoint (game-over in wave 2+)
+        const checkpoint = this.registry.get('nivel3_checkpoint') as {
+            waveNumber: number;
+            remainingAnimal: FoodItem[];
+            junkPool: FoodItem[];
+            savedInventory?: { id: string, categoria: string }[];
+        } | undefined;
+
+        if (checkpoint) {
+            this.registry.remove('nivel3_checkpoint');
+            this.remainingAnimal = [...checkpoint.remainingAnimal];
+            this.junkPool        = [...checkpoint.junkPool];
+            // startNextWave increments waveNumber, so set to one before the saved wave
+            this.waveNumber = checkpoint.waveNumber - 1;
+            
+            if (checkpoint.savedInventory) {
+                this.restoreInventory(checkpoint.savedInventory);
+            }
+            
+            this.time.delayedCall(400, () => this.startNextWave());
+        } else if (this.registry.get('introCompleted_Nivel3')) {
             this.time.delayedCall(400, () => this.initWavePools());
         } else {
             this.time.delayedCall(400, () => this.showIntroPlaton());
@@ -243,7 +272,18 @@ export class Nivel3Scene extends Phaser.Scene {
         this.waveAciertos   = 0;
         this.waveInProgress = false;
 
-        this.clearPlacedFoods(() => {
+        // Save checkpoint BEFORE splicing the pools
+        this.waveCheckpoint = {
+            waveNumber:     this.waveNumber,
+            remainingAnimal: [...this.remainingAnimal],
+            junkPool:        [...this.junkPool],
+            savedInventory:  this.placedFoods.map(f => ({ id: f.texture.key, categoria: f.getData("categoria") as string }))
+        };
+
+        // Reset foodContainer scroll position
+        if (this.foodContainer) this.foodContainer.x = this.buildFoodBarViewportX();
+
+        const proceed = () => {
             const aCount = Math.min(ANIMAL_PER_WAVE, this.remainingAnimal.length);
             this.waveCorrectTarget = aCount;
 
@@ -263,10 +303,55 @@ export class Nivel3Scene extends Phaser.Scene {
             this.populateFoodBar(foods);
             this.startTimer(isLastWave ? WAVE_TIME_LAST : WAVE_TIME_NORMAL);
             this.waveInProgress = true;
+        };
+
+        // Clear the basket if full (12 items), then proceed
+        const animalFull = this.placedFoods.filter(f => f.getData('basket') === this.animalSection).length >= 12;
+        if (animalFull) {
+            this.clearBasketFoods(this.animalSection, proceed);
+        } else {
+            proceed();
+        }
+    }
+
+    /** Returns the foodContainer's initial viewport X (mirrors buildFoodBarShell logic). */
+    private buildFoodBarViewportX(): number {
+        const { width } = this.scale;
+        const barWidth   = Math.round(width * 0.82);
+        const arrowWidth = 64;
+        const barLeft    = (width - barWidth) / 2;
+        return barLeft + arrowWidth;
+    }
+
+    /**
+     * Clears only the placed foods belonging to `panel`.
+     * Flashes the basket green, then tweens foods out.
+     */
+    private clearBasketFoods(panel: Phaser.GameObjects.Image, onDone?: () => void) {
+        const foods = this.placedFoods.filter(f => f.getData('basket') === panel);
+        if (foods.length === 0) { onDone?.(); return; }
+
+        panel.setTint(0x44ff44);
+        this.time.delayedCall(500, () => { panel.clearTint(); });
+
+        foods.forEach(s => { s.setData('basket', undefined); s.setData('slotRelY', undefined); });
+
+        const targets: Phaser.GameObjects.GameObject[] = [];
+        foods.forEach(sprite => {
+            const texto = sprite.getData('texto') as Phaser.GameObjects.Text | undefined;
+            if (texto) targets.push(texto);
+            targets.push(sprite);
+        });
+
+        this.placedFoods = this.placedFoods.filter(f => !foods.includes(f));
+
+        this.tweens.add({
+            targets, alpha: 0, y: '-=40', duration: 350, ease: 'Power2',
+            onComplete: () => { targets.forEach(obj => obj.destroy()); onDone?.(); }
         });
     }
 
-    private clearPlacedFoods(onDone: () => void) {
+    /* private clearPlacedFoods(onDone: () => void) {
         if (this.placedFoods.length === 0) { onDone(); return; }
 
         this.placedFoods.forEach(s => { s.setData('basket', undefined); s.setData('slotRelY', undefined); });
@@ -282,7 +367,7 @@ export class Nivel3Scene extends Phaser.Scene {
             targets, alpha: 0, y: '-=40', duration: 350, ease: 'Power2',
             onComplete: () => { targets.forEach(o => o.destroy()); this.placedFoods = []; onDone(); }
         });
-    }
+    } */
 
     private clearFoodBar() {
         if (!this.foodContainer) return;
@@ -411,6 +496,11 @@ export class Nivel3Scene extends Phaser.Scene {
         this.isTutorialActive = false;
         try { this.sound.play('sonido-error'); } catch { void 0; }
         this.mostrarPlaton(false);
+
+        // Save checkpoint so wave 2+ restarts from the same wave
+        if (this.waveNumber >= 2 && this.waveCheckpoint) {
+            this.registry.set('nivel3_checkpoint', this.waveCheckpoint);
+        }
 
         const { width, height } = this.scale;
         this.add.rectangle(width / 2, height / 2, width, height, 0x000000, 0.65).setDepth(100);
@@ -565,6 +655,13 @@ export class Nivel3Scene extends Phaser.Scene {
                 this.pulseSection();
 
                 this.waveAciertos++;
+
+                // Check if the basket is now full (12 items)
+                const basketFull = this.placedFoods.filter(f => f.getData('basket') === this.animalSection).length >= 12;
+                if (basketFull) {
+                    this.time.delayedCall(800, () => this.clearBasketFoods(this.animalSection));
+                }
+
                 if (this.waveAciertos >= this.waveCorrectTarget) {
                     this.time.delayedCall(800, () => this.onWaveComplete());
                 }
@@ -652,6 +749,47 @@ export class Nivel3Scene extends Phaser.Scene {
             if (dist < bestDist) { bestDist = dist; best = slot; }
         }
         return best;
+    }
+
+    private restoreInventory(saved: { id: string, categoria: string }[]) {
+        saved.forEach(item => {
+            const targetPanel = this.animalSection;
+            
+            const sprite = this.add.image(0, 0, item.id)
+                .setDisplaySize(FOOD_ITEM_SIZE, FOOD_ITEM_SIZE)
+                .setAlpha(1);
+            
+            const nameES = nutritionalInfo.find(n => n.id === item.id)?.nameES || item.id;
+            const texto = this.add.text(0, FOOD_LABEL_OFFSET, nameES, {
+                fontSize: '15px',
+                color: '#ffffff',
+                fontStyle: 'bold',
+                fontFamily: 'Arial, sans-serif',
+                stroke: '#5E412F',
+                strokeThickness: 4,
+            }).setOrigin(0.5).setAlpha(1);
+
+            sprite.setData("categoria", item.categoria);
+            sprite.setData("texto", texto);
+            
+            const slot = this.findNearestFreeInventorySlot(targetPanel, targetPanel.x, targetPanel.y);
+            if (slot) {
+                sprite.x = slot.x;
+                sprite.y = slot.y;
+                texto.x = slot.x;
+                texto.y = slot.y + FOOD_LABEL_OFFSET;
+                
+                sprite.setData("placed", true);
+                sprite.setData("basket", targetPanel);
+                sprite.setData("slotRelY", sprite.y - targetPanel.y);
+                this.placedFoods.push(sprite);
+                
+                sprite.setDepth(3);
+                texto.setDepth(3);
+                this.children.bringToTop(sprite);
+                this.children.bringToTop(texto);
+            }
+        });
     }
 
 

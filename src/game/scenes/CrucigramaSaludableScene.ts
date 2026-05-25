@@ -2,14 +2,7 @@ import * as Phaser from 'phaser';
 import { hoverScale } from "../../componentes/HoverScale";
 import { makeResponsiveVolver } from "../../componentes/ResponsiveVolver";
 
-interface WordConfig {
-    id: string;
-    answer: string;
-    hint: string;
-    startX: number;
-    startY: number;
-    horizontal: boolean;
-}
+import { type WordConfig, generateDynamicCrossword } from '../../data/crosswordGenerator';
 
 interface Cell {
     x: number;
@@ -22,17 +15,8 @@ interface Cell {
     numberText?: Phaser.GameObjects.Text;
 }
 
-const WORDS: WordConfig[] = [
-    { id: '1H', answer: 'CARBOHIDRATOS', hint: 'Principal fuente de energía del cuerpo, como el pan o la pasta.', startX: 2, startY: 5, horizontal: true },
-    { id: '2H', answer: 'MANZANA', hint: 'Fruta roja, verde o amarilla, muy común y saludable.', startX: 3, startY: 11, horizontal: true },
-    { id: '3V', answer: 'PROTEINAS', hint: 'Ayudan a formar músculos; se encuentran en carne, huevo y leguminosas.', startX: 4, startY: 4, horizontal: false },
-    { id: '4V', answer: 'CALORIAS', hint: 'Medida de la energía que nos aportan los alimentos.', startX: 6, startY: 2, horizontal: false },
-    { id: '5V', answer: 'ENERGIA', hint: 'Lo que nos da la comida para poder jugar, correr y pensar.', startX: 8, startY: 0, horizontal: false },
-    { id: '6V', answer: 'HIDRATACION', hint: 'Acción de tomar suficiente agua para mantener el cuerpo sano.', startX: 11, startY: 1, horizontal: false },
-    { id: '7V', answer: 'BROCOLI', hint: 'Vegetal verde que parece un arbolito.', startX: 13, startY: 3, horizontal: false }
-];
-
 export class CrucigramaSaludableScene extends Phaser.Scene {
+    private currentWords: WordConfig[] = [];
     private cells: Record<string, Cell> = {};
     private activeCellKey: string | null = null;
     private currentDirection: 'H' | 'V' = 'H';
@@ -44,6 +28,9 @@ export class CrucigramaSaludableScene extends Phaser.Scene {
     // UI Elements
     private uiContainer!: Phaser.GameObjects.Container;
     private centerContainer!: Phaser.GameObjects.Container;
+    private maxScrollY: number = 1000;
+    private maxCameraScroll: number = 0;
+    private visibleScreenHeight: number = 0;
 
     // Colors (Bosque Cálido)
     private colorVerde = 0x58B15B;
@@ -62,6 +49,7 @@ export class CrucigramaSaludableScene extends Phaser.Scene {
         this.activeCellKey = null;
         this.inputActive = true;
         this.currentDirection = 'H';
+        this.currentWords = generateDynamicCrossword(7);
     }
 
     preload() {
@@ -141,10 +129,10 @@ export class CrucigramaSaludableScene extends Phaser.Scene {
             this.buildGrid();
         }
         
-        // Dibujamos con un centro desplazado hacia abajo
-        this.drawGrid(-280, 520);
+        // Dibujamos con el top fijado debajo del título
+        this.drawGrid(-280, 170);
         this.drawHintsPanel(400, 520);
-        this.drawActionButtons(-280, 920);
+        this.drawActionButtons(400, 100);
 
         this.setupScrolling(scaleFactor);
     }
@@ -155,20 +143,23 @@ export class CrucigramaSaludableScene extends Phaser.Scene {
         // Calcular área visible real debido al modo ENVELOP
         const screenScale = Math.max(window.innerWidth / width, window.innerHeight / height);
         const visibleHeight = window.innerHeight / screenScale;
+        this.visibleScreenHeight = visibleHeight;
         
-        const contentHeight = 1000 * scaleFactor;
+        const contentHeight = this.maxScrollY * scaleFactor;
 
         // Siempre iniciamos arriba
         this.cameras.main.scrollY = 0;
 
         // Si el contenido cabe en la pantalla, no hay scroll
         if (contentHeight <= visibleHeight) {
+            this.maxCameraScroll = 0;
             return;
         }
 
         // Límites de scroll
         const minScroll = 0; 
         const maxScroll = contentHeight - visibleHeight + 40; // 40px de padding final
+        this.maxCameraScroll = maxScroll;
 
         let isDragging = false;
         let startY = 0;
@@ -182,7 +173,7 @@ export class CrucigramaSaludableScene extends Phaser.Scene {
 
         this.input.on('pointermove', (pointer: Phaser.Input.Pointer) => {
             if (isDragging) {
-                let newScroll = startScrollY - (pointer.y - startY);
+                const newScroll = startScrollY - (pointer.y - startY);
                 this.cameras.main.scrollY = Phaser.Math.Clamp(newScroll, minScroll, maxScroll);
             }
         });
@@ -190,8 +181,8 @@ export class CrucigramaSaludableScene extends Phaser.Scene {
         this.input.on('pointerup', () => { isDragging = false; });
         this.input.on('pointerupoutside', () => { isDragging = false; });
 
-        this.input.on('wheel', (_pointer: Phaser.Input.Pointer, _gameObjects: any[], _deltaX: number, deltaY: number) => {
-            let newScroll = this.cameras.main.scrollY + deltaY;
+        this.input.on('wheel', (_pointer: Phaser.Input.Pointer, _gameObjects: Phaser.GameObjects.GameObject[], _deltaX: number, deltaY: number) => {
+            const newScroll = this.cameras.main.scrollY + deltaY;
             this.cameras.main.scrollY = Phaser.Math.Clamp(newScroll, minScroll, maxScroll);
         });
     }
@@ -205,7 +196,7 @@ export class CrucigramaSaludableScene extends Phaser.Scene {
 
     private buildGrid() {
         this.cells = {};
-        for (const word of WORDS) {
+        for (const word of this.currentWords) {
             let cx = word.startX;
             let cy = word.startY;
 
@@ -229,7 +220,7 @@ export class CrucigramaSaludableScene extends Phaser.Scene {
         }
     }
 
-    private drawGrid(centerX: number, centerY: number) {
+    private drawGrid(centerX: number, topY: number) {
         const cellSize = 50;
         const padding = 5;
 
@@ -245,7 +236,9 @@ export class CrucigramaSaludableScene extends Phaser.Scene {
         const gridWidth = (maxX - minX + 1) * (cellSize + padding);
         const gridHeight = (maxY - minY + 1) * (cellSize + padding);
         const startDrawX = centerX - gridWidth / 2;
-        const startDrawY = centerY - gridHeight / 2;
+        const startDrawY = topY;
+        
+        this.maxScrollY = Math.max(1000, topY + gridHeight + 100);
 
         for (const key in this.cells) {
             const cell = this.cells[key];
@@ -272,7 +265,7 @@ export class CrucigramaSaludableScene extends Phaser.Scene {
             cell.text = text;
             this.centerContainer.add([rect, text]);
 
-            for (const word of WORDS) {
+            for (const word of this.currentWords) {
                 if (word.startX === cell.x && word.startY === cell.y) {
                     const numText = this.add.text(px - cellSize / 2 + 4, py - cellSize / 2 + 2, word.id.replace(/[HV]/g, ''), {
                         fontSize: '14px',
@@ -323,10 +316,10 @@ export class CrucigramaSaludableScene extends Phaser.Scene {
         };
 
         addSectionTitle('→ Horizontales');
-        WORDS.filter(w => w.horizontal).forEach(addHint);
+        this.currentWords.filter(w => w.horizontal).forEach(addHint);
         currentY += 10;
         addSectionTitle('↓ Verticales');
-        WORDS.filter(w => !w.horizontal).forEach(addHint);
+        this.currentWords.filter(w => !w.horizontal).forEach(addHint);
     }
 
     private drawActionButtons(startX: number, startY: number) {
@@ -395,7 +388,40 @@ export class CrucigramaSaludableScene extends Phaser.Scene {
         this.activeCellKey = key;
 
         if (this.activeCellKey && this.cells[this.activeCellKey]) {
-            this.cells[this.activeCellKey].rect?.setFillStyle(0xE8F5E9);
+            const activeCell = this.cells[this.activeCellKey];
+            activeCell.rect?.setFillStyle(0xE8F5E9);
+            
+            if (activeCell.rect) {
+                this.ensureCellVisible(activeCell.rect);
+            }
+        }
+    }
+
+    private ensureCellVisible(rect: Phaser.GameObjects.Rectangle) {
+        if (this.maxCameraScroll <= 0) return;
+
+        const worldY = this.centerContainer.y + rect.y * this.centerContainer.scaleY;
+        const currentScroll = this.cameras.main.scrollY;
+        
+        const topPadding = 250;
+        const bottomPadding = 150;
+        
+        let newScroll = currentScroll;
+        
+        if (worldY < currentScroll + topPadding) {
+            newScroll = worldY - topPadding;
+        } else if (worldY > currentScroll + this.visibleScreenHeight - bottomPadding) {
+            newScroll = worldY - this.visibleScreenHeight + bottomPadding;
+        }
+        
+        if (newScroll !== currentScroll) {
+            this.tweens.killTweensOf(this.cameras.main);
+            this.tweens.add({
+                targets: this.cameras.main,
+                scrollY: Phaser.Math.Clamp(newScroll, 0, this.maxCameraScroll),
+                duration: 250,
+                ease: 'Sine.easeOut'
+            });
         }
     }
 

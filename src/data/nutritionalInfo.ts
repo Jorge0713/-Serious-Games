@@ -2031,7 +2031,7 @@ export const nutritionalInfo: FoodItem[] = ([
         name: 'Milk',
         nameES: 'Leche',
         category: 'animal',
-        image: '/iconsFood/animal/milk-carton.png',
+        image: '/iconsFood/animal/milk_bottled.png',
         description: 'Excelente fuente de calcio asimilable y vitamina D, esenciales para el desarrollo y mantenimiento de los huesos y dientes. Aporta proteínas e hidratación.'
     },
     {
