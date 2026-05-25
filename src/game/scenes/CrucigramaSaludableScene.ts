@@ -28,6 +28,9 @@ export class CrucigramaSaludableScene extends Phaser.Scene {
     // UI Elements
     private uiContainer!: Phaser.GameObjects.Container;
     private centerContainer!: Phaser.GameObjects.Container;
+    private maxScrollY: number = 1000;
+    private maxCameraScroll: number = 0;
+    private visibleScreenHeight: number = 0;
 
     // Colors (Bosque Cálido)
     private colorVerde = 0x58B15B;
@@ -126,10 +129,10 @@ export class CrucigramaSaludableScene extends Phaser.Scene {
             this.buildGrid();
         }
         
-        // Dibujamos con un centro desplazado hacia abajo
-        this.drawGrid(-280, 520);
+        // Dibujamos con el top fijado debajo del título
+        this.drawGrid(-280, 170);
         this.drawHintsPanel(400, 520);
-        this.drawActionButtons(-280, 920);
+        this.drawActionButtons(400, 100);
 
         this.setupScrolling(scaleFactor);
     }
@@ -140,20 +143,23 @@ export class CrucigramaSaludableScene extends Phaser.Scene {
         // Calcular área visible real debido al modo ENVELOP
         const screenScale = Math.max(window.innerWidth / width, window.innerHeight / height);
         const visibleHeight = window.innerHeight / screenScale;
+        this.visibleScreenHeight = visibleHeight;
         
-        const contentHeight = 1000 * scaleFactor;
+        const contentHeight = this.maxScrollY * scaleFactor;
 
         // Siempre iniciamos arriba
         this.cameras.main.scrollY = 0;
 
         // Si el contenido cabe en la pantalla, no hay scroll
         if (contentHeight <= visibleHeight) {
+            this.maxCameraScroll = 0;
             return;
         }
 
         // Límites de scroll
         const minScroll = 0; 
         const maxScroll = contentHeight - visibleHeight + 40; // 40px de padding final
+        this.maxCameraScroll = maxScroll;
 
         let isDragging = false;
         let startY = 0;
@@ -214,7 +220,7 @@ export class CrucigramaSaludableScene extends Phaser.Scene {
         }
     }
 
-    private drawGrid(centerX: number, centerY: number) {
+    private drawGrid(centerX: number, topY: number) {
         const cellSize = 50;
         const padding = 5;
 
@@ -230,7 +236,9 @@ export class CrucigramaSaludableScene extends Phaser.Scene {
         const gridWidth = (maxX - minX + 1) * (cellSize + padding);
         const gridHeight = (maxY - minY + 1) * (cellSize + padding);
         const startDrawX = centerX - gridWidth / 2;
-        const startDrawY = centerY - gridHeight / 2;
+        const startDrawY = topY;
+        
+        this.maxScrollY = Math.max(1000, topY + gridHeight + 100);
 
         for (const key in this.cells) {
             const cell = this.cells[key];
@@ -380,7 +388,40 @@ export class CrucigramaSaludableScene extends Phaser.Scene {
         this.activeCellKey = key;
 
         if (this.activeCellKey && this.cells[this.activeCellKey]) {
-            this.cells[this.activeCellKey].rect?.setFillStyle(0xE8F5E9);
+            const activeCell = this.cells[this.activeCellKey];
+            activeCell.rect?.setFillStyle(0xE8F5E9);
+            
+            if (activeCell.rect) {
+                this.ensureCellVisible(activeCell.rect);
+            }
+        }
+    }
+
+    private ensureCellVisible(rect: Phaser.GameObjects.Rectangle) {
+        if (this.maxCameraScroll <= 0) return;
+
+        const worldY = this.centerContainer.y + rect.y * this.centerContainer.scaleY;
+        const currentScroll = this.cameras.main.scrollY;
+        
+        const topPadding = 250;
+        const bottomPadding = 150;
+        
+        let newScroll = currentScroll;
+        
+        if (worldY < currentScroll + topPadding) {
+            newScroll = worldY - topPadding;
+        } else if (worldY > currentScroll + this.visibleScreenHeight - bottomPadding) {
+            newScroll = worldY - this.visibleScreenHeight + bottomPadding;
+        }
+        
+        if (newScroll !== currentScroll) {
+            this.tweens.killTweensOf(this.cameras.main);
+            this.tweens.add({
+                targets: this.cameras.main,
+                scrollY: Phaser.Math.Clamp(newScroll, 0, this.maxCameraScroll),
+                duration: 250,
+                ease: 'Sine.easeOut'
+            });
         }
     }
 
