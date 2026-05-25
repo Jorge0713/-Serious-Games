@@ -1,6 +1,8 @@
 import * as Phaser from 'phaser';
 import { createDebugSkipButton } from '../systems/DebugSkipButton';
 import { showLevelCompleteOverlay } from '../systems/LevelCompleteOverlay';
+import { PlayerService } from '../../services/PlayerService';
+import { ProgressService } from '../../services/ProgressService';
 
 const FOOD_ITEM_SIZE = 70;
 const FOOD_ITEM_SPACING = 125;
@@ -115,8 +117,8 @@ export class Nivel3Scene extends Phaser.Scene {
         }).setOrigin(1, 0).setDepth(20);
 
         createDebugSkipButton(this, {
-            label: 'Saltar a conceptos',
-            nextScene: 'PreTutorialConceptosScene',
+            label: 'Saltar al roadmap',
+            nextScene: 'LevelSelectScene',
             soundKey: 'sonido-click',
         });
 
@@ -293,7 +295,7 @@ export class Nivel3Scene extends Phaser.Scene {
             }
         });
 
-        this.input.on('drop', (_pointer: Phaser.Input.Pointer, gameObject: DraggableImage, dropZone: Phaser.GameObjects.Zone) => {
+        this.input.on('drop', (_pointer: Phaser.Input.Pointer, gameObject: DraggableImage) => {
             if (gameObject.placed) return;
 
             if (gameObject.foodCategory === 'animal') {
@@ -409,14 +411,24 @@ export class Nivel3Scene extends Phaser.Scene {
 
     // ── Pantalla de victoria ──────────────────────────────────────────────────
     private showWin() {
+        this.guardarProgreso();
+
         showLevelCompleteOverlay(this, {
             title: '\u00A1NIVEL COMPLETADO!',
-            message: 'Identificaste los alimentos de origen animal. Ahora repasaremos conceptos clave antes del siguiente reto.',
+            message: 'Identificaste los alimentos de origen animal. Vuelve al recorrido para revisar tu avance.',
             scoreText: `Puntos: ${this.score}`,
-            buttonLabel: 'Ver conceptos',
-            nextScene: 'PreTutorialConceptosScene',
+            buttonLabel: 'Volver al recorrido',
+            nextScene: 'LevelSelectScene',
             soundKey: 'level_win',
         });
+    }
+
+    private guardarProgreso(): void {
+        const jugador = PlayerService.obtenerJugadorActivo();
+        if (!jugador) return;
+
+        const progreso = ProgressService.completarNivel(jugador.progreso, 3, this.score);
+        PlayerService.actualizarProgreso(jugador.id, progreso);
     }
 
     // ── Update: Recorte manual (Culling) ──────────────────────────────────────

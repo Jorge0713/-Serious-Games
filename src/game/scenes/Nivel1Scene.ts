@@ -1,6 +1,8 @@
 import * as Phaser from 'phaser';
 import { createDebugSkipButton } from '../systems/DebugSkipButton';
 import { showLevelCompleteOverlay } from '../systems/LevelCompleteOverlay';
+import { PlayerService } from '../../services/PlayerService';
+import { ProgressService } from '../../services/ProgressService';
 
 const FOOD_ITEM_SIZE = 70;
 const FOOD_ITEM_SPACING = 125;
@@ -108,8 +110,8 @@ export class Nivel1Scene extends Phaser.Scene {
         }).setOrigin(1, 0).setDepth(20);
 
         createDebugSkipButton(this, {
-            label: 'Saltar a Nivel 2',
-            nextScene: 'Nivel2Scene',
+            label: 'Saltar al roadmap',
+            nextScene: 'LevelSelectScene',
             soundKey: 'sonido-click',
         });
 
@@ -474,14 +476,24 @@ export class Nivel1Scene extends Phaser.Scene {
      * Muestra la pantalla de victoria al acomodar todas las frutas y verduras
      */
     private mostrarPantallaFinal() {
+        this.guardarProgreso();
+
         showLevelCompleteOverlay(this, {
             title: '\u00A1EXCELENTE TRABAJO!',
-            message: 'Ordenaste frutas y verduras en su lugar correcto. Ahora vamos con cereales y leguminosas.',
+            message: 'Ordenaste frutas y verduras en su lugar correcto. Vuelve al recorrido para seguir avanzando.',
             scoreText: `Puntos: ${this.score}`,
-            buttonLabel: 'Ir al Nivel 2',
-            nextScene: 'Nivel2Scene',
+            buttonLabel: 'Volver al recorrido',
+            nextScene: 'LevelSelectScene',
             soundKey: 'object_win',
             clickSoundKey: 'sonido-click',
         });
+    }
+
+    private guardarProgreso(): void {
+        const jugador = PlayerService.obtenerJugadorActivo();
+        if (!jugador) return;
+
+        const progreso = ProgressService.completarNivel(jugador.progreso, 1, this.score);
+        PlayerService.actualizarProgreso(jugador.id, progreso);
     }
 }

@@ -95,7 +95,7 @@ export const PreTutorialConceptos: React.FC<PreTutorialConceptosProps> = ({ onBa
 
     // Sonidos pre-cargados
     useEffect(() => {
-        const hoverAudio = new Audio('/Sound/hiverSound.mp3');
+        const hoverAudio = new Audio('/Sound/hoverSound.mp3');
         const clickAudio = new Audio('/Sound/Click.mp3');
         hoverAudio.load();
         clickAudio.load();

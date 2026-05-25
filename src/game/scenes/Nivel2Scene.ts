@@ -1,6 +1,8 @@
 import * as Phaser from 'phaser';
 import { createDebugSkipButton } from '../systems/DebugSkipButton';
 import { showLevelCompleteOverlay } from '../systems/LevelCompleteOverlay';
+import { PlayerService } from '../../services/PlayerService';
+import { ProgressService } from '../../services/ProgressService';
 
 const FOOD_ITEM_SIZE = 70;
 const FOOD_ITEM_SPACING = 125;
@@ -109,8 +111,8 @@ export class Nivel2Scene extends Phaser.Scene {
         }).setOrigin(1, 0).setDepth(20);
 
         createDebugSkipButton(this, {
-            label: 'Saltar a Nivel 3',
-            nextScene: 'Nivel3Scene',
+            label: 'Saltar al roadmap',
+            nextScene: 'LevelSelectScene',
             soundKey: 'sonido-click',
         });
 
@@ -449,14 +451,24 @@ export class Nivel2Scene extends Phaser.Scene {
     }
 
     private mostrarPantallaFinal() {
+        this.guardarProgreso();
+
         showLevelCompleteOverlay(this, {
             title: '\u00A1FELICIDADES!',
-            message: 'Completaste cereales y leguminosas. Ya puedes pasar al reto de origen animal.',
+            message: 'Completaste cereales y leguminosas. Vuelve al recorrido para seguir avanzando.',
             scoreText: `Puntos: ${this.score}`,
-            buttonLabel: 'Ir al Nivel 3',
-            nextScene: 'Nivel3Scene',
+            buttonLabel: 'Volver al recorrido',
+            nextScene: 'LevelSelectScene',
             soundKey: 'object_win',
             clickSoundKey: 'sonido-click',
         });
+    }
+
+    private guardarProgreso(): void {
+        const jugador = PlayerService.obtenerJugadorActivo();
+        if (!jugador) return;
+
+        const progreso = ProgressService.completarNivel(jugador.progreso, 2, this.score);
+        PlayerService.actualizarProgreso(jugador.id, progreso);
     }
 }

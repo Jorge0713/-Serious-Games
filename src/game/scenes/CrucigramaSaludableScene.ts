@@ -61,7 +61,6 @@ export class CrucigramaSaludableScene extends Phaser.Scene {
         this.cells = {};
         this.activeCellKey = null;
         this.inputActive = true;
-        this.hintTexts = [];
         this.currentDirection = 'H';
     }
 
