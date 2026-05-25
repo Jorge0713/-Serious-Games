@@ -140,13 +140,13 @@ function App() {
     startPhaserScene(tutorialNextScene);
   }, [startPhaserScene, tutorialNextScene]);
 
-  const handlePreviousSection = () => {
-    setCurrentSectionIndex(index => Math.max(0, index - 1));
-  };
-
   const handleNextSection = () => {
     setCurrentSectionIndex(index => Math.min(activeTutorialSections.length - 1, index + 1));
   };
+
+  const handleBackToLevelSelect = useCallback(() => {
+    startPhaserScene('LevelSelectScene');
+  }, [startPhaserScene]);
 
   useEffect(() => {
     window.showTutorial = (
@@ -198,7 +198,7 @@ function App() {
             currentSectionIndex={currentSectionIndex}
             totalSections={activeTutorialSections.length}
             finishLabel={tutorialFinishLabel}
-            onPreviousSection={handlePreviousSection}
+            onBackToLevelSelect={handleBackToLevelSelect}
             onNextSection={handleNextSection}
             onFinishTutorial={finishTutorial}
           />

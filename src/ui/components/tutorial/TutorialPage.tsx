@@ -8,7 +8,7 @@ interface TutorialPageProps {
     currentSectionIndex: number;
     totalSections: number;
     finishLabel?: string;
-    onPreviousSection: () => void;
+    onBackToLevelSelect: () => void;
     onNextSection: () => void;
     onFinishTutorial: () => void;
 }
@@ -19,7 +19,7 @@ export const TutorialPage: React.FC<TutorialPageProps> = ({
     currentSectionIndex,
     totalSections,
     finishLabel,
-    onPreviousSection,
+    onBackToLevelSelect,
     onNextSection,
     onFinishTutorial
 }) => {
@@ -35,7 +35,7 @@ export const TutorialPage: React.FC<TutorialPageProps> = ({
             currentSectionIndex={currentSectionIndex}
             totalSections={totalSections}
             finishLabel={finishLabel}
-            onPreviousSection={onPreviousSection}
+            onBackToLevelSelect={onBackToLevelSelect}
             onNextSection={onNextSection}
             onFinishTutorial={onFinishTutorial}
         />

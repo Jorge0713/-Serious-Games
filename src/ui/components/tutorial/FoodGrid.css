@@ -167,6 +167,7 @@
 }
 
 .btn-back,
+.btn-level-select-back,
 .btn-next,
 .circle-control {
     font-family: inherit;
@@ -178,6 +179,24 @@
         box-shadow 180ms ease,
         background 180ms ease,
         border-color 180ms ease;
+}
+
+.btn-level-select-back {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 180px;
+    height: 80px;
+    color: var(--ink);
+    background: transparent url('/assets/Buttons/SecondaryButton.png') center / 100% 100% no-repeat;
+    border: 0;
+    font-family: var(--display-font);
+    font-size: 30px;
+    font-weight: 1000;
+    line-height: 1;
+    image-rendering: pixelated;
+    text-align: center;
+
 }
 
 .btn-back {
@@ -203,6 +222,10 @@
 }
 
 .section-progress {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 20;
     display: inline-flex;
     align-items: center;
     min-height: 42px;
@@ -215,6 +238,14 @@
     font-family: var(--display-font);
     font-size: 16px;
     font-weight: 900;
+}
+
+.btn-level-select-back:hover {
+    transform: translateY(-2px) scale(1.04);
+}
+
+.btn-level-select-back:active {
+    transform: scale(0.95);
 }
 
 .btn-back:hover .btn-back-img {
@@ -860,14 +891,21 @@
     .section-nav {
         top: 12px;
         left: 12px;
-        right: 12px;
         align-items: flex-start;
-        flex-direction: column;
     }
 
-    .btn-back {
-        max-width: calc(100% - 24px);
-        font-size: 21px;
+    .btn-level-select-back {
+        width: 154px;
+        height: 70px;
+        font-size: 19px;
+    }
+
+    .section-progress {
+        top: 12px;
+        right: 12px;
+        min-height: 36px;
+        padding: 7px 12px;
+        font-size: 14px;
     }
 
     .tutorial-title {

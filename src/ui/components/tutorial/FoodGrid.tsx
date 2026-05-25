@@ -10,7 +10,7 @@ interface FoodGridProps {
     currentSectionIndex: number;
     totalSections: number;
     finishLabel?: string;
-    onPreviousSection: () => void;
+    onBackToLevelSelect: () => void;
     onNextSection: () => void;
     onFinishTutorial: () => void;
 }
@@ -39,6 +39,15 @@ const nutrientMatches = [
     { match: 'carbohidratos', label: 'Carbohidratos' },
     { match: 'grasas saludables', label: 'Grasas saludables' }
 ];
+
+const HOVER_SOUND_PATH = '/Sound/hoverSound.mp3';
+const CLICK_SOUND_PATH = '/Sound/Click.mp3';
+
+const playUiSound = (path: string, volume: number): void => {
+    const audio = new Audio(path);
+    audio.volume = volume;
+    audio.play().catch(() => {});
+};
 
 const fallbackImages: Record<FoodCategory, string> = {
     fruit: '/iconsFood/frutas/apple.png',
@@ -264,12 +273,11 @@ export const FoodGrid: React.FC<FoodGridProps> = ({
     currentSectionIndex,
     totalSections,
     finishLabel = 'Ir al Nivel 1',
-    onPreviousSection,
+    onBackToLevelSelect,
     onNextSection,
     onFinishTutorial
 }) => {
     const containerRef = useRef<HTMLDivElement>(null);
-    const isFirstSection = currentSectionIndex === 0;
     const isLastSection = currentSectionIndex === totalSections - 1;
     const groupedFoods = foods.reduce((groups, food) => {
         if (!groups[food.category]) {
@@ -278,6 +286,13 @@ export const FoodGrid: React.FC<FoodGridProps> = ({
         groups[food.category].push(food);
         return groups;
     }, {} as Record<FoodItem['category'], FoodItem[]>);
+
+    useEffect(() => {
+        const hoverAudio = new Audio(HOVER_SOUND_PATH);
+        const clickAudio = new Audio(CLICK_SOUND_PATH);
+        hoverAudio.load();
+        clickAudio.load();
+    }, []);
 
     useEffect(() => {
         containerRef.current?.scrollTo({
@@ -291,16 +306,15 @@ export const FoodGrid: React.FC<FoodGridProps> = ({
             <nav className="section-nav" aria-label="Navegación del tutorial">
                 <button
                     type="button"
-                    className="btn-back"
-                    onClick={onPreviousSection}
-                    disabled={isFirstSection}
-                    aria-label="Volver"
+                    className="btn-level-select-back"
+                    onPointerEnter={() => playUiSound(HOVER_SOUND_PATH, 0.08)}
+                    onClick={() => {
+                        playUiSound(CLICK_SOUND_PATH, 0.22);
+                        onBackToLevelSelect();
+                    }}
+                    aria-label="Volver a seleccion de niveles"
                 >
-                    <img
-                        src="/assets/Buttons/BtnBack.png"
-                        alt=""
-                        className="btn-back-img"
-                    />
+                    &lt; Volver
                 </button>
 
                 <span className="section-progress">
@@ -331,7 +345,16 @@ export const FoodGrid: React.FC<FoodGridProps> = ({
                     className={`btn-next ${isLastSection ? 'is-final' : ''}`}
                     data-label={isLastSection ? finishLabel : undefined}
                     aria-label={isLastSection ? finishLabel : 'Siguiente seccion'}
-                    onClick={isLastSection ? onFinishTutorial : onNextSection}
+                    onPointerEnter={() => playUiSound(HOVER_SOUND_PATH, 0.08)}
+                    onClick={() => {
+                        playUiSound(CLICK_SOUND_PATH, 0.22);
+                        if (isLastSection) {
+                            onFinishTutorial();
+                            return;
+                        }
+
+                        onNextSection();
+                    }}
                 >
                     {isLastSection ? finishLabel : 'Siguiente sección →'}
                 </button>
