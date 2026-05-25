@@ -14,7 +14,7 @@
 }
 
 .conceptos-bg {
-    position: absolute;
+    position: fixed;
     inset: 0;
     background-size: cover;
     background-position: center;
@@ -22,7 +22,7 @@
 }
 
 .conceptos-overlay {
-    position: absolute;
+    position: fixed;
     inset: 0;
     background-color: rgba(245, 251, 242, 0.92); /* #F5FBF2 */
     z-index: 2;
@@ -37,7 +37,7 @@
     cursor: pointer;
     z-index: 10;
     transition: transform 0.2s;
-    width: 100px;
+    width: 140px;
     padding: 0;
 }
 
@@ -165,10 +165,15 @@
     background: rgba(245, 251, 242, 0.98);
     border: 4px solid #5D4037;
     box-shadow: 10px 10px 0px rgba(93, 64, 55, 0.18);
-    padding: 30px;
     display: flex;
     flex-direction: column;
+    overflow: hidden;
+}
+
+.conceptos-main-scrollable {
+    flex-grow: 1;
     overflow-y: auto;
+    padding: 30px 30px 0 30px;
 }
 
 .main-header {
@@ -302,9 +307,10 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-top: auto;
-    padding-top: 20px;
+    padding: 20px 30px 30px 30px;
     border-top: 3px solid rgba(141, 110, 99, 0.18);
+    background: rgba(245, 251, 242, 0.98);
+    flex-shrink: 0;
 }
 
 .nav-btn {
@@ -365,21 +371,21 @@
 
 /* Scrollbars for panels */
 .conceptos-sidebar::-webkit-scrollbar,
-.conceptos-main::-webkit-scrollbar {
+.conceptos-main-scrollable::-webkit-scrollbar {
     width: 8px;
 }
 .conceptos-sidebar::-webkit-scrollbar-track,
-.conceptos-main::-webkit-scrollbar-track {
+.conceptos-main-scrollable::-webkit-scrollbar-track {
     background: rgba(141, 110, 99, 0.1);
 }
 .conceptos-sidebar::-webkit-scrollbar-thumb,
-.conceptos-main::-webkit-scrollbar-thumb {
+.conceptos-main-scrollable::-webkit-scrollbar-thumb {
     background: #8D6E63;
     border-radius: 4px;
 }
 
-/* Responsividad para pantallas pequeñas o muy estiradas */
-@media (max-width: 1100px), (max-height: 800px) {
+/* Responsividad para pantallas pequeñas */
+@media (max-width: 1000px) {
     .conceptos-layout {
         flex-direction: column;
         height: auto;

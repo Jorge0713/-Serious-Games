@@ -87,36 +87,41 @@ export class CrucigramaSaludableScene extends Phaser.Scene {
     private setupUI() {
         const { width, height } = this.scale;
         
+        // Calcular área visible real debido al modo ENVELOP
+        const screenScale = Math.max(window.innerWidth / width, window.innerHeight / height);
+        const visibleTop = (height - window.innerHeight / screenScale) / 2;
+        
         // Limpiar si ya existe
         if (this.uiContainer) this.uiContainer.destroy();
         this.uiContainer = this.add.container(0, 0);
 
-        // Center container para escala responsiva
-        const scaleFactor = Math.min(width / 1600, height / 900);
-        this.centerContainer = this.add.container(width / 2, height / 2 + 50);
+        // Center container alineado a la parte visible superior
+        const scaleFactor = Math.min(window.innerWidth / 1300, 1);
+        this.centerContainer = this.add.container(width / 2, visibleTop);
         this.centerContainer.setScale(scaleFactor);
         this.uiContainer.add(this.centerContainer);
 
-        // Título
-        const title = this.add.text(width * 0.1, 40, 'Crucigrama Saludable', {
+        // Título ahora empieza en coordenadas positivas relativas a visibleTop
+        const title = this.add.text(-630, 40, 'Crucigrama Saludable', {
             fontSize: '48px',
             color: this.colorMaderaOscuro,
             fontFamily: 'Arial',
             fontStyle: 'bold'
         });
 
-        const subtitle = this.add.text(width * 0.1, 100, 'Encuentra las palabras ocultas relacionadas con nutrición.', {
+        const subtitle = this.add.text(-630, 100, 'Encuentra las palabras ocultas relacionadas con nutrición.', {
             fontSize: '24px',
             color: this.colorMaderaOscuro,
             fontFamily: 'Arial'
         });
 
-        // uiContainer is removed as elements are already added to the scene
+        this.centerContainer.add([title, subtitle]);
 
         const btnVolver = this.add.image(150, 100, 'btn-Volver')
             .setInteractive({ useHandCursor: true });
 
         makeResponsiveVolver(this, btnVolver);
+        btnVolver.setScrollFactor(0); // Fijo en pantalla
 
         hoverScale(this, btnVolver, {
             scaleOver: 0.45,
@@ -129,17 +134,66 @@ export class CrucigramaSaludableScene extends Phaser.Scene {
             this.scene.start('MainMenu');
         });
 
-        this.uiContainer.add([title, subtitle, btnVolver]);
+        this.uiContainer.add([btnVolver]);
 
         // Re-construir grid de datos si está vacío
         if (Object.keys(this.cells).length === 0) {
             this.buildGrid();
         }
         
-        // Dibujamos con coordenadas relativas al centro
-        this.drawGrid(-280, -50);
-        this.drawHintsPanel(380, -50);
-        this.drawActionButtons(0, 380);
+        // Dibujamos con un centro desplazado hacia abajo
+        this.drawGrid(-280, 520);
+        this.drawHintsPanel(400, 520);
+        this.drawActionButtons(-280, 920);
+
+        this.setupScrolling(scaleFactor);
+    }
+
+    private setupScrolling(scaleFactor: number) {
+        const { width, height } = this.scale;
+        
+        // Calcular área visible real debido al modo ENVELOP
+        const screenScale = Math.max(window.innerWidth / width, window.innerHeight / height);
+        const visibleHeight = window.innerHeight / screenScale;
+        
+        const contentHeight = 1000 * scaleFactor;
+
+        // Siempre iniciamos arriba
+        this.cameras.main.scrollY = 0;
+
+        // Si el contenido cabe en la pantalla, no hay scroll
+        if (contentHeight <= visibleHeight) {
+            return;
+        }
+
+        // Límites de scroll
+        const minScroll = 0; 
+        const maxScroll = contentHeight - visibleHeight + 40; // 40px de padding final
+
+        let isDragging = false;
+        let startY = 0;
+        let startScrollY = 0;
+
+        this.input.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
+            isDragging = true;
+            startY = pointer.y;
+            startScrollY = this.cameras.main.scrollY;
+        });
+
+        this.input.on('pointermove', (pointer: Phaser.Input.Pointer) => {
+            if (isDragging) {
+                let newScroll = startScrollY - (pointer.y - startY);
+                this.cameras.main.scrollY = Phaser.Math.Clamp(newScroll, minScroll, maxScroll);
+            }
+        });
+
+        this.input.on('pointerup', () => { isDragging = false; });
+        this.input.on('pointerupoutside', () => { isDragging = false; });
+
+        this.input.on('wheel', (_pointer: Phaser.Input.Pointer, _gameObjects: any[], _deltaX: number, deltaY: number) => {
+            let newScroll = this.cameras.main.scrollY + deltaY;
+            this.cameras.main.scrollY = Phaser.Math.Clamp(newScroll, minScroll, maxScroll);
+        });
     }
 
     private handleResize() {
@@ -463,12 +517,14 @@ export class CrucigramaSaludableScene extends Phaser.Scene {
         this.inputActive = false;
         this.winSound.play();
         const { width, height } = this.scale;
-        const overlay = this.add.rectangle(width / 2, height / 2, width, height, 0x000000, 0.6).setDepth(100).setAlpha(0);
-        const card = this.add.rectangle(width / 2, height / 2, 700, 400, 0xFFFFFF).setStrokeStyle(6, this.colorVerde).setDepth(101);
-        const t1 = this.add.text(width / 2, height / 2 - 80, '¡Excelente Trabajo!', { fontSize: '56px', color: '#2E7D32', fontFamily: 'Arial', fontStyle: 'bold' }).setOrigin(0.5).setDepth(101);
-        const t2 = this.add.text(width / 2, height / 2 + 10, 'Has completado el crucigrama saludable.', { fontSize: '28px', color: this.colorMaderaOscuro, fontFamily: 'Arial' }).setOrigin(0.5).setDepth(101);
-        const btn = this.add.rectangle(width / 2, height / 2 + 120, 300, 70, this.colorVerde).setInteractive({ useHandCursor: true }).setDepth(101);
-        const bt = this.add.text(width / 2, height / 2 + 120, 'Continuar', { fontSize: '32px', color: '#FFFFFF', fontFamily: 'Arial', fontStyle: 'bold' }).setOrigin(0.5).setDepth(102);
+        const scrollY = this.cameras.main.scrollY;
+
+        const overlay = this.add.rectangle(width / 2, height / 2 + scrollY, width, height + 1000, 0x000000, 0.6).setDepth(100).setAlpha(0);
+        const card = this.add.rectangle(width / 2, height / 2 + scrollY, 700, 400, 0xFFFFFF).setStrokeStyle(6, this.colorVerde).setDepth(101);
+        const t1 = this.add.text(width / 2, height / 2 - 80 + scrollY, '¡Excelente Trabajo!', { fontSize: '56px', color: '#2E7D32', fontFamily: 'Arial', fontStyle: 'bold' }).setOrigin(0.5).setDepth(101);
+        const t2 = this.add.text(width / 2, height / 2 + 10 + scrollY, 'Has completado el crucigrama saludable.', { fontSize: '28px', color: this.colorMaderaOscuro, fontFamily: 'Arial' }).setOrigin(0.5).setDepth(101);
+        const btn = this.add.rectangle(width / 2, height / 2 + 120 + scrollY, 300, 70, this.colorVerde).setInteractive({ useHandCursor: true }).setDepth(101);
+        const bt = this.add.text(width / 2, height / 2 + 120 + scrollY, 'Continuar', { fontSize: '32px', color: '#FFFFFF', fontFamily: 'Arial', fontStyle: 'bold' }).setOrigin(0.5).setDepth(102);
 
         btn.on('pointerover', () => { this.hoverSound.play(); btn.setFillStyle(0x4CAF50); });
         btn.on('pointerout', () => { btn.setFillStyle(this.colorVerde); });

@@ -1561,7 +1561,7 @@ export const nutritionalInfo: FoodItem[] = ([
         id: 'ginger',
         name: 'Ginger',
         nameES: 'Jengibre',
-        category: 'vegetable',
+        category: 'cereal',
         image: '/iconsFood/verduras/ginger.png',
         description: 'Posee propiedades antiinflamatorias y antioxidantes potentes. Ayuda a reducir náuseas, mejorar la digestión y fortalecer el sistema inmune.'
     },

@@ -22,34 +22,36 @@ export const ConceptosMain: React.FC<ConceptosMainProps> = ({
 }) => {
     return (
         <main className="conceptos-main">
-            <div className="main-header">
-                <div className="main-icon-circle">{concept.icon}</div>
-                <div className="main-titles">
-                    <h2>{concept.title}</h2>
-                    <h3>{concept.subtitle}</h3>
-                </div>
-            </div>
-
-            <div className="main-info-box">
-                <div className="info-accent"></div>
-                <div className="info-content">
-                    <h4>¿QUÉ ES?</h4>
-                    <p>{concept.body}</p>
-                    <p className="callout">{concept.callout}</p>
-                </div>
-            </div>
-
-            <h4 className="examples-title">{concept.examplesTitle.toUpperCase()}</h4>
-            <div className="examples-grid">
-                {concept.examples.map((ex, idx) => (
-                    <div key={idx} className="example-card">
-                        <div className="example-img-wrapper">
-                            <img src={ex.path} alt={ex.label} />
-                        </div>
-                        <div className="example-label">{ex.label}</div>
-                        <div className="example-note">{ex.note}</div>
+            <div className="conceptos-main-scrollable">
+                <div className="main-header">
+                    <div className="main-icon-circle">{concept.icon}</div>
+                    <div className="main-titles">
+                        <h2>{concept.title}</h2>
+                        <h3>{concept.subtitle}</h3>
                     </div>
-                ))}
+                </div>
+
+                <div className="main-info-box">
+                    <div className="info-accent"></div>
+                    <div className="info-content">
+                        <h4>¿QUÉ ES?</h4>
+                        <p>{concept.body}</p>
+                        <p className="callout">{concept.callout}</p>
+                    </div>
+                </div>
+
+                <h4 className="examples-title">{concept.examplesTitle.toUpperCase()}</h4>
+                <div className="examples-grid">
+                    {concept.examples.map((ex, idx) => (
+                        <div key={idx} className="example-card">
+                            <div className="example-img-wrapper">
+                                <img src={ex.path} alt={ex.label} />
+                            </div>
+                            <div className="example-label">{ex.label}</div>
+                            <div className="example-note">{ex.note}</div>
+                        </div>
+                    ))}
+                </div>
             </div>
 
             {/* Navigation */}
