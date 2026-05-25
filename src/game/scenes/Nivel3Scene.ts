@@ -33,6 +33,7 @@ export class Nivel3Scene extends Phaser.Scene {
         waveNumber: number;
         remainingAnimal: FoodItem[];
         junkPool: FoodItem[];
+        savedInventory?: { id: string, categoria: string }[];
     } | null = null;
 
     // Timer
@@ -181,6 +182,7 @@ export class Nivel3Scene extends Phaser.Scene {
             waveNumber: number;
             remainingAnimal: FoodItem[];
             junkPool: FoodItem[];
+            savedInventory?: { id: string, categoria: string }[];
         } | undefined;
 
         if (checkpoint) {
@@ -189,6 +191,11 @@ export class Nivel3Scene extends Phaser.Scene {
             this.junkPool        = [...checkpoint.junkPool];
             // startNextWave increments waveNumber, so set to one before the saved wave
             this.waveNumber = checkpoint.waveNumber - 1;
+            
+            if (checkpoint.savedInventory) {
+                this.restoreInventory(checkpoint.savedInventory);
+            }
+            
             this.time.delayedCall(400, () => this.startNextWave());
         } else if (this.registry.get('introCompleted_Nivel3')) {
             this.time.delayedCall(400, () => this.initWavePools());
@@ -225,6 +232,7 @@ export class Nivel3Scene extends Phaser.Scene {
             waveNumber:     this.waveNumber,
             remainingAnimal: [...this.remainingAnimal],
             junkPool:        [...this.junkPool],
+            savedInventory:  this.placedFoods.map(f => ({ id: f.texture.key, categoria: f.getData("categoria") as string }))
         };
 
         // Reset foodContainer scroll position
@@ -696,6 +704,47 @@ export class Nivel3Scene extends Phaser.Scene {
             if (dist < bestDist) { bestDist = dist; best = slot; }
         }
         return best;
+    }
+
+    private restoreInventory(saved: { id: string, categoria: string }[]) {
+        saved.forEach(item => {
+            const targetPanel = this.animalSection;
+            
+            const sprite = this.add.image(0, 0, item.id)
+                .setDisplaySize(FOOD_ITEM_SIZE, FOOD_ITEM_SIZE)
+                .setAlpha(1);
+            
+            const nameES = nutritionalInfo.find(n => n.id === item.id)?.nameES || item.id;
+            const texto = this.add.text(0, FOOD_LABEL_OFFSET, nameES, {
+                fontSize: '15px',
+                color: '#ffffff',
+                fontStyle: 'bold',
+                fontFamily: 'Arial, sans-serif',
+                stroke: '#5E412F',
+                strokeThickness: 4,
+            }).setOrigin(0.5).setAlpha(1);
+
+            sprite.setData("categoria", item.categoria);
+            sprite.setData("texto", texto);
+            
+            const slot = this.findNearestFreeInventorySlot(targetPanel, targetPanel.x, targetPanel.y);
+            if (slot) {
+                sprite.x = slot.x;
+                sprite.y = slot.y;
+                texto.x = slot.x;
+                texto.y = slot.y + FOOD_LABEL_OFFSET;
+                
+                sprite.setData("placed", true);
+                sprite.setData("basket", targetPanel);
+                sprite.setData("slotRelY", sprite.y - targetPanel.y);
+                this.placedFoods.push(sprite);
+                
+                sprite.setDepth(3);
+                texto.setDepth(3);
+                this.children.bringToTop(sprite);
+                this.children.bringToTop(texto);
+            }
+        });
     }
 
 
