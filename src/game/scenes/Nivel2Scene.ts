@@ -1,14 +1,9 @@
 import * as Phaser from 'phaser';
 import { createDebugSkipButton } from '../systems/DebugSkipButton';
 import { showLevelCompleteOverlay } from '../systems/LevelCompleteOverlay';
-<<<<<<< HEAD
-import { PlayerService } from '../../services/PlayerService';
-import { ProgressService } from '../../services/ProgressService';
-=======
 import { nutritionalInfo } from '../../data/nutritionalInfo';
 import type { FoodItem } from '../../data/nutritionalInfo';
 import { getErrorMessage } from '../../data/errorMessages';
->>>>>>> refs/remotes/origin/rama-Front
 
 const FOOD_ITEM_SIZE       = 70;
 const FOOD_ITEM_SPACING    = 125;
@@ -121,13 +116,7 @@ export class Nivel2Scene extends Phaser.Scene {
         }).setOrigin(0.5);
 
         createDebugSkipButton(this, {
-<<<<<<< HEAD
-            label: 'Saltar al roadmap',
-            nextScene: 'LevelSelectScene',
-            soundKey: 'sonido-click',
-=======
             label: 'Saltar a Nivel 3', nextScene: 'Nivel3Scene', soundKey: 'sonido-click',
->>>>>>> refs/remotes/origin/rama-Front
         });
 
         // CANASTAS
@@ -739,28 +728,6 @@ export class Nivel2Scene extends Phaser.Scene {
         });
     }
 
-<<<<<<< HEAD
-    private mostrarPantallaFinal() {
-        this.guardarProgreso();
-
-        showLevelCompleteOverlay(this, {
-            title: '\u00A1FELICIDADES!',
-            message: 'Completaste cereales y leguminosas. Vuelve al recorrido para seguir avanzando.',
-            scoreText: `Puntos: ${this.score}`,
-            buttonLabel: 'Volver al recorrido',
-            nextScene: 'LevelSelectScene',
-            soundKey: 'object_win',
-            clickSoundKey: 'sonido-click',
-        });
-    }
-
-    private guardarProgreso(): void {
-        const jugador = PlayerService.obtenerJugadorActivo();
-        if (!jugador) return;
-
-        const progreso = ProgressService.completarNivel(jugador.progreso, 2, this.score);
-        PlayerService.actualizarProgreso(jugador.id, progreso);
-=======
     // ─── EDUCATIONAL FEEDBACK ─────────────────────────────────────────────────
 
     private clearToast() {
@@ -925,6 +892,5 @@ export class Nivel2Scene extends Phaser.Scene {
             const texto = food.getData('texto') as Phaser.GameObjects.Text | undefined;
             if (texto) texto.y = food.y + FOOD_LABEL_OFFSET;
         }
->>>>>>> refs/remotes/origin/rama-Front
     }
 }
