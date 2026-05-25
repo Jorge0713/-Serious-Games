@@ -1,5 +1,6 @@
 import * as Phaser from 'phaser';
 import { PrefabButtons } from '../../componentes/PrefabButtons';
+import { FONT_DISPLAY, FONT_MONO } from '../../config/gameFonts';
 
 const WIDTH = 1920;
 const HEIGHT = 1080;
@@ -35,8 +36,6 @@ const HEX = {
     white: '#FFFFFF',
 };
 
-const FONT_DISPLAY = '"Pixelify Sans", Arial, sans-serif';
-const FONT_MONO = '"VT323", "Courier New", monospace';
 const LOCKED_MESSAGE = 'Completa la sección anterior para desbloquear esta sección.';
 const PENDING_CONNECTION_MESSAGE = 'Sección activa lista. Conexión al nivel pendiente.';
 
@@ -59,17 +58,6 @@ interface SectionConfig {
     progressValue: number;
     unlocked: boolean;
     sceneKey: string;
-}
-
-interface PixelButtonConfig {
-    x: number;
-    y: number;
-    width: number;
-    height: number;
-    label: string;
-    fill: number;
-    fontSize: number;
-    onClick: () => void;
 }
 
 const SECTIONS: SectionConfig[] = [
@@ -574,15 +562,15 @@ export class LevelSelectScene extends Phaser.Scene {
 
     private createBottomHud(): void {
         const hud = this.add.container(WIDTH / 2, 1000).setDepth(30);
-        
+
         const shadow = this.add.rectangle(10, 10, 1870, 124, COLORS.ink, 1);
-        
+
         const bg = this.add.rectangle(0, 0, 1870, 124, COLORS.paper, 1).setStrokeStyle(5, COLORS.ink);
 
         const levelCircle = this.add.circle(-880, 0, 34, COLORS.white, 1).setStrokeStyle(5, COLORS.ink);
-        
+
         const levelInner = this.add.circle(-880, 0, 24, COLORS.yellow, 0.35).setStrokeStyle(3, COLORS.yellow);
-        
+
         const levelText = this.add.text(-880, 0, '1', {
             fontFamily: FONT_DISPLAY,
             fontSize: '30px',
@@ -609,7 +597,7 @@ export class LevelSelectScene extends Phaser.Scene {
             color: HEX.ink,
         }).setOrigin(0, 0.5);
 
-        const continueButton = PrefabButtons.continuar(this, 760, 0, () => this.handleSectionSelection(this.getActiveSection()), {
+        const continueButton = PrefabButtons.continuar(this, 760, 0, () => window.showTutorial?.(), {
             text: 'CONTINUAR >',
             width: 300,
             height: 76,
@@ -630,9 +618,9 @@ export class LevelSelectScene extends Phaser.Scene {
         });
 
 
-        PrefabButtons.secundario(this, 200, 50, () => this.scene.start('TutorialScene'), {
+        PrefabButtons.secundario(this, 200, 90, () => this.scene.start('TutorialScene'), {
             text: '< Presentacion',
-            width:340,
+            width: 340,
             fontSize: 30,
             hoverSound: this.hoverSound,
             clickSound: this.clickSound,
@@ -640,28 +628,6 @@ export class LevelSelectScene extends Phaser.Scene {
         });
 
         hud.add([shadow, bg, levelCircle, levelInner, levelText, kicker, current, detail, continueButton]);
-    }
-
-    private createLabelCard(
-        x: number,
-        y: number,
-        width: number,
-        height: number,
-        label: string,
-        fill: number,
-        fontSize: number
-    ): Phaser.GameObjects.Container {
-        const card = this.add.container(x, y);
-        const shadow = this.add.rectangle(5, 5, width, height, COLORS.ink, 1);
-        const bg = this.add.rectangle(0, 0, width, height, fill, 1).setStrokeStyle(4, COLORS.ink);
-        const text = this.add.text(0, 0, label, {
-            fontFamily: FONT_MONO,
-            fontSize: `${fontSize}px`,
-            color: HEX.ink,
-        }).setOrigin(0.5);
-
-        card.add([shadow, bg, text]);
-        return card;
     }
 
     private handleSectionSelection(section: SectionConfig): void {
@@ -676,10 +642,6 @@ export class LevelSelectScene extends Phaser.Scene {
         }
 
         this.scene.start(section.sceneKey);
-    }
-
-    private getActiveSection(): SectionConfig {
-        return SECTIONS.find(section => section.unlocked) ?? SECTIONS[0];
     }
 
     private showToast(message: string): void {

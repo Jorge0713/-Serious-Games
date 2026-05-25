@@ -1,4 +1,5 @@
 import type * as Phaser from 'phaser';
+import { FONT_DISPLAY } from '../../config/gameFonts';
 
 interface DebugSkipButtonConfig {
     label: string;
@@ -18,7 +19,7 @@ export const createDebugSkipButton = (
     const button = scene.add.text(x, y, config.label, {
         fontSize: '17px',
         color: '#ffffff',
-        fontFamily: '"Pixelify Sans", Arial, sans-serif',
+        fontFamily: FONT_DISPLAY,
         fontStyle: 'bold',
         backgroundColor: '#5E412F',
         padding: { x: 14, y: 10 },

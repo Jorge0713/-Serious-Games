@@ -1,18 +1,22 @@
 import * as Phaser from 'phaser';
-import { createDebugSkipButton } from '../systems/DebugSkipButton';
 import { showLevelCompleteOverlay } from '../systems/LevelCompleteOverlay';
 import { nutritionalInfo } from '../../data/nutritionalInfo';
 import type { FoodItem } from '../../data/nutritionalInfo';
 import { getErrorMessage } from '../../data/errorMessages';
+import { FONT_DISPLAY } from '../../config/gameFonts';
+import { LEVEL_SELECT_HEX as HEX } from '../../config/gameColors';
+import { PrefabButtons } from "../../componentes/PrefabButtons";
 
-const FOOD_ITEM_SIZE      = 70;
-const FOOD_ITEM_SPACING   = 125;
-const FOOD_LABEL_OFFSET   = 48;
-const WAVE_SIZE           = 10;
-const VERDURAS_PER_WAVE   = 4;
-const FRUTAS_PER_WAVE     = 4;
-const WAVE_TIME_NORMAL    = 60;
-const WAVE_TIME_LAST      = 30;
+const WIDTH = 1920;
+
+const FOOD_ITEM_SIZE = 70;
+const FOOD_ITEM_SPACING = 125;
+const FOOD_LABEL_OFFSET = 48;
+const WAVE_SIZE = 10;
+const VERDURAS_PER_WAVE = 4;
+const FRUTAS_PER_WAVE = 4;
+const WAVE_TIME_NORMAL = 60;
+const WAVE_TIME_LAST = 30;
 
 export class Nivel1Scene extends Phaser.Scene {
     private fondo_cocina!: Phaser.GameObjects.Image;
@@ -22,15 +26,16 @@ export class Nivel1Scene extends Phaser.Scene {
     private foodContainer!: Phaser.GameObjects.Container;
     private placedFoods: Phaser.GameObjects.Image[] = [];
     private isTutorialActive = false;
-
+    private hoverSound!: Phaser.Sound.BaseSound;
+    private clickSound!: Phaser.Sound.BaseSound;
     // Wave state
-    private waveNumber       = 0;
+    private waveNumber = 0;
     private waveCorrectTarget = 0;
-    private waveAciertos     = 0;
+    private waveAciertos = 0;
     private remainingVerduras: FoodItem[] = [];
-    private remainingFrutas:   FoodItem[] = [];
-    private seboPool:          FoodItem[] = [];
-    private waveInProgress   = false;
+    private remainingFrutas: FoodItem[] = [];
+    private seboPool: FoodItem[] = [];
+    private waveInProgress = false;
 
     // Timer
     private timerSeconds = WAVE_TIME_NORMAL;
@@ -46,25 +51,25 @@ export class Nivel1Scene extends Phaser.Scene {
 
     // Basket drop zones (synced every frame to follow bobbing baskets)
     private zonaBordeVerduras!: Phaser.GameObjects.Zone;
-    private zonaVerduras!:      Phaser.GameObjects.Zone;
+    private zonaVerduras!: Phaser.GameObjects.Zone;
     private zvOffY = 0;
-    private zonaBordeFrutas!:   Phaser.GameObjects.Zone;
-    private zonaFrutas!:        Phaser.GameObjects.Zone;
+    private zonaBordeFrutas!: Phaser.GameObjects.Zone;
+    private zonaFrutas!: Phaser.GameObjects.Zone;
     private zfOffY = 0;
 
     // Tutorial interactivo
-    private tutorialCarrot?:    Phaser.GameObjects.Image;
-    private tutorialHand?:      Phaser.GameObjects.Image;
+    private tutorialCarrot?: Phaser.GameObjects.Image;
+    private tutorialHand?: Phaser.GameObjects.Image;
     private tutorialHighlight?: Phaser.GameObjects.Rectangle;
     private tutorialGhostCarrot?: Phaser.GameObjects.Image;
-    private tutorialBubble?:    Phaser.GameObjects.Graphics;
+    private tutorialBubble?: Phaser.GameObjects.Graphics;
     private tutorialBubbleTxt?: Phaser.GameObjects.Text;
     private isTutorialDragging = false;
 
     // Educational feedback toast (only one at a time)
-    private toastBg?:    Phaser.GameObjects.Rectangle;
+    private toastBg?: Phaser.GameObjects.Rectangle;
     private toastLabel?: Phaser.GameObjects.Text;
-    private toastTxt?:   Phaser.GameObjects.Text;
+    private toastTxt?: Phaser.GameObjects.Text;
     private toastTimer?: Phaser.Time.TimerEvent;
 
     // UI Elements for resizing
@@ -101,13 +106,14 @@ export class Nivel1Scene extends Phaser.Scene {
         this.load.image("inventario_verduras", "/assets/Plato/inventoryVegetables.webp");
         this.load.image("inventario_frutas", "/assets/Plato/inventoryFruits.webp");
         this.load.image("platon-feliz", "/assets/Platon/platon_feliz.png");
-        this.load.image("platon-triste","/assets/Platon/platon_triste.png");
-        this.load.image("manita",       "/assets/Backgrounds/manita.png");
-        this.load.audio("object_win",   "/Sound/ObjectWIN.mp3");
+        this.load.image("platon-triste", "/assets/Platon/platon_triste.png");
+        this.load.image("manita", "/assets/Backgrounds/manita.png");
+        this.load.audio("object_win", "/Sound/ObjectWIN.mp3");
         this.load.audio("sonido-error", "/Sound/incorrecto.mp3");
         this.load.audio("sonido-click", "/Sound/Click.mp3");
         this.load.audio("carta-sonido", "/Sound/CartaSound.mp3");
-        this.load.audio("reloj-tic",    "/Sound/Clock.mp3");
+        this.load.audio("reloj-tic", "/Sound/Clock.mp3");
+        PrefabButtons.preload(this);
 
         nutritionalInfo.forEach(food => {
             this.load.image(food.id, food.image);
@@ -115,14 +121,14 @@ export class Nivel1Scene extends Phaser.Scene {
     }
 
     create() {
-        this.placedFoods    = [];
-        this.waveNumber     = 0;
-        this.waveAciertos   = 0;
+        this.placedFoods = [];
+        this.waveNumber = 0;
+        this.waveAciertos = 0;
         this.waveInProgress = false;
-        this.lives          = 2;
+        this.lives = 2;
 
         const { width, height } = this.scale;
-        
+
         // Calcular área visible real (modo ENVELOP)
         const screenScale = Math.max(window.innerWidth / width, window.innerHeight / height);
         const visibleTop = (height - window.innerHeight / screenScale) / 2;
@@ -137,19 +143,25 @@ export class Nivel1Scene extends Phaser.Scene {
         void this.fondo_cocina;
 
         // INSTRUCCIÓN (posicionado relativo al top visible, dejando espacio para el botón Volver de React)
-        this.txtInstrucciones = this.add.text(width / 2, visibleTop + 75, 'Arrastra las frutas y verduras a su canasta', {
-            fontSize: '32px',
-            color: '#000',
-            fontFamily: 'Arial, sans-serif',
-            backgroundColor: 'rgba(255,255,255,0.7)',
-            padding: { x: 20, y: 10 }
-        }).setOrigin(0.5);
+        this.add.text(WIDTH / 2 + 4, 92 + 5, 'Arrastra los alimentos a su seccion', {
+            fontFamily: FONT_DISPLAY,
+            fontSize: '56px',
+            fontStyle: 'bold',
+            color: '#77D39D',
+            stroke: HEX.ink,
+            strokeThickness: 4,
+        }).setOrigin(0.5).setDepth(18);
 
-        createDebugSkipButton(this, {
-            label: 'Saltar al roadmap',
-            nextScene: 'LevelSelectScene',
-            soundKey: 'sonido-click',
-        });
+        this.add.text(WIDTH / 2, 92, 'Arrastra los alimentos a su seccion', {
+            fontFamily: FONT_DISPLAY,
+            fontSize: '56px',
+            fontStyle: 'bold',
+            color: HEX.white,
+            stroke: HEX.ink,
+            strokeThickness: 4,
+        }).setOrigin(0.5).setDepth(19);
+
+
 
         // CANASTAS + ZONAS
         const escalaCanasta = 0.60;
@@ -158,14 +170,14 @@ export class Nivel1Scene extends Phaser.Scene {
         const segmentoVerduras = this.segmentoVerduras = this.add.image(width / 2 - 300, canastaCentroY, "inventario_verduras")
             .setScale(escalaCanasta);
 
-        const zvBordW = segmentoVerduras.displayWidth  * 1;
+        const zvBordW = segmentoVerduras.displayWidth * 1;
         const zvBordH = segmentoVerduras.displayHeight * 1;
         this.zonaBordeVerduras = this.add.zone(
             segmentoVerduras.x, segmentoVerduras.y, zvBordW, zvBordH
         ).setRectangleDropZone(zvBordW, zvBordH);
         this.zonaBordeVerduras.setData("categoria", "verdura");
 
-        const zvW = segmentoVerduras.displayWidth  * 0.75;
+        const zvW = segmentoVerduras.displayWidth * 0.75;
         const zvH = segmentoVerduras.displayHeight * 0.75;
         this.zvOffY = segmentoVerduras.displayHeight * 0.03;
         this.zonaVerduras = this.add.zone(
@@ -177,14 +189,14 @@ export class Nivel1Scene extends Phaser.Scene {
         const segmentoFrutas = this.segmentoFrutas = this.add.image(width / 2 + 300, canastaCentroY, "inventario_frutas")
             .setScale(escalaCanasta);
 
-        const zfBordW = segmentoFrutas.displayWidth  * 1;
+        const zfBordW = segmentoFrutas.displayWidth * 1;
         const zfBordH = segmentoFrutas.displayHeight * 1;
         this.zonaBordeFrutas = this.add.zone(
             segmentoFrutas.x, segmentoFrutas.y, zfBordW, zfBordH
         ).setRectangleDropZone(zfBordW, zfBordH);
         this.zonaBordeFrutas.setData("categoria", "fruta");
 
-        const zfW = segmentoFrutas.displayWidth  * 0.75;
+        const zfW = segmentoFrutas.displayWidth * 0.75;
         const zfH = segmentoFrutas.displayHeight * 0.75;
         this.zfOffY = segmentoFrutas.displayHeight * 0.03;
         this.zonaFrutas = this.add.zone(
@@ -194,20 +206,26 @@ export class Nivel1Scene extends Phaser.Scene {
         this.zonaBordeFrutas.setData("snapToZone", this.zonaFrutas);
 
         // LABELS canastas
-        const tipStyle: Phaser.Types.GameObjects.Text.TextStyle = {
-            fontSize: '22px', color: '#ffffff', fontFamily: 'Arial',
-            fontStyle: 'bold', stroke: '#5E412F', strokeThickness: 5,
-        };
-        this.lblVerduras = this.add.text(
-            segmentoVerduras.x,
-            segmentoVerduras.y + segmentoVerduras.displayHeight / 2 + 12,
-            'TU CANASTA DE VERDURAS', tipStyle
-        ).setOrigin(0.5).setDepth(3);
-        this.lblFrutas = this.add.text(
-            segmentoFrutas.x,
-            segmentoFrutas.y + segmentoFrutas.displayHeight / 2 + 12,
-            'TU CANASTA DE FRUTAS', tipStyle
-        ).setOrigin(0.5).setDepth(3);
+
+        this.lblVerduras = this.add.text(670, 92 + 5, 'Verduras', {
+            fontFamily: FONT_DISPLAY,
+            fontSize: '56px',
+            fontStyle: 'bold',
+            color: HEX.white,
+            stroke: HEX.ink,
+            strokeThickness: 4,
+        }).setOrigin(0.5).setDepth(18);
+
+        
+
+        this.lblFrutas = this.add.text(1260, 92, 'Frutas', {
+            fontFamily: FONT_DISPLAY,
+            fontSize: '56px',
+            fontStyle: 'bold',
+            color: HEX.white,
+            stroke: HEX.ink,
+            strokeThickness: 4,
+        }).setOrigin(0.5).setDepth(19);
 
         // CANASTA IDLE ANIMATIONS
         this.startBasketIdleAnim(this.segmentoVerduras, 0);
@@ -256,18 +274,48 @@ export class Nivel1Scene extends Phaser.Scene {
         } else {
             this.time.delayedCall(400, () => this.showIntroPlaton());
         }
+        this.createBackButton();
+    }
+    private createBackButton(): void {
+        PrefabButtons.volver(this, 110, 90, () => {
+            this.returnToFoodGrid();
+        }, {
+            text: "< Volver",
+            width: 150,
+            height: 90,
+            fontSize: 30,
+            hoverSound: this.hoverSound,
+            clickSound: this.clickSound,
+            depth: 20,
+        });
+    }
+
+    private returnToFoodGrid(): void {
+        this.stopTimer();
+
+        if (window.showTutorial) {
+            this.scene.pause();
+            window.showTutorial(['vegetable', 'fruit'], {
+                title: 'Verduras y frutas',
+                nextScene: 'Nivel1Scene',
+                finishLabel: 'Volver al Nivel 1',
+            });
+            return;
+        }
+
+        this.scene.start('LevelSelectScene');
     }
 
     // ─── WAVE SYSTEM ──────────────────────────────────────────────────────────
 
     private initWavePools() {
         const allVerduras = nutritionalInfo.filter(f => f.category === 'vegetable');
-        const allFrutas   = nutritionalInfo.filter(f => f.category === 'fruit');
-        const allSebos    = nutritionalInfo.filter(f => f.category !== 'vegetable' && f.category !== 'fruit');
+        const allFrutas = nutritionalInfo.filter(f => f.category === 'fruit');
+        const allSebos = nutritionalInfo.filter(f => f.category !== 'vegetable' && f.category !== 'fruit');
 
         this.remainingVerduras = Phaser.Utils.Array.Shuffle([...allVerduras]) as FoodItem[];
-        this.remainingFrutas   = Phaser.Utils.Array.Shuffle([...allFrutas])   as FoodItem[];
-        this.seboPool          = Phaser.Utils.Array.Shuffle([...allSebos])    as FoodItem[];
+        this.remainingFrutas = Phaser.Utils.Array.Shuffle([...allFrutas]) as FoodItem[];
+        this.seboPool = Phaser.Utils.Array.Shuffle([...allSebos]) as FoodItem[];
 
         // Zanahoria primero en oleada 1 para el tutorial
         const carrotIdx = this.remainingVerduras.findIndex(f => f.id === 'carrot');
@@ -281,7 +329,7 @@ export class Nivel1Scene extends Phaser.Scene {
 
     private startNextWave() {
         this.waveNumber++;
-        this.waveAciertos   = 0;
+        this.waveAciertos = 0;
         this.waveInProgress = false;
 
         this.clearPlacedFoods(() => {
@@ -300,14 +348,14 @@ export class Nivel1Scene extends Phaser.Scene {
 
     private pickWaveFoods(): { foods: FoodItem[], correctCount: number } {
         const numVerduras = Math.min(VERDURAS_PER_WAVE, this.remainingVerduras.length);
-        const numFrutas   = Math.min(FRUTAS_PER_WAVE,   this.remainingFrutas.length);
+        const numFrutas = Math.min(FRUTAS_PER_WAVE, this.remainingFrutas.length);
 
         const waveVerduras = this.remainingVerduras.splice(0, numVerduras);
-        const waveFrutas   = this.remainingFrutas.splice(0, numFrutas);
+        const waveFrutas = this.remainingFrutas.splice(0, numFrutas);
         const correctCount = numVerduras + numFrutas;
 
-        const sebosNeeded  = WAVE_SIZE - correctCount;
-        const waveSebos    = (Phaser.Utils.Array.Shuffle([...this.seboPool]) as FoodItem[]).slice(0, sebosNeeded);
+        const sebosNeeded = WAVE_SIZE - correctCount;
+        const waveSebos = (Phaser.Utils.Array.Shuffle([...this.seboPool]) as FoodItem[]).slice(0, sebosNeeded);
 
         const mixed = [...waveVerduras, ...waveFrutas, ...waveSebos];
 
@@ -361,10 +409,10 @@ export class Nivel1Scene extends Phaser.Scene {
 
     private populateFoodBar(foods: FoodItem[]) {
         const { width } = this.scale;
-        
-        const barWidth   = Math.round(width * 0.82);
+
+        const barWidth = Math.round(width * 0.82);
         const arrowWidth = 64;
-        const viewportW  = barWidth - arrowWidth * 2;
+        const viewportW = barWidth - arrowWidth * 2;
 
         // Ancho real del contenido (de borde a borde del primer y último alimento)
         const contentSpan = (foods.length - 1) * FOOD_ITEM_SPACING + FOOD_ITEM_SIZE;
@@ -376,8 +424,8 @@ export class Nivel1Scene extends Phaser.Scene {
             const localY = 204;
 
             const categoria = item.category === 'vegetable' ? 'verdura'
-                            : item.category === 'fruit'     ? 'fruta'
-                            : 'sebo';
+                : item.category === 'fruit' ? 'fruta'
+                    : 'sebo';
 
             // Sprite en su posición final; animación pop desde escala 0
             const sprite = this.add.image(localX, localY, item.id)
@@ -401,15 +449,15 @@ export class Nivel1Scene extends Phaser.Scene {
 
             this.input.setDraggable(sprite);
 
-            sprite.setData("categoria",   categoria);
-            sprite.setData("localHomeX",  localX);
-            sprite.setData("localHomeY",  localY);
-            sprite.setData("originalX",   localX);
-            sprite.setData("originalY",   localY);
-            sprite.setData("lastValidX",  localX);
-            sprite.setData("lastValidY",  localY);
+            sprite.setData("categoria", categoria);
+            sprite.setData("localHomeX", localX);
+            sprite.setData("localHomeY", localY);
+            sprite.setData("originalX", localX);
+            sprite.setData("originalY", localY);
+            sprite.setData("lastValidX", localX);
+            sprite.setData("lastValidY", localY);
             sprite.setData("fromFoodBar", true);
-            sprite.setData("texto",       texto);
+            sprite.setData("texto", texto);
 
             this.foodContainer.add([sprite, texto]);
 
@@ -473,9 +521,9 @@ export class Nivel1Scene extends Phaser.Scene {
     private updateTimerDisplay() {
         if (!this.timerText) return;
         this.timerText.setText(String(this.timerSeconds));
-        if (this.timerSeconds <= 10)      this.timerText.setColor('#ff2222');
+        if (this.timerSeconds <= 10) this.timerText.setColor('#ff2222');
         else if (this.timerSeconds <= 20) this.timerText.setColor('#ffaa00');
-        else                               this.timerText.setColor('#ffffff');
+        else this.timerText.setColor('#ffffff');
 
         if (this.timerSeconds <= 20 && !this.urgentMode) {
             this.urgentMode = true;
@@ -524,9 +572,9 @@ export class Nivel1Scene extends Phaser.Scene {
         this.time.delayedCall(1000, () => {
             const restartTxt = this.add.text(width / 2, height / 2 + 72,
                 'Toca aquí para intentarlo de nuevo', {
-                    fontSize: '26px', color: '#ffdd88', fontFamily: 'Arial',
-                    fontStyle: 'bold', stroke: '#000000', strokeThickness: 4,
-                }
+                fontSize: '26px', color: '#ffdd88', fontFamily: 'Arial',
+                fontStyle: 'bold', stroke: '#000000', strokeThickness: 4,
+            }
             ).setOrigin(0.5).setDepth(101).setAlpha(0);
 
             this.tweens.add({ targets: restartTxt, alpha: 1, duration: 350 });
@@ -550,9 +598,9 @@ export class Nivel1Scene extends Phaser.Scene {
 
     private clearToast() {
         if (this.toastTimer) { this.toastTimer.destroy(); this.toastTimer = undefined; }
-        if (this.toastBg)    { this.tweens.killTweensOf(this.toastBg);    this.toastBg.destroy();    this.toastBg    = undefined; }
+        if (this.toastBg) { this.tweens.killTweensOf(this.toastBg); this.toastBg.destroy(); this.toastBg = undefined; }
         if (this.toastLabel) { this.tweens.killTweensOf(this.toastLabel); this.toastLabel.destroy(); this.toastLabel = undefined; }
-        if (this.toastTxt)   { this.tweens.killTweensOf(this.toastTxt);   this.toastTxt.destroy();   this.toastTxt   = undefined; }
+        if (this.toastTxt) { this.tweens.killTweensOf(this.toastTxt); this.toastTxt.destroy(); this.toastTxt = undefined; }
     }
 
     private showEducationalFeedback(itemCat: string, zoneCat: string) {
@@ -670,12 +718,12 @@ export class Nivel1Scene extends Phaser.Scene {
     // ─── FOOD BAR SHELL ───────────────────────────────────────────────────────
 
     private buildFoodBarShell(width: number, visibleTop: number = 0) {
-        const barWidth     = Math.round(width * 0.82);
-        const arrowWidth   = 64;
-        const barLeft      = (width - barWidth) / 2;
-        const viewportX    = barLeft + arrowWidth;
-        const stripTop     = visibleTop + 140; // Relativo al área visible
-        const stripHeight  = 148;
+        const barWidth = Math.round(width * 0.82);
+        const arrowWidth = 64;
+        const barLeft = (width - barWidth) / 2;
+        const viewportX = barLeft + arrowWidth;
+        const stripTop = visibleTop + 140; // Relativo al área visible
+        const stripHeight = 148;
         const stripCenterY = stripTop + stripHeight / 2;
 
         this.foodBarBg = this.add.rectangle(width / 2, stripCenterY, barWidth, stripHeight, 0xf7cc85, 0.82)
@@ -733,7 +781,7 @@ export class Nivel1Scene extends Phaser.Scene {
             if (!this.waveInProgress) return;
 
             const categoriaItem = gameObject.getData("categoria") as string;
-            const categoriaZona = dropZone.getData("categoria")   as string;
+            const categoriaZona = dropZone.getData("categoria") as string;
 
             if (categoriaItem === categoriaZona) {
                 // Siempre snapeamos al slot de inventario libre más cercano
@@ -754,11 +802,11 @@ export class Nivel1Scene extends Phaser.Scene {
                 gameObject.clearTint();
                 this.input.setDraggable(gameObject, false);
                 gameObject.disableInteractive();
-                gameObject.setData("placed",      true);
-                gameObject.setData("lastValidX",  gameObject.x);
-                gameObject.setData("lastValidY",  gameObject.y);
-                gameObject.setData("basket",      targetPanel);
-                gameObject.setData("slotRelY",    gameObject.y - targetPanel.y);
+                gameObject.setData("placed", true);
+                gameObject.setData("lastValidX", gameObject.x);
+                gameObject.setData("lastValidY", gameObject.y);
+                gameObject.setData("basket", targetPanel);
+                gameObject.setData("slotRelY", gameObject.y - targetPanel.y);
                 this.placedFoods.push(gameObject);
 
                 try { this.sound.play("object_win"); } catch { void 0; }
@@ -821,7 +869,7 @@ export class Nivel1Scene extends Phaser.Scene {
     // ─── RETURN TO BAR ────────────────────────────────────────────────────────
 
     private returnToFoodBar(gameObject: Phaser.GameObjects.Image) {
-        const texto      = gameObject.getData("texto")      as Phaser.GameObjects.Text | undefined;
+        const texto = gameObject.getData("texto") as Phaser.GameObjects.Text | undefined;
         const localHomeX = gameObject.getData("localHomeX") as number;
         const localHomeY = gameObject.getData("localHomeY") as number;
         const targetWorldX = this.foodContainer.x + localHomeX;
@@ -858,7 +906,7 @@ export class Nivel1Scene extends Phaser.Scene {
     // Imagen 784×680 px, centro en (392, 340).
     // 4 columnas × 3 filas. Offsets en píxeles nativos desde el centro.
     private static readonly SLOT_COL_OFFSETS = [-240, -80, 80, 240];
-    private static readonly SLOT_ROW_OFFSETS = [-154,  12,  185];
+    private static readonly SLOT_ROW_OFFSETS = [-154, 12, 185];
 
     private getInventorySlotPositions(panel: Phaser.GameObjects.Image): { x: number; y: number }[] {
         const s = panel.scaleX;
@@ -876,7 +924,7 @@ export class Nivel1Scene extends Phaser.Scene {
         nearX: number, nearY: number,
         excluding?: Phaser.GameObjects.Image
     ): { x: number; y: number } | null {
-        const slots    = this.getInventorySlotPositions(panel);
+        const slots = this.getInventorySlotPositions(panel);
         const occupied = this.placedFoods
             .filter(p => p !== excluding)
             .map(p => ({ x: Math.round(p.x), y: Math.round(p.y) }));
@@ -906,7 +954,7 @@ export class Nivel1Scene extends Phaser.Scene {
         const visibleBottom = visibleTop + window.innerHeight / screenScale;
 
         if (this.txtInstrucciones) this.txtInstrucciones.setY(visibleTop + 75);
-        
+
         if (this.txtTiempo) {
             this.txtTiempo.setPosition(visibleLeft + visibleWidth - 110, visibleTop + 60);
             this.timerText.setPosition(visibleLeft + visibleWidth - 110, visibleTop + 90);
@@ -969,25 +1017,25 @@ export class Nivel1Scene extends Phaser.Scene {
             duration: 850,
             ease: 'Power2.easeOut',
             onComplete: () => {
-                const cx  = 700;
-                const cy  = height - 630;
+                const cx = 700;
+                const cy = height - 630;
 
                 const txt = this.add.text(cx, cy,
                     'Este es el nivel 1,\nVerduras vs Frutas.\nEn este nivel desbloquearás\ntus lotes de alimentos del\ntipo verduras y frutas.',
                     {
                         fontSize: '27px',
                         color: '#000000',
-                        fontFamily: 'Gill Sans MT',
+                        fontFamily: FONT_DISPLAY,
                         align: 'left',
                         wordWrap: { width: 400 },
                     }
                 ).setOrigin(0.5).setDepth(12).setAlpha(0);
 
                 const pad = 24;
-                const bx  = cx - txt.width  / 2 - pad;
-                const by  = cy - txt.height / 2 - pad;
-                const bw  = txt.width  + pad * 2;
-                const bh  = txt.height + pad * 2;
+                const bx = cx - txt.width / 2 - pad;
+                const by = cy - txt.height / 2 - pad;
+                const bw = txt.width + pad * 2;
+                const bh = txt.height + pad * 2;
 
                 const bubble = this.add.graphics().setDepth(11).setAlpha(0);
                 // Cola del globo (se dibuja primero para que el rect tape el borde superior)
@@ -1063,7 +1111,7 @@ export class Nivel1Scene extends Phaser.Scene {
             .setDepth(45).setStrokeStyle(3, 0x44cc44, 1);
         this.tweens.add({ targets: this.tutorialHighlight, alpha: { from: 0.28, to: 0.68 }, duration: 440, yoyo: true, repeat: -1 });
 
-        // Activar animación de arrastre inmediatamente
+        // Activar animación de arrastre inmeEStamente
         this.loopTutHand(slot.x, slot.y);
 
         // Paso 1 → avanza al empezar a arrastrar la zanahoria
@@ -1091,12 +1139,12 @@ export class Nivel1Scene extends Phaser.Scene {
 
     private loopTutHand(slotX: number, slotY: number) {
         if (!this.tutorialHand || !this.tutorialCarrot || !this.isTutorialActive || this.isTutorialDragging) return;
-        
+
         const carrotStartX = this.foodContainer.x + this.tutorialCarrot.x;
         const carrotStartY = this.foodContainer.y + this.tutorialCarrot.y;
         const startX = carrotStartX + 15;
         const startY = carrotStartY + 20;
-        
+
         const hand = this.tutorialHand;
         hand.setPosition(startX, startY).setAlpha(0).setScale(1.1);
 
@@ -1115,7 +1163,7 @@ export class Nivel1Scene extends Phaser.Scene {
             targets: hand, alpha: 1, duration: 300,
             onComplete: () => {
                 if (!this.isTutorialActive || !this.tutorialHand || this.isTutorialDragging) return;
-                
+
                 // Pequeña pausa antes de hacer clic
                 this.time.delayedCall(200, () => {
                     if (!this.isTutorialActive || !this.tutorialHand || this.isTutorialDragging) return;
@@ -1125,7 +1173,7 @@ export class Nivel1Scene extends Phaser.Scene {
                         targets: hand, scaleX: 0.9, scaleY: 0.9, duration: 350, ease: 'Sine.easeOut',
                         onComplete: () => {
                             if (!this.isTutorialActive || !this.tutorialHand || this.isTutorialDragging) return;
-                            
+
                             // Fase 3: Aparecer el fantasma de zanahoria como si la agarrara
                             ghost.setAlpha(0.6);
 
@@ -1141,7 +1189,7 @@ export class Nivel1Scene extends Phaser.Scene {
                                     targets: [ghost], x: slotX, y: slotY, duration: 1300, ease: 'Power2.easeInOut',
                                     onComplete: () => {
                                         if (!this.isTutorialActive || !this.tutorialHand || this.isTutorialDragging) return;
-                                        
+
                                         // Fase 4.5: Soltar click (restaurar escala)
                                         this.tweens.add({
                                             targets: hand, scaleX: 1.1, scaleY: 1.1, duration: 250
@@ -1166,7 +1214,7 @@ export class Nivel1Scene extends Phaser.Scene {
 
     private handleTutorialDrop(gameObject: Phaser.GameObjects.Image, dropZone: Phaser.GameObjects.Zone) {
         const catItem = gameObject.getData('categoria') as string;
-        const catZone = dropZone.getData('categoria')   as string;
+        const catZone = dropZone.getData('categoria') as string;
 
         if (catItem !== catZone) {
             gameObject.clearTint();
@@ -1191,11 +1239,11 @@ export class Nivel1Scene extends Phaser.Scene {
         gameObject.clearTint();
         this.input.setDraggable(gameObject, false);
         gameObject.disableInteractive();
-        gameObject.setData('placed',     true);
+        gameObject.setData('placed', true);
         gameObject.setData('lastValidX', gameObject.x);
         gameObject.setData('lastValidY', gameObject.y);
-        gameObject.setData('basket',     this.segmentoVerduras);
-        gameObject.setData('slotRelY',   gameObject.y - this.segmentoVerduras.y);
+        gameObject.setData('basket', this.segmentoVerduras);
+        gameObject.setData('slotRelY', gameObject.y - this.segmentoVerduras.y);
         this.placedFoods.push(gameObject);
         this.waveAciertos++;
 
@@ -1206,7 +1254,7 @@ export class Nivel1Scene extends Phaser.Scene {
 
         // Detener manita, fantasma y resaltado
         this.isTutorialActive = false;
-        if (this.tutorialHand)      this.tweens.killTweensOf(this.tutorialHand);
+        if (this.tutorialHand) this.tweens.killTweensOf(this.tutorialHand);
         if (this.tutorialHighlight) this.tweens.killTweensOf(this.tutorialHighlight);
         if (this.tutorialGhostCarrot) { this.tweens.killTweensOf(this.tutorialGhostCarrot); this.tutorialGhostCarrot.setAlpha(0); }
 
@@ -1229,7 +1277,7 @@ export class Nivel1Scene extends Phaser.Scene {
     }
 
     private endTutorial() {
-        if (this.tutorialHand)      { this.tweens.killTweensOf(this.tutorialHand);      this.tutorialHand.destroy();      this.tutorialHand      = undefined; }
+        if (this.tutorialHand) { this.tweens.killTweensOf(this.tutorialHand); this.tutorialHand.destroy(); this.tutorialHand = undefined; }
         if (this.tutorialHighlight) { this.tweens.killTweensOf(this.tutorialHighlight); this.tutorialHighlight.destroy(); this.tutorialHighlight = undefined; }
         if (this.tutorialGhostCarrot) { this.tweens.killTweensOf(this.tutorialGhostCarrot); this.tutorialGhostCarrot.destroy(); this.tutorialGhostCarrot = undefined; }
         this.destroyTutBubble();
@@ -1245,11 +1293,11 @@ export class Nivel1Scene extends Phaser.Scene {
             }
         });
 
-        this.tutorialCarrot   = undefined;
+        this.tutorialCarrot = undefined;
         this.isTutorialActive = false;
         this.isTutorialDragging = false;
         this.registry.set('tutorialCompleted_Nivel1', true);
-        this.waveInProgress   = true;
+        this.waveInProgress = true;
         this.startTimer(WAVE_TIME_NORMAL);   // contador arranca en 60 s
     }
 
@@ -1262,15 +1310,15 @@ export class Nivel1Scene extends Phaser.Scene {
 
         this.tutorialBubbleTxt = this.add.text(cx, cy, text, {
             fontSize: '26px', color: '#000000',
-            fontFamily: 'Gill Sans MT', align: 'left',
+            fontFamily: FONT_DISPLAY, align: 'left',
             wordWrap: { width: 370 },
         }).setOrigin(0.5).setDepth(12).setAlpha(0);
 
         const pad = 20;
-        const bx  = cx - this.tutorialBubbleTxt.width  / 2 - pad;
-        const by  = cy - this.tutorialBubbleTxt.height / 2 - pad;
-        const bw  = this.tutorialBubbleTxt.width  + pad * 2;
-        const bh  = this.tutorialBubbleTxt.height + pad * 2;
+        const bx = cx - this.tutorialBubbleTxt.width / 2 - pad;
+        const by = cy - this.tutorialBubbleTxt.height / 2 - pad;
+        const bw = this.tutorialBubbleTxt.width + pad * 2;
+        const bh = this.tutorialBubbleTxt.height + pad * 2;
 
         this.tutorialBubble = this.add.graphics().setDepth(11).setAlpha(0);
         this.tutorialBubble.fillStyle(0xFFFAED, 0.97);
@@ -1288,8 +1336,9 @@ export class Nivel1Scene extends Phaser.Scene {
     }
 
     private destroyTutBubble() {
-        if (this.tutorialBubble)    { this.tweens.killTweensOf(this.tutorialBubble);    this.tutorialBubble.destroy();    this.tutorialBubble    = undefined; }
+        if (this.tutorialBubble) { this.tweens.killTweensOf(this.tutorialBubble); this.tutorialBubble.destroy(); this.tutorialBubble = undefined; }
         if (this.tutorialBubbleTxt) { this.tweens.killTweensOf(this.tutorialBubbleTxt); this.tutorialBubbleTxt.destroy(); this.tutorialBubbleTxt = undefined; }
+
     }
 
     update() {
@@ -1302,11 +1351,11 @@ export class Nivel1Scene extends Phaser.Scene {
         // Keep drop zones aligned with bobbing basket images
         if (this.zonaBordeVerduras) {
             this.zonaBordeVerduras.y = this.segmentoVerduras.y;
-            this.zonaVerduras.y      = this.segmentoVerduras.y + this.zvOffY;
+            this.zonaVerduras.y = this.segmentoVerduras.y + this.zvOffY;
         }
         if (this.zonaBordeFrutas) {
             this.zonaBordeFrutas.y = this.segmentoFrutas.y;
-            this.zonaFrutas.y      = this.segmentoFrutas.y + this.zfOffY;
+            this.zonaFrutas.y = this.segmentoFrutas.y + this.zfOffY;
         }
 
         // Keep tutorial highlight on the target slot as basket bobs
@@ -1319,7 +1368,7 @@ export class Nivel1Scene extends Phaser.Scene {
         // Keep placed foods glued to their basket's current Y
         for (const food of this.placedFoods) {
             const basket = food.getData('basket') as Phaser.GameObjects.Image | undefined;
-            const relY   = food.getData('slotRelY') as number | undefined;
+            const relY = food.getData('slotRelY') as number | undefined;
             if (basket === undefined || relY === undefined) continue;
             food.y = basket.y + relY;
             const texto = food.getData('texto') as Phaser.GameObjects.Text | undefined;

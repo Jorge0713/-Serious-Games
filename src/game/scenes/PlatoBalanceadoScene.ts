@@ -1,5 +1,6 @@
 import * as Phaser from 'phaser';
 import { createDebugSkipButton } from '../systems/DebugSkipButton';
+import { FONT_DISPLAY } from '../../config/gameFonts';
 
 // ─── Paleta Bosque Cálido ────────────────────────────────────────────────────
 const PALETTE = {
@@ -15,7 +16,7 @@ const PALETTE = {
     terracotaHex: '#D2691E',
 };
 
-const SCENE_FONT = '"Pixelify Sans", Arial, sans-serif';
+const SCENE_FONT = FONT_DISPLAY;
 
 // ─── Tipado ──────────────────────────────────────────────────────────────────
 type Grupo = 'verduras_frutas' | 'cereal' | 'leguminosa_aoa';

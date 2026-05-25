@@ -1,4 +1,5 @@
 import * as Phaser from 'phaser';
+import { FONT_DISPLAY, FONT_MONO } from '../../config/gameFonts';
 
 interface LevelCompleteOverlayConfig {
     title: string;
@@ -24,8 +25,8 @@ const COLOR_HEX = {
     neutral: '#F9F6EF',
 };
 
-const TITLE_FONT = '"Pixelify Sans", Arial, sans-serif';
-const BODY_FONT = '"VT323", "Courier New", monospace';
+const TITLE_FONT = FONT_DISPLAY;
+const BODY_FONT = FONT_MONO;
 
 export const showLevelCompleteOverlay = (
     scene: Phaser.Scene,

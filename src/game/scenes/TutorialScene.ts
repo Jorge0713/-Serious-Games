@@ -1,6 +1,7 @@
 import * as Phaser from "phaser";
 import { PrefabButtons } from "../../componentes/PrefabButtons";
-import { DialogueSystem } from "../systems/dialog/DialogueSystem";
+import { PlatonSpeechBubble } from "../systems/dialog/PlatonSpeechBubble";
+
 
 type PlateZoneId = "verduras" | "frutas" | "cereales" | "leguminosas" | "animal";
 
@@ -10,13 +11,24 @@ type PlateZoneDialog = {
 };
 
 const INITIAL_DIALOG = "Hola aventurero. Soy Platon. Frente a ti esta el Plato del Bien Comer. Pasa el cursor sobre cada seccion para conocer sus grupos de alimentos.";
+const TUTORIAL_KITCHEN_BACKGROUND_ALPHA = 1;
+const TUTORIAL_SCRIM_CENTER_ALPHA = 0.18;
+const TUTORIAL_SCRIM_EDGE_ALPHA = 0.45;
+const DIALOG_X_MAX = 620;                 // tope horizontal (px) — sube/baja este número
+const DIALOG_X_RATIO = 0.32;              // fracción del ancho de pantalla
+const DIALOG_Y_OFFSET_FROM_BOTTOM = 600;  // px arriba del borde inferior
+const DIALOG_WRAP_WIDTH_MAX = 520;        // ancho máximo del texto
+const DIALOG_WRAP_WIDTH_MIN = 370;        // ancho mínimo del texto
+const DIALOG_WRAP_RATIO = 0.28;           // fracción del ancho para el wrap
+const DIALOG_DEV_MODE = false;
+const DIALOG_NUDGE_STEP = 10;
 
 const PLATE_ZONE_DIALOGS: Record<PlateZoneId, PlateZoneDialog> = {
     verduras: {
         title: "Verduras",
         text: "Las verduras aportan vitaminas, minerales y fibra. Ayudan a mantener una alimentacion equilibrada y deben consumirse con frecuencia.",
     },
-    frutas: {
+    frutas: {   
         title: "Frutas",
         text: "Las frutas aportan vitaminas, minerales, agua y fibra. Son una buena opcion natural para complementar la alimentacion diaria.",
     },
@@ -35,19 +47,24 @@ const PLATE_ZONE_DIALOGS: Record<PlateZoneId, PlateZoneDialog> = {
 };
 
 export class TutorialScene extends Phaser.Scene {
-    private dialog!: DialogueSystem;
+    private speechBubble!: PlatonSpeechBubble;
     private platon!: Phaser.GameObjects.Sprite;
     private plato!: Phaser.GameObjects.Image;
     private activeSection: PlateZoneId | null = null;
     private hoverSound!: Phaser.Sound.BaseSound;
     private clickSound!: Phaser.Sound.BaseSound;
     private initialDialogTimer?: Phaser.Time.TimerEvent;
+    private dialogX = 0;
+    private dialogY = 0;
+    private dialogWrapWidth = DIALOG_WRAP_WIDTH_MAX;
+    private currentDialogText: string | null = null;
 
     constructor() {
         super("TutorialScene");
     }
 
     preload() {
+
         this.load.spritesheet("platon", "/assets/Platon/platon.png", {
             frameWidth: 291,
             frameHeight: 256
@@ -68,9 +85,7 @@ export class TutorialScene extends Phaser.Scene {
         this.hoverSound = this.sound.add("Hover", { volume: 0.2 });
         this.clickSound = this.sound.add("Click", { volume: 0.3 });
 
-        this.add.image(width / 2, height / 2, "Fondo-cocina")
-            .setScale(0.5)
-            .setDisplaySize(width, height);
+        this.createKitchenBackground();
 
         this.plato = this.add.image(
             width * 0.65,
@@ -80,7 +95,7 @@ export class TutorialScene extends Phaser.Scene {
 
         this.platon = this.add.sprite(
             width * 0.17,
-            height * 0.75,
+            height * 0.765,
             "platon"
         ).setScale(2);
 
@@ -92,21 +107,99 @@ export class TutorialScene extends Phaser.Scene {
         });
         this.platon.play("wave");
 
-        this.dialog = new DialogueSystem({
-            scene: this,
-            x: 50,
-            y: 250,
-            width: width - 850,
-        });
+        this.speechBubble = new PlatonSpeechBubble(this);
+        this.recomputeDialogLayout();
 
         this.showInitialDialog();
         this.createInteractiveZones();
         this.createBackButton();
         this.createNextButton();
+        this.setupDialogNudge();
+    }
+
+    private createKitchenBackground(): void {
+        const { width, height } = this.scale;
+
+        // Capa 1: rectángulo crema sólido
+        this.add.rectangle(width / 2, height / 2, width, height, 0xfffbf0, 1)
+            .setDepth(-3);
+
+        // Capa 2: imagen de cocina con opacidad ajustable
+        this.add.image(width / 2, height / 2, "Fondo-cocina")
+            .setDisplaySize(width, height)
+            .setAlpha(TUTORIAL_KITCHEN_BACKGROUND_ALPHA)
+            .setDepth(-2);
+
+        // Capa 3: scrim radial crema (claro al centro, más opaco en los bordes)
+        this.createScrimTexture();
+        this.add.image(width / 2, height / 2, "tutorial_scrim")
+            .setDisplaySize(width, height)
+            .setDepth(-1);
+    }
+
+    private createScrimTexture(): void {
+        const key = "tutorial_scrim";
+        if (this.textures.exists(key)) {
+            this.textures.remove(key);
+        }
+
+        const { width, height } = this.scale;
+        const canvas = document.createElement("canvas");
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) return;
+
+        const gradient = ctx.createRadialGradient(
+            width / 2, height / 2, 120,
+            width / 2, height / 2, Math.max(width, height) * 0.6,
+        );
+        gradient.addColorStop(0, `rgba(255, 251, 240, ${TUTORIAL_SCRIM_CENTER_ALPHA})`);
+        gradient.addColorStop(1, `rgba(255, 251, 240, ${TUTORIAL_SCRIM_EDGE_ALPHA})`);
+        ctx.fillStyle = gradient;
+        ctx.fillRect(0, 0, width, height);
+        this.textures.addCanvas(key, canvas);
+    }
+
+    private recomputeDialogLayout(): void {
+        const { width, height } = this.scale;
+        this.dialogX = Math.min(width * DIALOG_X_RATIO, DIALOG_X_MAX);
+        this.dialogY = height - DIALOG_Y_OFFSET_FROM_BOTTOM;
+        this.dialogWrapWidth = Math.min(
+            DIALOG_WRAP_WIDTH_MAX,
+            Math.max(DIALOG_WRAP_WIDTH_MIN, width * DIALOG_WRAP_RATIO),
+        );
+    }
+
+    private setupDialogNudge(): void {
+        if (!DIALOG_DEV_MODE) return;
+
+        const nudge = (dx: number, dy: number) => {
+            this.dialogX += dx;
+            this.dialogY += dy;
+            console.log(`[Diálogo] X=${this.dialogX}  Y=${this.dialogY}`);
+            if (this.currentDialogText) {
+                this.refreshDialogPosition(this.currentDialogText);
+            }
+        };
+
+        this.input.keyboard?.on("keydown-LEFT", () => nudge(-DIALOG_NUDGE_STEP, 0));
+        this.input.keyboard?.on("keydown-RIGHT", () => nudge(DIALOG_NUDGE_STEP, 0));
+        this.input.keyboard?.on("keydown-UP", () => nudge(0, -DIALOG_NUDGE_STEP));
+        this.input.keyboard?.on("keydown-DOWN", () => nudge(0, DIALOG_NUDGE_STEP));
+    }
+
+    private refreshDialogPosition(text: string): void {
+        this.speechBubble.show({
+            x: this.dialogX,
+            y: this.dialogY,
+            text,
+            wordWrapWidth: this.dialogWrapWidth,
+        });
     }
 
     private showInitialDialog(): void {
-        this.dialog.show(INITIAL_DIALOG, 0);
+        this.showSpeechBubble(INITIAL_DIALOG);
         this.initialDialogTimer = this.time.delayedCall(6000, () => {
             if (!this.activeSection) {
                 this.hideDialog();
@@ -195,11 +288,22 @@ export class TutorialScene extends Phaser.Scene {
 
     private showPlateZoneDialog(zoneId: PlateZoneId): void {
         const dialog = PLATE_ZONE_DIALOGS[zoneId];
-        this.dialog.show(`${dialog.title}\n${dialog.text}`, 0);
+        this.showSpeechBubble(`${dialog.title}\n${dialog.text}`);
     }
 
     private hideDialog(): void {
-        this.dialog.hide();
+        this.currentDialogText = null;
+        this.speechBubble.hide(150);
+    }
+
+    private showSpeechBubble(text: string): void {
+        this.currentDialogText = text;
+        this.speechBubble.show({
+            x: this.dialogX,
+            y: this.dialogY,
+            text,
+            wordWrapWidth: this.dialogWrapWidth,
+        });
     }
 
     private applyPlateHover(): void {

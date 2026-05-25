@@ -1,11 +1,30 @@
 import * as Phaser from 'phaser';
 import { PrefabButtons } from '../../componentes/PrefabButtons';
-import { MAIN_MENU_COLORS as COLORS } from '../../config/gameColors';
 import { PlayerService } from '../../services/PlayerService';
 import type { Sexo } from '../../types/player.types';
 
 const WIDTH = 1920;
 const HEIGHT = 1080;
+const MENU_KITCHEN_BACKGROUND_ALPHA = 1;
+const MENU_SCRIM_CENTER_ALPHA = 0.48;
+const MENU_SCRIM_EDGE_ALPHA = 0.70;
+
+const COLORS = {
+    bg: 0xfffbf0,
+    bgCard: 0xffffff,
+    ink: 0x2e3142,
+    inkHex: '#2E3142',
+    ink2Hex: '#4F5266',
+    inkMuteHex: '#9094A4',
+    frutas: 0x7ad3a0,
+    frutasTint: 0xe4f4ea,
+    cereales: 0xf9cd55,
+    cerealesTint: 0xfcefc9,
+    cerealesDimHex: '#A6811A',
+    legumin: 0xff9580,
+    accent: 0x8a95e0,
+    accentTint: 0xe6e9f6,
+};
 
 const FONT_DISPLAY = '"Pixelify Sans", Arial, sans-serif';
 const FONT_MONO = '"VT323", "Courier New", monospace';
@@ -75,7 +94,7 @@ export class MainMenu extends Phaser.Scene {
             this.load.image(food.key, food.path);
         });
 
-        this.load.audio('menu_click', '/Sound/StartPlay.mp3');
+        this.load.audio('menu_click', '/Sound/Click.mp3');
         this.load.audio('menu_hover', '/Sound/hoverSound.mp3');
     }
 
@@ -129,7 +148,9 @@ export class MainMenu extends Phaser.Scene {
 
     private createScrimTexture(): void {
         const key = 'menu_scrim_light';
-        if (this.textures.exists(key)) return;
+        if (this.textures.exists(key)) {
+            this.textures.remove(key);
+        }
 
         const canvas = document.createElement('canvas');
         canvas.width = WIDTH;
@@ -138,11 +159,13 @@ export class MainMenu extends Phaser.Scene {
         if (!context) return;
 
         const gradient = context.createRadialGradient(WIDTH / 2, HEIGHT / 2, 120, WIDTH / 2, HEIGHT / 2, 1140);
-        gradient.addColorStop(0, 'rgba(255, 251, 240, 0.72)');
-        gradient.addColorStop(1, 'rgba(255, 251, 240, 0.98)');
+        gradient.addColorStop(0, `rgba(255, 251, 240, ${MENU_SCRIM_CENTER_ALPHA})`);
+        gradient.addColorStop(1, `rgba(255, 251, 240, ${MENU_SCRIM_EDGE_ALPHA})`);
         context.fillStyle = gradient;
         context.fillRect(0, 0, WIDTH, HEIGHT);
         this.textures.addCanvas(key, canvas);
+
+        
     }
 
     private createDotTexture(): void {
@@ -183,7 +206,7 @@ export class MainMenu extends Phaser.Scene {
 
         this.add.image(WIDTH / 2, HEIGHT / 2, 'menu_kitchen_bg')
             .setDisplaySize(WIDTH, HEIGHT)
-            .setAlpha(0.5)
+            .setAlpha(MENU_KITCHEN_BACKGROUND_ALPHA)
             .setDepth(1);
 
         this.add.image(WIDTH / 2, HEIGHT / 2, 'menu_scrim_light')
@@ -256,8 +279,6 @@ export class MainMenu extends Phaser.Scene {
     // ─────────────────────────── HUD & title ───────────────────────────
 
     private createHud(): void {
-            
-
         this.createTextCard({
             x: WIDTH - 120,
             y: 32,
@@ -276,7 +297,7 @@ export class MainMenu extends Phaser.Scene {
     private createTitleStack(): void {
         const logo = this.add.container(WIDTH / 2, 482).setDepth(6);
         logo.add([
-            this.createLogoLayer(12, 12, '#FF9580'),
+            this.createLogoLayer(12, 12, 'COLORS.cereales' ),
             this.createLogoLayer(6, 6, '#7AD3A0'),
             this.createLogoLayer(0, 0, '#FFFFFF'),
         ]);
@@ -331,7 +352,7 @@ export class MainMenu extends Phaser.Scene {
     }
 
     private createPlayButton(): void {
-        const playButton = PrefabButtons.continuar(this, WIDTH / 2, 750, () => this.startGame(false), {
+        const playButton = PrefabButtons.continuar(this, WIDTH / 2, 750, () => this.startGame(), {
             text: ' JUGAR',
             width: 340,
             height: 100,
@@ -415,7 +436,7 @@ export class MainMenu extends Phaser.Scene {
             try {
                 PlayerService.establecerJugadorActivo(select.value);
                 this.removePlayerFormOverlay();
-                this.scene.start('LevelSelectScene');
+                this.scene.start('TutorialScene');
             } catch (error) {
                 errorBox.textContent = error instanceof Error
                     ? error.message
@@ -433,7 +454,7 @@ export class MainMenu extends Phaser.Scene {
         button.style.color = style.color;
         button.style.height = style.height;
         button.style.border = '0';
-        button.style.backgroundColor = 'transparent';
+        button.style.backgroundColor = 'transparent';  
         button.style.backgroundImage = `url("${style.backgroundImage}")`;
         button.style.backgroundRepeat = 'no-repeat';
         button.style.backgroundPosition = 'center';
@@ -587,7 +608,7 @@ export class MainMenu extends Phaser.Scene {
             this.clickSound?.play();
         }
 
-        this.scene.start('TutorialScene');
+        this.showPlayerFormOverlay();
     }
 
     private startTutorial(playSound = true): void {
@@ -600,7 +621,7 @@ export class MainMenu extends Phaser.Scene {
 
     // ─────────────────────── Player form overlay (DOM) ───────────────────────
 
-    public showPlayerFormOverlay(): void {
+    private showPlayerFormOverlay(): void {
         if (this.playerFormOverlay) {
             this.playerFormOverlay.querySelector<HTMLInputElement>('input[name="nombre"]')?.focus();
             return;

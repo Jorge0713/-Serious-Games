@@ -1,6 +1,7 @@
 import * as Phaser from 'phaser';
 import { GameButton } from './GameButton';
 import type { GameButtonConfig } from './GameButton';
+import { FONT_DISPLAY } from '../config/gameFonts';
 
 const TEXTURES = {
     primary: 'MainButton',
@@ -14,7 +15,6 @@ const ASSET_PATHS = {
     [TEXTURES.cancel]: '/assets/Buttons/Cancel.png',
 };
 
-const FONT_DISPLAY = '"Pixelify Sans", Arial, sans-serif';
 const INK_HEX = '#2E3142';
 
 const HOVER_KEY_FALLBACKS = ['menu_hover', 'hoverSound', 'Hover', 'roadmap_hover'];

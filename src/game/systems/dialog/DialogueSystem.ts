@@ -1,4 +1,5 @@
 import * as Phaser from "phaser";
+import { FONT_DISPLAY } from "../../../config/gameFonts";
 
 type DialogueConfig = {
   scene: Phaser.Scene;
@@ -37,7 +38,7 @@ export class DialogueSystem {
 
     // Texto
     this.text = this.scene.add.text(this.x + this.padding, this.y + this.padding, "", {
-      fontFamily: "Gill Sans MT", 
+      fontFamily: FONT_DISPLAY, 
       fontSize: "19px",
       color: "#000",
       lineSpacing: 3,

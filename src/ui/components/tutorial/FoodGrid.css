@@ -1,30 +1,73 @@
+/* ─── Tokens de diseño (alineados con MAIN_MENU_COLORS / LEVEL_SELECT_COLORS) ── */
 .tutorial-container {
-    --green-main: #76A665;
-    --wood: #5E412F;
-    --wood-dark: #5E412F;
-    --cream: #DECDBC;
-    --terracotta: #D9A066;
-    --green-rgb: 118, 166, 101;
-    --wood-rgb: 94, 65, 47;
-    --wood-dark-rgb: 94, 65, 47;
-    --cream-rgb: 249, 246, 239;
-    --terracotta-rgb: 217, 160, 102;
+    --paper: #FFFBF0;
+    --paper-soft: #F2EADB;
+    --card: #FFFFFF;
+    --ink: #2E3142;
+    --ink-soft: #4F5266;
+    --ink-mute: #9094A4;
+    --ink-rgb: 46, 49, 66;
+    --paper-rgb: 255, 251, 240;
+
+    --green: #77D39D;
+    --green-rgb: 119, 211, 157;
+    --coral: #FF907F;
+    --coral-rgb: 255, 144, 127;
+    --yellow: #F7CE63;
+    --yellow-rgb: 247, 206, 99;
+    --orange: #F4A36F;
+    --orange-rgb: 244, 163, 111;
+    --accent: #8A95E0;
+
+    /* Aliases legacy: el .tsx y resto del CSS los siguen usando */
+    --green-main: var(--green);
+    --wood: var(--ink);
+    --wood-dark: var(--ink);
+    --cream: var(--paper);
+    --terracotta: var(--orange);
+    --wood-rgb: var(--ink-rgb);
+    --wood-dark-rgb: var(--ink-rgb);
+    --cream-rgb: var(--paper-rgb);
+    --terracotta-rgb: var(--orange-rgb);
+
     --display-font: 'Pixelify Sans', 'Trebuchet MS', system-ui, sans-serif;
     --text-font: 'VT323', 'Courier New', monospace;
+
     width: 100%;
     height: 100vh;
     box-sizing: border-box;
-    color: var(--wood-dark);
+    color: var(--ink);
     background:
-        linear-gradient(180deg, rgba(var(--cream-rgb), 0.80), rgba(var(--cream-rgb), 0.80)),
+        radial-gradient(circle at 50% 50%, rgba(var(--paper-rgb), 0.78), rgba(var(--paper-rgb), 0.96) 60%),
+        linear-gradient(180deg, rgba(var(--paper-rgb), 0.55), rgba(var(--paper-rgb), 0.55)),
         url('/assets/Backgrounds/Fondo_Cocina.png');
-    background-size: cover;
+    background-size: cover, cover, cover;
     background-position: center;
     overflow-y: auto;
     overflow-x: hidden;
     scroll-behavior: smooth;
     font-family: var(--text-font);
     font-weight: 700;
+    position: relative;
+}
+
+/* Patrón de puntos sutil estilo MainMenu / LevelSelectScene */
+.tutorial-container::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+    background-image:
+        radial-gradient(rgba(var(--ink-rgb), 0.08) 1.5px, transparent 1.5px);
+    background-size: 28px 28px;
+    background-position: 0 0;
+    opacity: 0.9;
+}
+
+.tutorial-container > * {
+    position: relative;
+    z-index: 1;
 }
 
 .tutorial-container::-webkit-scrollbar,
@@ -35,27 +78,27 @@
 
 .tutorial-container::-webkit-scrollbar-track,
 .food-track::-webkit-scrollbar-track {
-    background: rgba(var(--wood-dark-rgb), 0.14);
+    background: rgba(var(--ink-rgb), 0.1);
     border-radius: 999px;
 }
 
 .tutorial-container::-webkit-scrollbar-thumb,
 .food-track::-webkit-scrollbar-thumb {
-    background: var(--terracotta);
-    border: 3px solid var(--cream);
+    background: var(--green);
+    border: 3px solid var(--paper);
     border-radius: 999px;
 }
 
 .tutorial-container::-webkit-scrollbar-thumb:hover,
 .food-track::-webkit-scrollbar-thumb:hover {
-    background: var(--green-main);
+    background: var(--coral);
 }
 
 @supports (scrollbar-width: auto) {
     .tutorial-container,
     .food-track {
         scrollbar-width: thin;
-        scrollbar-color: var(--terracotta) rgba(var(--wood-dark-rgb), 0.14);
+        scrollbar-color: var(--green) rgba(var(--ink-rgb), 0.1);
     }
 }
 
@@ -65,6 +108,7 @@
     padding: 88px 0 56px;
 }
 
+/* ─── Hero ─────────────────────────────────────────────────────────────── */
 .tutorial-hero {
     text-align: center;
     animation: viewReveal 520ms ease both;
@@ -74,17 +118,17 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    min-height: 36px;
-    padding: 7px 18px;
-    color: var(--cream);
-    background: var(--wood-dark);
-    border: 2px solid var(--wood);
-    border-radius: 999px;
-    box-shadow: 0 10px 22px rgba(var(--wood-dark-rgb), 0.18);
-    font-size: 15px;
+    min-height: 38px;
+    padding: 8px 22px;
+    color: var(--paper);
+    background: var(--ink);
+    border: 3px solid var(--ink);
+    box-shadow: 4px 4px 0 rgba(var(--ink-rgb), 0.18);
+    border-radius: 6px;
+    font-size: 16px;
     font-weight: 900;
     font-family: var(--display-font);
-    letter-spacing: 0;
+    letter-spacing: 1px;
     text-transform: uppercase;
 }
 
@@ -92,25 +136,26 @@
     width: auto;
     height: auto;
     max-width: 960px;
-    margin: 20px auto 10px;
-    color: var(--wood-dark);
+    margin: 22px auto 10px;
+    color: var(--ink);
     font-size: clamp(34px, 5vw, 62px);
     line-height: 1.02;
     font-weight: 1000;
     font-family: var(--display-font);
-    letter-spacing: 0;
-    text-shadow: 0 4px 0 rgba(var(--wood-rgb), 0.14);
+    text-shadow: 4px 4px 0 rgba(var(--ink-rgb), 0.14);
 }
 
 .tutorial-subtitle {
     max-width: 660px;
     margin: 0 auto 34px;
-    color: var(--wood);
-    font-size: clamp(25px, 2.8vw, 34px);
+    color: var(--ink-soft);
+    font-size: clamp(22px, 2.4vw, 28px);
     font-weight: 700;
     line-height: 1.35;
+    font-family: var(--text-font);
 }
 
+/* ─── Nav superior ─────────────────────────────────────────────────────── */
 .section-nav {
     position: fixed;
     top: 20px;
@@ -118,7 +163,7 @@
     z-index: 20;
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 14px;
 }
 
 .btn-back,
@@ -140,7 +185,6 @@
     border: none;
     padding: 0;
     box-shadow: none;
-
     display: flex;
     align-items: center;
     justify-content: center;
@@ -149,9 +193,7 @@
 .btn-back-img {
     width: 140px;
     height: auto;
-
     image-rendering: pixelated;
-
     transition: transform 180ms ease;
 }
 
@@ -164,19 +206,19 @@
     display: inline-flex;
     align-items: center;
     min-height: 42px;
-    padding: 8px 16px;
-    color: var(--cream);
-    background: var(--green-main);
-    border: 2px solid var(--wood-dark);
-    border-radius: 999px;
-    box-shadow: 0 10px 22px rgba(var(--wood-dark-rgb), 0.16);
+    padding: 8px 18px;
+    color: var(--ink);
+    background: var(--yellow);
+    border: 3px solid var(--ink);
+    box-shadow: 4px 4px 0 rgba(var(--ink-rgb), 0.18);
+    border-radius: 8px;
     font-family: var(--display-font);
-    font-size: 15px;
+    font-size: 16px;
     font-weight: 900;
 }
 
-.btn-back:hover  .btn-back-img {
-        transform: translateY(-2px) scale(1.04);
+.btn-back:hover .btn-back-img {
+    transform: translateY(-2px) scale(1.04);
 }
 
 .circle-control:hover .btn-left-sprite,
@@ -194,9 +236,10 @@
     width: 12px;
 }
 
+/* ─── Stack de secciones ───────────────────────────────────────────────── */
 .sections-stack {
     display: grid;
-    gap: 32px;
+    gap: 28px;
 }
 
 .food-section {
@@ -206,67 +249,66 @@
 .section-header {
     display: flex;
     align-items: center;
-    gap: 16px;
+    gap: 18px;
     margin-bottom: 14px;
 }
 
 .section-icon {
     display: grid;
     place-items: center;
-    width: 66px;
-    height: 66px;
-    color: var(--cream);
-    background: var(--green-main);
-    border: 4px solid var(--wood);
-    border-radius: 20px;
-    box-shadow: 0 12px 0 rgba(var(--wood-dark-rgb), 0.18);
-    font-size: 34px;
+    width: 64px;
+    height: 64px;
+    color: var(--ink);
+    background: var(--green);
+    border: 3px solid var(--ink);
+    border-radius: 10px;
+    box-shadow: 5px 5px 0 rgba(var(--ink-rgb), 0.22);
+    font-size: 32px;
 }
 
 .section-title {
     width: auto;
     height: auto;
     margin: 0;
-    color: var(--wood-dark);
+    color: var(--ink);
     font-size: clamp(28px, 3vw, 42px);
     line-height: 1;
     font-weight: 1000;
     font-family: var(--display-font);
-    letter-spacing: 0;
 }
 
 .section-copy {
-    margin-top: 6px;
-    color: rgba(var(--wood-dark-rgb), 0.74);
-    font-size: clamp(24px, 2.2vw, 31px);
+    margin-top: 8px;
+    color: var(--ink-soft);
+    font-size: clamp(22px, 2.2vw, 28px);
     font-weight: 700;
-    line-height: 1.12;
+    line-height: 1.18;
     max-width: 760px;
+    font-family: var(--text-font);
 }
 
+/* ─── Panel principal del explorador ───────────────────────────────────── */
 .food-explorer {
     display: grid;
     grid-template-columns: minmax(0, 1fr) minmax(340px, 430px);
-    gap: 20px;
-    padding: 18px;
-    background:
-        linear-gradient(135deg, rgba(var(--terracotta-rgb), 0.16), rgba(var(--cream-rgb), 0.96)),
-        repeating-linear-gradient(45deg, rgba(var(--wood-rgb), 0.055) 0 10px, transparent 10px 20px);
-    border: 3px solid rgba(var(--wood-dark-rgb), 0.72);
-    border-radius: 26px;
+    gap: 22px;
+    padding: 22px;
+    background: var(--card);
+    border: 3px solid var(--ink);
+    border-radius: 14px;
     box-shadow:
-        0 22px 44px rgba(var(--wood-dark-rgb), 0.2),
-        inset 0 0 0 2px rgba(var(--cream-rgb), 0.72);
+        8px 8px 0 rgba(var(--ink-rgb), 0.18),
+        inset 0 0 0 2px rgba(var(--ink-rgb), 0.04);
 }
 
 .empty-food-state {
     padding: 24px;
-    color: var(--wood-dark);
-    background: var(--cream);
-    border: 3px solid rgba(var(--wood-dark-rgb), 0.48);
-    border-radius: 22px;
-    box-shadow: 0 14px 28px rgba(var(--wood-dark-rgb), 0.14);
-    font-size: 24px;
+    color: var(--ink);
+    background: var(--card);
+    border: 3px solid var(--ink);
+    border-radius: 12px;
+    box-shadow: 6px 6px 0 rgba(var(--ink-rgb), 0.16);
+    font-size: 22px;
     line-height: 1.2;
 }
 
@@ -274,7 +316,7 @@
     min-width: 0;
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 14px;
 }
 
 .carousel-toolbar {
@@ -286,10 +328,12 @@
 }
 
 .carousel-label {
-    color: var(--wood-dark);
+    color: var(--ink);
     font-family: var(--display-font);
-    font-size: 20px;
+    font-size: 22px;
     font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
 }
 
 .carousel-actions {
@@ -341,7 +385,7 @@
 
 .food-track {
     display: flex;
-    gap: 18px;
+    gap: 16px;
     min-height: 318px;
     padding: 18px 10px 24px;
     overflow-x: auto;
@@ -350,16 +394,14 @@
     scroll-padding: 12px;
 }
 
+/* ─── Panel de nutrición ───────────────────────────────────────────────── */
 .nutrition-summary-panel {
     padding: 20px 22px 22px;
-    color: var(--wood-dark);
-    background:
-        linear-gradient(180deg, rgba(var(--cream-rgb), 0.96), rgba(var(--terracotta-rgb), 0.11));
-    border: 3px solid var(--wood-dark);
-    border-radius: 22px;
-    box-shadow:
-        0 14px 0 rgba(var(--wood-rgb), 0.14),
-        inset 0 0 0 2px rgba(var(--cream-rgb), 0.7);
+    color: var(--ink);
+    background: var(--paper);
+    border: 3px solid var(--ink);
+    border-radius: 12px;
+    box-shadow: 5px 5px 0 rgba(var(--ink-rgb), 0.14);
 }
 
 .nutrition-summary-header {
@@ -370,20 +412,20 @@
 
 .nutrition-summary-header h3 {
     margin: 0;
-    color: var(--wood-dark);
+    color: var(--ink);
     font-family: var(--display-font);
     font-size: 24px;
     font-weight: 1000;
     line-height: 1;
-    letter-spacing: 0;
 }
 
 .nutrition-summary-header p {
     margin: 0;
-    color: var(--wood);
-    font-size: 24px;
+    color: var(--ink-soft);
+    font-size: 22px;
     line-height: 1.1;
     font-weight: 700;
+    font-family: var(--text-font);
 }
 
 .nutrition-card-grid {
@@ -395,11 +437,10 @@
 .nutrition-card {
     min-height: 92px;
     padding: 14px 12px;
-    background:
-        linear-gradient(180deg, rgba(var(--cream-rgb), 0.98), rgba(var(--green-rgb), 0.1));
-    border: 2px solid rgba(var(--wood-rgb), 0.42);
-    border-radius: 16px;
-    box-shadow: inset 0 1px 0 rgba(var(--cream-rgb), 0.9);
+    background: var(--card);
+    border: 2px solid var(--ink);
+    border-radius: 10px;
+    box-shadow: 3px 3px 0 rgba(var(--ink-rgb), 0.14);
     display: flex;
     flex-direction: column;
     justify-content: space-between;
@@ -407,17 +448,18 @@
 }
 
 .nutrition-card-label {
-    color: var(--wood);
+    color: var(--ink-soft);
     font-family: var(--display-font);
     font-size: 14px;
     font-weight: 900;
     line-height: 1;
     text-transform: uppercase;
+    letter-spacing: 0.5px;
     overflow-wrap: anywhere;
 }
 
 .nutrition-card-value {
-    color: var(--wood-dark);
+    color: var(--ink);
     font-family: var(--display-font);
     font-size: 24px;
     font-weight: 1000;
@@ -425,19 +467,17 @@
     overflow-wrap: anywhere;
 }
 
+/* ─── Tarjeta de alimento ─────────────────────────────────────────────── */
 .food-card {
     position: relative;
     flex: 0 0 clamp(168px, 16vw, 214px);
     min-height: 268px;
     padding: 18px 14px 16px;
-    color: var(--wood-dark);
-    background:
-        linear-gradient(180deg, rgba(var(--terracotta-rgb), 0.12), rgba(var(--cream-rgb), 0.98));
-    border: 3px solid rgba(var(--wood-dark-rgb), 0.5);
-    border-radius: 24px;
-    box-shadow:
-        0 14px 0 rgba(var(--wood-rgb), 0.12),
-        0 18px 30px rgba(var(--wood-dark-rgb), 0.18);
+    color: var(--ink);
+    background: var(--card);
+    border: 3px solid var(--ink);
+    border-radius: 14px;
+    box-shadow: 5px 5px 0 rgba(var(--ink-rgb), 0.18);
     scroll-snap-align: center;
     display: flex;
     flex-direction: column;
@@ -446,55 +486,53 @@
     transform: translateY(0) scale(1);
     animation: cardPop 520ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
     overflow: hidden;
+    cursor: pointer;
 }
 
 .food-card::before {
     content: '';
     position: absolute;
     inset: 8px;
-    border-radius: 18px;
-    background:
-        linear-gradient(90deg, rgba(var(--wood-rgb), 0.055) 1px, transparent 1px),
-        linear-gradient(0deg, rgba(var(--wood-rgb), 0.045) 1px, transparent 1px);
-    background-size: 22px 22px;
-    opacity: 0.55;
+    border-radius: 10px;
+    background-image:
+        radial-gradient(rgba(var(--ink-rgb), 0.06) 1px, transparent 1px);
+    background-size: 16px 16px;
+    opacity: 0.5;
     pointer-events: none;
 }
 
 .food-card:hover,
 .food-card:focus-visible {
-    transform: translateY(-10px) scale(1.045);
-    border-color: var(--green-main);
+    transform: translateY(-6px);
     box-shadow:
-        0 18px 0 rgba(var(--green-rgb), 0.22),
-        0 26px 42px rgba(var(--wood-dark-rgb), 0.26);
+        8px 11px 0 rgba(var(--green-rgb), 0.45),
+        0 0 0 3px var(--green) inset;
     outline: none;
 }
 
 .food-card.is-active {
     flex-basis: clamp(210px, 19vw, 260px);
-    transform: translateY(-8px) scale(1.04);
-    background:
-        linear-gradient(180deg, rgba(var(--green-rgb), 0.12), var(--cream) 45%);
-    border-color: var(--green-main);
+    transform: translateY(-6px);
+    background: var(--card);
     box-shadow:
-        0 18px 0 rgba(var(--green-rgb), 0.24),
-        0 28px 48px rgba(var(--wood-dark-rgb), 0.28);
+        8px 11px 0 rgba(var(--green-rgb), 0.6),
+        0 0 0 3px var(--green) inset;
 }
 
 .card-number {
     position: absolute;
-    top: 12px;
-    left: 12px;
+    top: 10px;
+    left: 10px;
     z-index: 1;
-    color: var(--cream);
-    background: var(--wood-dark);
-    border: 2px solid rgba(var(--wood-dark-rgb), 0.58);
-    border-radius: 999px;
+    color: var(--paper);
+    background: var(--ink);
+    border: 2px solid var(--ink);
+    border-radius: 6px;
     padding: 3px 9px;
-    font-size: 12px;
+    font-size: 13px;
     font-weight: 1000;
     font-family: var(--display-font);
+    letter-spacing: 0.5px;
 }
 
 .food-image-frame {
@@ -504,20 +542,18 @@
     place-items: center;
     width: 126px;
     height: 126px;
-    margin-top: 20px;
-    background:
-        radial-gradient(circle, rgba(var(--green-rgb), 0.2), var(--cream) 66%),
-        linear-gradient(180deg, var(--cream), rgba(var(--wood-rgb), 0.14));
-    border: 3px solid rgba(var(--wood-rgb), 0.38);
+    margin-top: 24px;
+    background: var(--paper);
+    border: 3px solid var(--ink);
     border-radius: 50%;
-    box-shadow: inset 0 4px 12px rgba(var(--wood-dark-rgb), 0.14);
+    box-shadow: inset 0 4px 12px rgba(var(--ink-rgb), 0.12);
 }
 
 .food-image {
     width: 94px;
     height: 94px;
     object-fit: contain;
-    filter: drop-shadow(0 10px 10px rgba(var(--wood-dark-rgb), 0.25));
+    filter: drop-shadow(0 8px 8px rgba(var(--ink-rgb), 0.22));
     transform: translateY(0) rotate(0);
     transition: transform 220ms ease, filter 220ms ease;
 }
@@ -525,16 +561,16 @@
 .food-card:hover .food-image,
 .food-card.is-active .food-image {
     transform: translateY(-4px) rotate(-3deg) scale(1.08);
-    filter: drop-shadow(0 14px 14px rgba(var(--wood-dark-rgb), 0.32));
+    filter: drop-shadow(0 12px 12px rgba(var(--ink-rgb), 0.3));
 }
 
 .food-name {
     position: relative;
     z-index: 1;
     width: 100%;
-    color: var(--wood-dark);
+    color: var(--ink);
     font-family: var(--display-font);
-    font-size: 21px;
+    font-size: 22px;
     line-height: 1.1;
     font-weight: 900;
     text-align: center;
@@ -546,29 +582,31 @@
     right: 10px;
     top: 10px;
     z-index: 2;
-    padding: 4px 9px;
-    color: var(--cream);
-    background: var(--green-main);
-    border: 2px solid var(--wood-dark);
-    border-radius: 999px;
+    padding: 4px 10px;
+    color: var(--ink);
+    background: var(--green);
+    border: 2px solid var(--ink);
+    border-radius: 6px;
     font-family: var(--display-font);
     font-size: 12px;
     font-weight: 900;
-    box-shadow: 0 6px 12px rgba(var(--green-rgb), 0.24);
+    box-shadow: 2px 2px 0 rgba(var(--ink-rgb), 0.18);
+    letter-spacing: 0.5px;
 }
 
+/* ─── Spotlight (ficha nutritiva) ──────────────────────────────────────── */
 .food-spotlight {
     position: sticky;
     top: 88px;
     align-self: start;
     min-height: 100%;
-    padding: 45px 38px 47px;
-    background-image: url('/assets/Backgrounds/foodSpotlight.webp');
-    background-position: center;
-    background-size: 100% 100%;
-    background-repeat: no-repeat;
+    padding: 26px 28px 30px;
+    background: var(--paper);
+    border: 3px solid var(--ink);
+    border-radius: 14px;
     box-shadow:
-        0 10px 24px rgba(var(--wood-dark-rgb), 0.16);
+        8px 8px 0 rgba(var(--ink-rgb), 0.18),
+        inset 0 0 0 2px rgba(var(--ink-rgb), 0.04);
     animation: spotlightIn 320ms ease both;
     overflow: hidden;
 }
@@ -576,11 +614,12 @@
 .food-spotlight::before {
     content: '';
     position: absolute;
-    inset: 0;
-    background:
-        linear-gradient(115deg, transparent 0 52%, rgba(var(--wood-rgb), 0.045) 52% 56%, transparent 56%),
-        repeating-linear-gradient(0deg, rgba(var(--wood-rgb), 0.04) 0 2px, transparent 2px 16px);
-    opacity: 0.55;
+    inset: 8px;
+    border-radius: 10px;
+    background-image:
+        radial-gradient(rgba(var(--ink-rgb), 0.05) 1.2px, transparent 1.2px);
+    background-size: 22px 22px;
+    opacity: 0.7;
     pointer-events: none;
 }
 
@@ -597,35 +636,37 @@
     justify-content: space-between;
     gap: 10px;
     width: 100%;
-    min-height: 60px;
-    color: var(--cream);
-    background-image: url('/assets/Backgrounds/fichaNutritiva.webp');
-    background-repeat: no-repeat;
-    background-size: 100% 100%;
-    background-position: center;
-    padding: 14px 28px;
+    min-height: 50px;
+    color: var(--ink);
+    background: var(--yellow);
+    border: 3px solid var(--ink);
+    border-radius: 10px;
+    box-shadow: 4px 4px 0 rgba(var(--ink-rgb), 0.18);
+    padding: 10px 18px;
     font-family: var(--display-font);
-    font-size: 18px;
+    font-size: 16px;
     font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
     box-sizing: border-box;
 }
 
 .spotlight-image-wrap {
     display: grid;
     place-items: center;
-    min-height: 190px;
-    margin: 16px 0;
-    background: rgba(255, 248, 240, 0.62);
-    backdrop-filter: blur(3px);
-    border: 3px solid rgba(var(--wood-rgb), 0.34);
-    border-radius: 22px;
+    min-height: 200px;
+    margin: 18px 0;
+    background: var(--card);
+    border: 3px solid var(--ink);
+    border-radius: 12px;
+    box-shadow: 4px 4px 0 rgba(var(--ink-rgb), 0.12);
 }
 
 .spotlight-image {
     width: min(220px, 70%);
     max-height: 172px;
     object-fit: contain;
-    filter: drop-shadow(0 18px 16px rgba(var(--wood-dark-rgb), 0.3));
+    filter: drop-shadow(0 14px 14px rgba(var(--ink-rgb), 0.26));
     animation: floatFood 2600ms ease-in-out infinite;
 }
 
@@ -638,46 +679,45 @@
     width: auto;
     height: auto;
     margin: 0;
-    color: #1f1712;
+    color: var(--ink);
     font-size: clamp(30px, 3vw, 44px);
     line-height: 1;
     font-weight: 1000;
     font-family: var(--display-font);
-    letter-spacing: 0;
 }
 
 .info-block {
-    padding: 14px;
-    color: var(--wood-dark);
-    background: rgba(255, 248, 240, 0.78);
-    backdrop-filter: blur(2px);
-    border: 2px solid rgba(var(--wood-rgb), 0.22);
-    border-left: 8px solid var(--green-main);
-    border-radius: 18px;
-    box-shadow: inset 0 1px 0 rgba(var(--cream-rgb), 0.58);
+    padding: 14px 16px;
+    color: var(--ink);
+    background: var(--card);
+    border: 2px solid var(--ink);
+    border-left: 8px solid var(--green);
+    border-radius: 10px;
+    box-shadow: 3px 3px 0 rgba(var(--ink-rgb), 0.12);
 }
 
 .info-block.compact {
-    border-left-color: var(--terracotta);
+    border-left-color: var(--coral);
 }
 
 .info-label {
     display: block;
-    margin-bottom: 5px;
-    color: #1f1712;
+    margin-bottom: 6px;
+    color: var(--ink-soft);
     font-family: var(--display-font);
     font-size: 14px;
     font-weight: 900;
     text-transform: uppercase;
-    letter-spacing: 0;
+    letter-spacing: 0.5px;
 }
 
 .info-block p {
     margin: 0;
-    color: #1f1712;
-    font-size: 24px;
-    line-height: 1.12;
+    color: var(--ink);
+    font-size: 22px;
+    line-height: 1.16;
     font-weight: 700;
+    font-family: var(--text-font);
 }
 
 .nutrient-cloud {
@@ -689,46 +729,69 @@
 .nutrient-cloud span {
     display: inline-flex;
     align-items: center;
-    min-height: 34px;
+    min-height: 32px;
     padding: 6px 12px;
-    color: #1f1712;
-    background: var(--green-main);
-    border: 2px solid var(--wood-dark);
-    border-radius: 999px;
-    box-shadow: 0 8px 0 rgba(var(--wood-dark-rgb), 0.14);
+    color: var(--ink);
+    background: var(--green);
+    border: 2px solid var(--ink);
+    border-radius: 6px;
+    box-shadow: 3px 3px 0 rgba(var(--ink-rgb), 0.18);
     font-family: var(--display-font);
     font-size: 14px;
     font-weight: 900;
+    letter-spacing: 0.5px;
 }
 
 .nutrient-cloud span.is-secondary {
-    background: var(--terracotta);
+    background: var(--yellow);
 }
 
+/* ─── Botón siguiente / final ──────────────────────────────────────────── */
 .btn-next {
     display: block;
     min-height: 58px;
     margin: 42px auto 0;
     padding: 14px 36px;
-    color: var(--cream);
-    background: var(--green-main);
-    border: 3px solid var(--wood-dark);
-    border-radius: 18px;
-    box-shadow: 0 14px 0 rgba(var(--wood-dark-rgb), 0.18);
-    font-size: clamp(25px, 2.8vw, 33px);
+    color: var(--ink);
+    background: var(--green);
+    border: 3px solid var(--ink);
+    border-radius: 10px;
+    box-shadow: 6px 6px 0 rgba(var(--ink-rgb), 0.2);
+    font-family: var(--display-font);
+    font-size: clamp(22px, 2.4vw, 28px);
+    font-weight: 1000;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+}
+
+.btn-next:hover {
+    transform: translate(-2px, -2px);
+    box-shadow: 8px 8px 0 rgba(var(--ink-rgb), 0.24);
+}
+
+.btn-next:active {
+    transform: translate(2px, 2px);
+    box-shadow: 3px 3px 0 rgba(var(--ink-rgb), 0.2);
 }
 
 .btn-next.is-final {
-    background: var(--green-main);
-    border-color: var(--wood-dark);
-    font-size: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 290px;
+    height: 96px;
+    padding: 0 34px 10px;
+    color: var(--ink);
+    background: transparent url('/assets/Buttons/MainButton.png') center / 100% 100% no-repeat;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+    image-rendering: pixelated;
+    line-height: 1;
+    text-align: center;
 }
 
-.btn-next.is-final::after {
-    content: attr(data-label);
-    font-size: clamp(25px, 2.8vw, 33px);
-}
-
+/* ─── Animaciones ──────────────────────────────────────────────────────── */
 @keyframes viewReveal {
     from {
         opacity: 0;
@@ -771,6 +834,7 @@
     }
 }
 
+/* ─── Responsivo ───────────────────────────────────────────────────────── */
 @media (max-width: 980px) {
     .tutorial-shell {
         width: min(100% - 28px, 760px);
@@ -817,13 +881,13 @@
     .section-icon {
         width: 54px;
         height: 54px;
-        border-radius: 17px;
+        border-radius: 8px;
         font-size: 28px;
     }
 
     .food-explorer {
-        padding: 12px;
-        border-radius: 22px;
+        padding: 14px;
+        border-radius: 12px;
     }
 
     .carousel-toolbar {
@@ -839,12 +903,12 @@
 
     .nutrition-summary-panel {
         padding: 16px;
-        border-radius: 18px;
+        border-radius: 10px;
     }
 
     .nutrition-summary-header h3,
     .nutrition-summary-header p {
-        font-size: 21px;
+        font-size: 20px;
     }
 
     .nutrition-card-grid {

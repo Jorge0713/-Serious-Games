@@ -333,7 +333,7 @@ export const FoodGrid: React.FC<FoodGridProps> = ({
                     aria-label={isLastSection ? finishLabel : 'Siguiente seccion'}
                     onClick={isLastSection ? onFinishTutorial : onNextSection}
                 >
-                    {isLastSection ? 'Ir al Nivel 1' : 'Siguiente sección →'}
+                    {isLastSection ? finishLabel : 'Siguiente sección →'}
                 </button>
             </main>
         </div>
