@@ -59,6 +59,7 @@ export class Nivel1Scene extends Phaser.Scene {
     private tutorialGhostCarrot?: Phaser.GameObjects.Image;
     private tutorialBubble?:    Phaser.GameObjects.Graphics;
     private tutorialBubbleTxt?: Phaser.GameObjects.Text;
+    private isTutorialDragging = false;
 
     // Educational feedback toast (only one at a time)
     private toastBg?:    Phaser.GameObjects.Rectangle;
@@ -78,6 +79,20 @@ export class Nivel1Scene extends Phaser.Scene {
 
     constructor() {
         super('Nivel1Scene');
+    }
+
+    init() {
+        this.isTutorialActive = false;
+        this.tutorialCarrot = undefined;
+        this.tutorialHand = undefined;
+        this.tutorialHighlight = undefined;
+        this.tutorialGhostCarrot = undefined;
+        this.tutorialBubble = undefined;
+        this.tutorialBubbleTxt = undefined;
+        this.isTutorialDragging = false;
+        this.toastTimer = undefined;
+        this.lastWindowWidth = 0;
+        this.lastWindowHeight = 0;
     }
 
     preload() {
@@ -236,7 +251,11 @@ export class Nivel1Scene extends Phaser.Scene {
         this.events.once('shutdown', () => this.stopTimer());
 
         // INTRO PLATÓN → luego oleadas → luego tutorial mano
-        this.time.delayedCall(400, () => this.showIntroPlaton());
+        if (this.registry.get('tutorialCompleted_Nivel1')) {
+            this.time.delayedCall(400, () => this.initWavePools());
+        } else {
+            this.time.delayedCall(400, () => this.showIntroPlaton());
+        }
     }
 
     // ─── WAVE SYSTEM ──────────────────────────────────────────────────────────
@@ -662,7 +681,7 @@ export class Nivel1Scene extends Phaser.Scene {
         this.foodBarBg = this.add.rectangle(width / 2, stripCenterY, barWidth, stripHeight, 0xf7cc85, 0.82)
             .setStrokeStyle(4, 0x5E412F).setDepth(1);
 
-        this.foodContainer = this.add.container(viewportX, 0).setDepth(5);
+        this.foodContainer = this.add.container(viewportX, visibleTop).setDepth(5);
     }
 
     // ─── DRAG & DROP ──────────────────────────────────────────────────────────
@@ -746,7 +765,7 @@ export class Nivel1Scene extends Phaser.Scene {
                 try { this.mostrarPlaton(true); } catch { void 0; }
 
                 if (categoriaItem === 'verdura' || categoriaItem === 'fruta') {
-                    this.shakeBasket(categoriaZona === 'verdura' ? this.segmentoVerduras : this.segmentoFrutas);
+                    this.pulseBasket(categoriaZona === 'verdura' ? this.segmentoVerduras : this.segmentoFrutas);
                     this.waveAciertos++;
                     if (this.waveAciertos >= this.waveCorrectTarget) {
                         this.time.delayedCall(800, () => this.onWaveComplete());
@@ -760,8 +779,10 @@ export class Nivel1Scene extends Phaser.Scene {
                 try { this.mostrarPlaton(false); } catch { void 0; }
 
                 if (categoriaItem === 'verdura' || categoriaItem === 'fruta') {
-                    // Fruta/verdura en zona incorrecta → sacudir, mostrar pista, perder vida
+                    // Fruta/verdura en zona incorrecta → sacudir la canasta equivocada, mostrar pista, perder vida
                     this.shakeWrongFood(gameObject);
+                    const dropZoneBasket = categoriaZona === 'verdura' ? this.segmentoVerduras : this.segmentoFrutas;
+                    this.shakeWrongBasket(dropZoneBasket);
                     this.flashCorrectBasket(categoriaItem);
                     this.showEducationalFeedback(categoriaItem, categoriaZona);
                     this.returnToFoodBar(gameObject);
@@ -995,9 +1016,11 @@ export class Nivel1Scene extends Phaser.Scene {
                             txt.destroy();
                             // Poblar barra; el timer arranca DESPUÉS del tutorial
                             this.initWavePools();
-                            this.stopTimer();
-                            this.waveInProgress = false;
-                            this.time.delayedCall(700, () => this.startTutorial());
+                            if (!this.registry.get('tutorialCompleted_Nivel1')) {
+                                this.stopTimer();
+                                this.waveInProgress = false;
+                                this.time.delayedCall(700, () => this.startTutorial());
+                            }
                         }
                     });
                 });
@@ -1050,6 +1073,8 @@ export class Nivel1Scene extends Phaser.Scene {
     private onTutorialStep2() {
         if (!this.tutorialCarrot) return;
 
+        this.isTutorialDragging = true;
+
         // Actualizar burbuja
         this.showTutBubble('¡Muy bien! Llévala\nhasta la zona resaltada.');
 
@@ -1065,7 +1090,7 @@ export class Nivel1Scene extends Phaser.Scene {
     }
 
     private loopTutHand(slotX: number, slotY: number) {
-        if (!this.tutorialHand || !this.tutorialCarrot || !this.isTutorialActive) return;
+        if (!this.tutorialHand || !this.tutorialCarrot || !this.isTutorialActive || this.isTutorialDragging) return;
         
         const carrotStartX = this.foodContainer.x + this.tutorialCarrot.x;
         const carrotStartY = this.foodContainer.y + this.tutorialCarrot.y;
@@ -1089,24 +1114,24 @@ export class Nivel1Scene extends Phaser.Scene {
         this.tweens.add({
             targets: hand, alpha: 1, duration: 300,
             onComplete: () => {
-                if (!this.isTutorialActive || !this.tutorialHand) return;
+                if (!this.isTutorialActive || !this.tutorialHand || this.isTutorialDragging) return;
                 
                 // Pequeña pausa antes de hacer clic
                 this.time.delayedCall(200, () => {
-                    if (!this.isTutorialActive || !this.tutorialHand) return;
+                    if (!this.isTutorialActive || !this.tutorialHand || this.isTutorialDragging) return;
 
                     // Fase 2: Simular click (bajar escala, NO yoyo)
                     this.tweens.add({
                         targets: hand, scaleX: 0.9, scaleY: 0.9, duration: 350, ease: 'Sine.easeOut',
                         onComplete: () => {
-                            if (!this.isTutorialActive || !this.tutorialHand) return;
+                            if (!this.isTutorialActive || !this.tutorialHand || this.isTutorialDragging) return;
                             
                             // Fase 3: Aparecer el fantasma de zanahoria como si la agarrara
                             ghost.setAlpha(0.6);
 
                             // Pausa breve con el click apretado antes de arrastrar
                             this.time.delayedCall(200, () => {
-                                if (!this.isTutorialActive || !this.tutorialHand) return;
+                                if (!this.isTutorialActive || !this.tutorialHand || this.isTutorialDragging) return;
 
                                 // Fase 4: Mover mano y fantasma hacia el objetivo (más lento)
                                 this.tweens.add({
@@ -1115,7 +1140,7 @@ export class Nivel1Scene extends Phaser.Scene {
                                 this.tweens.add({
                                     targets: [ghost], x: slotX, y: slotY, duration: 1300, ease: 'Power2.easeInOut',
                                     onComplete: () => {
-                                        if (!this.isTutorialActive || !this.tutorialHand) return;
+                                        if (!this.isTutorialActive || !this.tutorialHand || this.isTutorialDragging) return;
                                         
                                         // Fase 4.5: Soltar click (restaurar escala)
                                         this.tweens.add({
@@ -1192,6 +1217,7 @@ export class Nivel1Scene extends Phaser.Scene {
     }
 
     private showTutWrongHint() {
+        this.isTutorialDragging = false;
         this.tweens.add({ targets: this.segmentoVerduras, alpha: { from: 1, to: 0.4 }, duration: 160, yoyo: true, repeat: 2 });
         // Reiniciar loop de manita tras el regreso del alimento a la barra
         this.time.delayedCall(380, () => {
@@ -1221,6 +1247,8 @@ export class Nivel1Scene extends Phaser.Scene {
 
         this.tutorialCarrot   = undefined;
         this.isTutorialActive = false;
+        this.isTutorialDragging = false;
+        this.registry.set('tutorialCompleted_Nivel1', true);
         this.waveInProgress   = true;
         this.startTimer(WAVE_TIME_NORMAL);   // contador arranca en 60 s
     }
@@ -1315,7 +1343,7 @@ export class Nivel1Scene extends Phaser.Scene {
         });
     }
 
-    private shakeBasket(basket: Phaser.GameObjects.Image) {
+    private shakeWrongBasket(basket: Phaser.GameObjects.Image) {
         this.tweens.add({
             targets: basket,
             angle: 8,
@@ -1324,6 +1352,18 @@ export class Nivel1Scene extends Phaser.Scene {
             repeat: 4,
             ease: 'Linear',
             onComplete: () => { basket.setAngle(0); },
+        });
+    }
+
+    private pulseBasket(basket: Phaser.GameObjects.Image) {
+        const sx = basket.scaleX, sy = basket.scaleY;
+        this.tweens.add({
+            targets: basket,
+            scaleX: sx * 1.05,
+            scaleY: sy * 1.05,
+            duration: 150,
+            yoyo: true,
+            ease: 'Sine.easeInOut'
         });
     }
 

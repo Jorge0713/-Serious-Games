@@ -61,6 +61,12 @@ export class Nivel3Scene extends Phaser.Scene {
 
     constructor() { super('Nivel3Scene'); }
 
+    init() {
+        this.toastTimer = undefined;
+        this.lastWindowWidth = 0;
+        this.lastWindowHeight = 0;
+    }
+
     // ── PRELOAD ───────────────────────────────────────────────────────────────
     preload() {
         this.load.image('fondo_cocina3',    '/assets/Backgrounds/Fondo_Cocina.png');
@@ -162,7 +168,11 @@ export class Nivel3Scene extends Phaser.Scene {
         this.setupDragDrop();
 
         this.events.once('shutdown', () => this.stopTimer());
-        this.time.delayedCall(400, () => this.showIntroPlaton());
+        if (this.registry.get('introCompleted_Nivel3')) {
+            this.time.delayedCall(400, () => this.initWavePools());
+        } else {
+            this.time.delayedCall(400, () => this.showIntroPlaton());
+        }
     }
 
     // ─── WAVE SYSTEM ──────────────────────────────────────────────────────────
@@ -393,7 +403,7 @@ export class Nivel3Scene extends Phaser.Scene {
         this.foodBarBg = this.add.rectangle(width / 2, stripCenterY, barWidth, stripHeight, 0xf7cc85, 0.82)
             .setStrokeStyle(4, 0x5E412F).setDepth(1);
 
-        this.foodContainer = this.add.container(viewportX, 0).setDepth(5);
+        this.foodContainer = this.add.container(viewportX, visibleTop).setDepth(5);
     }
 
     private populateFoodBar(foods: FoodItem[]) {
@@ -507,7 +517,7 @@ export class Nivel3Scene extends Phaser.Scene {
 
                 try { this.sound.play('object_win'); } catch { void 0; }
                 try { this.mostrarPlaton(true); } catch { void 0; }
-                this.shakeSection();
+                this.pulseSection();
 
                 this.waveAciertos++;
                 if (this.waveAciertos >= this.waveCorrectTarget) {
@@ -519,6 +529,7 @@ export class Nivel3Scene extends Phaser.Scene {
                 try { this.sound.play('sonido-error'); } catch { void 0; }
                 try { this.mostrarPlaton(false); } catch { void 0; }
                 this.shakeWrongFood(gameObject);
+                this.shakeWrongSection();
                 this.showEducationalFeedback(categoria, 'animal');
                 this.returnToFoodBar(gameObject);
                 this.lives--;
@@ -639,6 +650,7 @@ export class Nivel3Scene extends Phaser.Scene {
                         onComplete: () => {
                             bubble.destroy(); txt.destroy();
                             this.isTutorialActive = false;
+                            this.registry.set('introCompleted_Nivel3', true);
                             this.initWavePools();
                         }
                     });
@@ -695,8 +707,28 @@ export class Nivel3Scene extends Phaser.Scene {
         this.tweens.add({ targets: section, y: baseY - 9, duration: 900, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
     }
 
-    private shakeSection() {
-        this.tweens.add({ targets: this.animalSection, angle: 8, duration: 55, yoyo: true, repeat: 4, ease: 'Linear', onComplete: () => { this.animalSection.setAngle(0); } });
+    private shakeWrongSection() {
+        this.tweens.add({
+            targets: this.animalSection,
+            angle: 8,
+            duration: 55,
+            yoyo: true,
+            repeat: 4,
+            ease: 'Linear',
+            onComplete: () => { this.animalSection.setAngle(0); },
+        });
+    }
+
+    private pulseSection() {
+        const sx = this.animalSection.scaleX, sy = this.animalSection.scaleY;
+        this.tweens.add({
+            targets: this.animalSection,
+            scaleX: sx * 1.05,
+            scaleY: sy * 1.05,
+            duration: 150,
+            yoyo: true,
+            ease: 'Sine.easeInOut'
+        });
     }
 
     private mostrarPlaton(esFeliz: boolean) {

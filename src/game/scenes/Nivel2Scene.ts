@@ -70,6 +70,12 @@ export class Nivel2Scene extends Phaser.Scene {
 
     constructor() { super('Nivel2Scene'); }
 
+    init() {
+        this.toastTimer = undefined;
+        this.lastWindowWidth = 0;
+        this.lastWindowHeight = 0;
+    }
+
     preload() {
         this.load.image('Fondo-cocina',           '/assets/Backgrounds/Fondo_Cocina.png');
         this.load.image('inventario-cereales',    '/assets/Plato/inventoryCereals.webp');
@@ -205,7 +211,11 @@ export class Nivel2Scene extends Phaser.Scene {
         this.setupDragDrop();
 
         this.events.once('shutdown', () => this.stopTimer());
-        this.time.delayedCall(400, () => this.showIntroPlaton());
+        if (this.registry.get('introCompleted_Nivel2')) {
+            this.time.delayedCall(400, () => this.initWavePools());
+        } else {
+            this.time.delayedCall(400, () => this.showIntroPlaton());
+        }
     }
 
     // ─── WAVE SYSTEM ──────────────────────────────────────────────────────────
@@ -452,7 +462,7 @@ export class Nivel2Scene extends Phaser.Scene {
         this.foodBarBg = this.add.rectangle(width / 2, stripCenterY, barWidth, stripHeight, 0xf7cc85, 0.82)
             .setStrokeStyle(4, 0x5E412F).setDepth(1);
 
-        this.foodContainer = this.add.container(viewportX, 0).setDepth(5);
+        this.foodContainer = this.add.container(viewportX, visibleTop).setDepth(5);
     }
 
     private populateFoodBar(foods: FoodItem[]) {
@@ -563,7 +573,7 @@ export class Nivel2Scene extends Phaser.Scene {
                 try { this.mostrarPlaton(true); } catch { void 0; }
 
                 if (categoriaItem === 'cereal' || categoriaItem === 'leguminosa') {
-                    this.shakeBasket(targetPanel);
+                    this.pulseBasket(targetPanel);
                     this.waveAciertos++;
                     if (this.waveAciertos >= this.waveCorrectTarget) {
                         this.time.delayedCall(800, () => this.onWaveComplete());
@@ -577,6 +587,8 @@ export class Nivel2Scene extends Phaser.Scene {
 
                 if (categoriaItem === 'cereal' || categoriaItem === 'leguminosa') {
                     this.shakeWrongFood(gameObject);
+                    const dropZoneBasket = categoriaZona === 'cereal' ? this.segmentoCereales : this.segmentoLeguminosas;
+                    this.shakeWrongBasket(dropZoneBasket);
                     this.flashCorrectBasket(categoriaItem);
                     this.showEducationalFeedback(categoriaItem, categoriaZona);
                     this.returnToFoodBar(gameObject);
@@ -707,6 +719,7 @@ export class Nivel2Scene extends Phaser.Scene {
                         onComplete: () => {
                             bubble.destroy(); txt.destroy();
                             this.isTutorialActive = false;
+                            this.registry.set('introCompleted_Nivel2', true);
                             this.initWavePools();
                         }
                     });
@@ -771,8 +784,23 @@ export class Nivel2Scene extends Phaser.Scene {
         });
     }
 
-    private shakeBasket(basket: Phaser.GameObjects.Image) {
-        this.tweens.add({ targets: basket, angle: 8, duration: 55, yoyo: true, repeat: 4, ease: 'Linear', onComplete: () => { basket.setAngle(0); } });
+    private shakeWrongBasket(basket: Phaser.GameObjects.Image) {
+        this.tweens.add({
+            targets: basket, angle: 8, duration: 55, yoyo: true, repeat: 4, ease: 'Linear',
+            onComplete: () => { basket.setAngle(0); },
+        });
+    }
+
+    private pulseBasket(basket: Phaser.GameObjects.Image) {
+        const sx = basket.scaleX, sy = basket.scaleY;
+        this.tweens.add({
+            targets: basket,
+            scaleX: sx * 1.05,
+            scaleY: sy * 1.05,
+            duration: 150,
+            yoyo: true,
+            ease: 'Sine.easeInOut'
+        });
     }
 
     private mostrarPlaton(esFeliz: boolean) {
