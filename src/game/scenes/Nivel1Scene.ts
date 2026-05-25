@@ -8,7 +8,6 @@ import { getErrorMessage } from '../../data/errorMessages';
 const FOOD_ITEM_SIZE      = 70;
 const FOOD_ITEM_SPACING   = 125;
 const FOOD_LABEL_OFFSET   = 48;
-const FOOD_SCROLL_STEP    = 500;
 const WAVE_SIZE           = 10;
 const VERDURAS_PER_WAVE   = 4;
 const FRUTAS_PER_WAVE     = 4;
@@ -21,11 +20,6 @@ export class Nivel1Scene extends Phaser.Scene {
     private segmentoVerduras!: Phaser.GameObjects.Image;
     private segmentoFrutas!: Phaser.GameObjects.Image;
     private foodContainer!: Phaser.GameObjects.Container;
-    private minFoodScrollX = 0;
-    private maxFoodScrollX = 0;
-    private isFoodScrolling = false;
-    private foodViewportX = 0;
-    private foodViewportW = 0;
     private placedFoods: Phaser.GameObjects.Image[] = [];
     private isTutorialActive = false;
 
@@ -62,6 +56,7 @@ export class Nivel1Scene extends Phaser.Scene {
     private tutorialCarrot?:    Phaser.GameObjects.Image;
     private tutorialHand?:      Phaser.GameObjects.Image;
     private tutorialHighlight?: Phaser.GameObjects.Rectangle;
+    private tutorialGhostCarrot?: Phaser.GameObjects.Image;
     private tutorialBubble?:    Phaser.GameObjects.Graphics;
     private tutorialBubbleTxt?: Phaser.GameObjects.Text;
 
@@ -70,6 +65,16 @@ export class Nivel1Scene extends Phaser.Scene {
     private toastLabel?: Phaser.GameObjects.Text;
     private toastTxt?:   Phaser.GameObjects.Text;
     private toastTimer?: Phaser.Time.TimerEvent;
+
+    // UI Elements for resizing
+    private txtInstrucciones!: Phaser.GameObjects.Text;
+    private txtTiempo!: Phaser.GameObjects.Text;
+    private txtVidas!: Phaser.GameObjects.Text;
+    private lblVerduras!: Phaser.GameObjects.Text;
+    private lblFrutas!: Phaser.GameObjects.Text;
+    private foodBarBg!: Phaser.GameObjects.Rectangle;
+    private lastWindowWidth = 0;
+    private lastWindowHeight = 0;
 
     constructor() {
         super('Nivel1Scene');
@@ -102,6 +107,13 @@ export class Nivel1Scene extends Phaser.Scene {
         this.lives          = 2;
 
         const { width, height } = this.scale;
+        
+        // Calcular área visible real (modo ENVELOP)
+        const screenScale = Math.max(window.innerWidth / width, window.innerHeight / height);
+        const visibleTop = (height - window.innerHeight / screenScale) / 2;
+        const visibleLeft = (width - window.innerWidth / screenScale) / 2;
+        const visibleWidth = window.innerWidth / screenScale;
+        const visibleBottom = visibleTop + window.innerHeight / screenScale;
 
         // FONDO
         this.fondo_cocina = this.add.image(width / 2, height / 2, "Fondo-cocina")
@@ -109,8 +121,8 @@ export class Nivel1Scene extends Phaser.Scene {
             .setDisplaySize(width, height);
         void this.fondo_cocina;
 
-        // INSTRUCCIÓN
-        this.add.text(width / 2, 75, 'Arrastra las frutas y verduras a su canasta', {
+        // INSTRUCCIÓN (posicionado relativo al top visible, dejando espacio para el botón Volver de React)
+        this.txtInstrucciones = this.add.text(width / 2, visibleTop + 75, 'Arrastra las frutas y verduras a su canasta', {
             fontSize: '32px',
             color: '#000',
             fontFamily: 'Arial, sans-serif',
@@ -126,7 +138,7 @@ export class Nivel1Scene extends Phaser.Scene {
 
         // CANASTAS + ZONAS
         const escalaCanasta = 0.60;
-        const canastaCentroY = height - 490;
+        const canastaCentroY = visibleTop + (visibleBottom - visibleTop) * 0.65;
 
         const segmentoVerduras = this.segmentoVerduras = this.add.image(width / 2 - 300, canastaCentroY, "inventario_verduras")
             .setScale(escalaCanasta);
@@ -171,12 +183,12 @@ export class Nivel1Scene extends Phaser.Scene {
             fontSize: '22px', color: '#ffffff', fontFamily: 'Arial',
             fontStyle: 'bold', stroke: '#5E412F', strokeThickness: 5,
         };
-        this.add.text(
+        this.lblVerduras = this.add.text(
             segmentoVerduras.x,
             segmentoVerduras.y + segmentoVerduras.displayHeight / 2 + 12,
             'TU CANASTA DE VERDURAS', tipStyle
         ).setOrigin(0.5).setDepth(3);
-        this.add.text(
+        this.lblFrutas = this.add.text(
             segmentoFrutas.x,
             segmentoFrutas.y + segmentoFrutas.displayHeight / 2 + 12,
             'TU CANASTA DE FRUTAS', tipStyle
@@ -187,36 +199,36 @@ export class Nivel1Scene extends Phaser.Scene {
         this.startBasketIdleAnim(this.segmentoFrutas, 450);
 
         // TIMER
-        this.add.text(width - 110, 110, 'TIEMPO', {
+        this.txtTiempo = this.add.text(visibleLeft + visibleWidth - 110, visibleTop + 60, 'TIEMPO', {
             fontSize: '16px', color: '#ffffff', fontFamily: 'Arial', fontStyle: 'bold',
         }).setOrigin(0.5).setDepth(20);
 
-        this.timerText = this.add.text(width - 110, 140, '60', {
+        this.timerText = this.add.text(visibleLeft + visibleWidth - 110, visibleTop + 90, '60', {
             fontSize: '38px', color: '#ffffff', fontFamily: 'Arial',
             fontStyle: 'bold', stroke: '#5E412F', strokeThickness: 5,
         }).setOrigin(0.5).setDepth(20);
 
-        this.timerWarningText = this.add.text(width - 110, 176, '¡Faltan 20 segundos!', {
+        this.timerWarningText = this.add.text(visibleLeft + visibleWidth - 110, visibleTop + 126, '¡Faltan 20 segundos!', {
             fontSize: '13px', color: '#ffaa00', fontFamily: 'Arial',
             fontStyle: 'bold', stroke: '#000000', strokeThickness: 3,
         }).setOrigin(0.5).setDepth(20).setVisible(false);
 
-        // VIDAS
-        this.add.text(30, 110, 'VIDAS', {
+        // VIDAS (Empujado a la derecha para no chocar con Volver)
+        this.txtVidas = this.add.text(visibleLeft + 220, visibleTop + 60, 'VIDAS', {
             fontSize: '16px', color: '#ffffff', fontFamily: 'Arial', fontStyle: 'bold',
         }).setOrigin(0, 0.5).setDepth(20);
 
-        this.livesText = this.add.text(30, 140, '♥ ♥', {
+        this.livesText = this.add.text(visibleLeft + 220, visibleTop + 90, '♥ ♥', {
             fontSize: '30px', color: '#ff4444', fontFamily: 'Arial', fontStyle: 'bold',
             stroke: '#000000', strokeThickness: 3,
         }).setOrigin(0, 0.5).setDepth(20);
 
         // PLATÓN
-        this.platon = this.add.image(width - 200, height - 200, "platon-feliz")
+        this.platon = this.add.image(width - 200, visibleBottom - 100, "platon-feliz")
             .setAlpha(0).setScale(0.8);
 
         // FOOD BAR (shell: background + buttons + container)
-        this.buildFoodBarShell(width);
+        this.buildFoodBarShell(width, visibleTop);
 
         // DRAG & DROP
         this.setupDragDrop();
@@ -259,7 +271,6 @@ export class Nivel1Scene extends Phaser.Scene {
 
             const isLastWave = this.remainingVerduras.length === 0 && this.remainingFrutas.length === 0;
 
-            if (this.foodContainer) this.foodContainer.x = this.foodViewportX;
             this.clearFoodBar();
             this.populateFoodBar(foods);
             this.startTimer(isLastWave ? WAVE_TIME_LAST : WAVE_TIME_NORMAL);
@@ -331,29 +342,19 @@ export class Nivel1Scene extends Phaser.Scene {
 
     private populateFoodBar(foods: FoodItem[]) {
         const { width } = this.scale;
+        
         const barWidth   = Math.round(width * 0.82);
         const arrowWidth = 64;
-        const barLeft    = (width - barWidth) / 2;
-        const viewportX  = barLeft + arrowWidth;
         const viewportW  = barWidth - arrowWidth * 2;
-        const stripTop   = 128;
-        const stripHeight = 148;
-        const stripCenterY = stripTop + stripHeight / 2;
 
         // Ancho real del contenido (de borde a borde del primer y último alimento)
         const contentSpan = (foods.length - 1) * FOOD_ITEM_SPACING + FOOD_ITEM_SIZE;
         // Padding izquierdo para centrar cuando el contenido es más angosto que el viewport
         const xPad = Math.max(0, (viewportW - contentSpan) / 2);
 
-        this.foodViewportX  = viewportX;
-        this.foodViewportW  = viewportW;
-        this.minFoodScrollX = viewportX;
-        this.maxFoodScrollX = viewportX - Math.max(0, xPad * 2 + contentSpan - viewportW);
-
         foods.forEach((item, index) => {
             const localX = xPad + FOOD_ITEM_SIZE / 2 + index * FOOD_ITEM_SPACING;
-            // Centrar el conjunto imagen+label verticalmente en la barra
-            const localY = stripCenterY - 10;
+            const localY = 204;
 
             const categoria = item.category === 'vegetable' ? 'verdura'
                             : item.category === 'fruit'     ? 'fruta'
@@ -408,8 +409,6 @@ export class Nivel1Scene extends Phaser.Scene {
                 });
             });
         });
-
-        this.updateFoodBarVisibility();
     }
 
     // ─── TIMER ────────────────────────────────────────────────────────────────
@@ -651,22 +650,19 @@ export class Nivel1Scene extends Phaser.Scene {
 
     // ─── FOOD BAR SHELL ───────────────────────────────────────────────────────
 
-    private buildFoodBarShell(width: number) {
+    private buildFoodBarShell(width: number, visibleTop: number = 0) {
         const barWidth     = Math.round(width * 0.82);
         const arrowWidth   = 64;
         const barLeft      = (width - barWidth) / 2;
         const viewportX    = barLeft + arrowWidth;
-        const viewportW    = barWidth - arrowWidth * 2;
-        const stripTop     = 128;
+        const stripTop     = visibleTop + 140; // Relativo al área visible
         const stripHeight  = 148;
         const stripCenterY = stripTop + stripHeight / 2;
 
-        this.add.rectangle(width / 2, stripCenterY, barWidth, stripHeight, 0xf7cc85, 0.82)
+        this.foodBarBg = this.add.rectangle(width / 2, stripCenterY, barWidth, stripHeight, 0xf7cc85, 0.82)
             .setStrokeStyle(4, 0x5E412F).setDepth(1);
 
         this.foodContainer = this.add.container(viewportX, 0).setDepth(5);
-        this.foodViewportX = viewportX;
-        this.foodViewportW = viewportW;
     }
 
     // ─── DRAG & DROP ──────────────────────────────────────────────────────────
@@ -801,29 +797,6 @@ export class Nivel1Scene extends Phaser.Scene {
         });
     }
 
-    // ─── SCROLL ───────────────────────────────────────────────────────────────
-
-    private scrollFoodBar(delta: number) {
-        if (!this.foodContainer || this.isFoodScrolling || this.isTutorialActive) return;
-
-        const newX = Phaser.Math.Clamp(
-            this.foodContainer.x + delta,
-            this.maxFoodScrollX,
-            this.minFoodScrollX
-        );
-        if (newX === this.foodContainer.x) return;
-
-        this.isFoodScrolling = true;
-        this.tweens.add({
-            targets: this.foodContainer,
-            x: newX,
-            duration: 320,
-            ease: 'Cubic.easeOut',
-            onUpdate:   () => this.updateFoodBarVisibility(),
-            onComplete: () => { this.isFoodScrolling = false; this.updateFoodBarVisibility(); }
-        });
-    }
-
     // ─── RETURN TO BAR ────────────────────────────────────────────────────────
 
     private returnToFoodBar(gameObject: Phaser.GameObjects.Image) {
@@ -843,7 +816,6 @@ export class Nivel1Scene extends Phaser.Scene {
                 gameObject.y = localHomeY;
                 gameObject.clearTint();
                 this.foodContainer.add(gameObject);
-                this.updateFoodBarVisibility();
             }
         });
 
@@ -857,7 +829,6 @@ export class Nivel1Scene extends Phaser.Scene {
                 texto.x = localHomeX;
                 texto.y = localHomeY + FOOD_LABEL_OFFSET;
                 this.foodContainer.add(texto);
-                this.updateFoodBarVisibility();
             }
         });
     }
@@ -903,32 +874,59 @@ export class Nivel1Scene extends Phaser.Scene {
         return best;
     }
 
-    // ─── VISIBILITY ───────────────────────────────────────────────────────────
+    // ─── UPDATE ───────────────────────────────────────────────────────────────
 
-    private updateFoodBarVisibility() {
-        if (!this.foodContainer) return;
-        const left  = this.foodViewportX;
-        const right = this.foodViewportX + this.foodViewportW;
+    private repositionUI() {
+        const { width, height } = this.scale;
+        const screenScale = Math.max(window.innerWidth / width, window.innerHeight / height);
+        const visibleTop = (height - window.innerHeight / screenScale) / 2;
+        const visibleLeft = (width - window.innerWidth / screenScale) / 2;
+        const visibleWidth = window.innerWidth / screenScale;
+        const visibleBottom = visibleTop + window.innerHeight / screenScale;
 
-        this.foodContainer.list.forEach(child => {
-            const item = child as Phaser.GameObjects.Image | Phaser.GameObjects.Text;
-            const worldX = this.foodContainer.x + item.x;
-            const visible = worldX >= left - 50 && worldX <= right + 50;
+        if (this.txtInstrucciones) this.txtInstrucciones.setY(visibleTop + 75);
+        
+        if (this.txtTiempo) {
+            this.txtTiempo.setPosition(visibleLeft + visibleWidth - 110, visibleTop + 60);
+            this.timerText.setPosition(visibleLeft + visibleWidth - 110, visibleTop + 90);
+            this.timerWarningText.setPosition(visibleLeft + visibleWidth - 110, visibleTop + 126);
+        }
 
-            item.setVisible(visible);
-            if (!visible) { item.setAlpha(0); return; }
+        if (this.txtVidas) {
+            this.txtVidas.setPosition(visibleLeft + 220, visibleTop + 60);
+            this.livesText.setPosition(visibleLeft + 220, visibleTop + 90);
+        }
 
-            if (worldX < left + 36) {
-                item.setAlpha(Math.max(0.2, (worldX - (left - 50)) / 86));
-            } else if (worldX > right - 36) {
-                item.setAlpha(Math.max(0.2, ((right + 50) - worldX) / 86));
+        if (this.platon && !this.tweens.isTweening(this.platon)) {
+            if (this.platon.x < width / 2) {
+                this.platon.setX(visibleLeft + 300);
             } else {
-                item.setAlpha(1);
+                this.platon.setX(visibleLeft + visibleWidth - 200);
             }
-        });
+        }
+
+        const canastaCentroY = visibleTop + (visibleBottom - visibleTop) * 0.65;
+        if (this.segmentoVerduras) {
+            this.segmentoVerduras.setY(canastaCentroY);
+            if (this.lblVerduras) this.lblVerduras.setY(canastaCentroY + this.segmentoVerduras.displayHeight / 2 + 40);
+        }
+        if (this.segmentoFrutas) {
+            this.segmentoFrutas.setY(canastaCentroY);
+            if (this.lblFrutas) this.lblFrutas.setY(canastaCentroY + this.segmentoFrutas.displayHeight / 2 + 40);
+        }
+
+        if (this.foodBarBg) {
+            const stripTop = visibleTop + 140;
+            const stripHeight = 148;
+            this.foodBarBg.setY(stripTop + stripHeight / 2);
+            if (this.foodContainer) {
+                this.foodContainer.setY(visibleTop);
+            }
+        }
     }
 
-    // ─── INTRO PLATÓN ────────────────────────────────────────────────────────
+
+
 
     private showIntroPlaton() {
         this.isTutorialActive = true;
@@ -1016,81 +1014,126 @@ export class Nivel1Scene extends Phaser.Scene {
         if (!carrot) { this.isTutorialActive = false; this.waveInProgress = true; this.startTimer(WAVE_TIME_NORMAL); return; }
         this.tutorialCarrot = carrot;
 
-        // Solo la zanahoria es interactiva; no arrastrable todavía (paso 1)
+        // Solo la zanahoria es interactiva; habilitar arrastre desde el paso 1
         this.foodContainer.list.forEach(child => {
             if (child instanceof Phaser.GameObjects.Image) child.disableInteractive();
         });
         carrot.setInteractive({ useHandCursor: true });
-        this.input.setDraggable(carrot, false);
+        this.input.setDraggable(carrot, true);
 
         // Platón aparece en el lado izquierdo (ya está en x=220, alpha=0 tras el intro)
         this.platon.setTexture('platon-feliz').setDepth(10);
         this.tweens.add({ targets: this.platon, alpha: 1, duration: 600, ease: 'Power2.easeOut' });
 
         // Burbuja paso 1
-        this.showTutBubble('Selecciona la zanahoria\nmanteniendo presionado\nel click.');
+        this.showTutBubble('Arrastra la zanahoria\na su canasta manteniendo\npresionado el click.');
 
-        // Manita apuntando a la zanahoria con bob
+        // Manita apuntando a la zanahoria
         const wx = this.foodContainer.x + carrot.x;
-        const wy = carrot.y;
-        this.tutorialHand = this.add.image(wx + 15, wy - 50, 'manita')
+        const wy = this.foodContainer.y + carrot.y;
+        this.tutorialHand = this.add.image(wx + 15, wy + 20, 'manita')
             .setDepth(50).setAlpha(0).setScale(1.1);
-        this.tweens.add({
-            targets: this.tutorialHand, alpha: 1, y: wy - 38, duration: 400, ease: 'Back.easeOut',
-            onComplete: () => {
-                if (this.tutorialHand)
-                    this.tweens.add({ targets: this.tutorialHand, y: wy - 54, duration: 550, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
-            }
-        });
 
-        // Paso 1 → avanza al hacer click en la zanahoria
-        carrot.once('pointerdown', () => this.onTutorialStep2());
+        // Resaltar el slot objetivo desde el inicio
+        const slot = this.getInventorySlotPositions(this.segmentoVerduras)[0];
+        this.tutorialHighlight = this.add.rectangle(slot.x, slot.y, 84, 84, 0x76ff76, 0.28)
+            .setDepth(45).setStrokeStyle(3, 0x44cc44, 1);
+        this.tweens.add({ targets: this.tutorialHighlight, alpha: { from: 0.28, to: 0.68 }, duration: 440, yoyo: true, repeat: -1 });
+
+        // Activar animación de arrastre inmediatamente
+        this.loopTutHand(slot.x, slot.y);
+
+        // Paso 1 → avanza al empezar a arrastrar la zanahoria
+        carrot.once('dragstart', () => this.onTutorialStep2());
     }
 
     private onTutorialStep2() {
         if (!this.tutorialCarrot) return;
 
         // Actualizar burbuja
-        this.showTutBubble('¡Muy bien! Ahora arrastra\nla zanahoria al inventario.');
+        this.showTutBubble('¡Muy bien! Llévala\nhasta la zona resaltada.');
 
-        // Habilitar arrastre
-        this.input.setDraggable(this.tutorialCarrot, true);
-
-        // Detener bob y activar loop hacia el slot
+        // Ocultar la manita y fantasma mientras el usuario ya lo tiene agarrado
         if (this.tutorialHand) {
             this.tweens.killTweensOf(this.tutorialHand);
-            const slot = this.getInventorySlotPositions(this.segmentoVerduras)[0];
-            this.loopTutHand(slot.x, slot.y);
+            this.tutorialHand.setAlpha(0);
         }
-
-        // Resaltar el slot objetivo
-        const slot = this.getInventorySlotPositions(this.segmentoVerduras)[0];
-        this.tutorialHighlight = this.add.rectangle(slot.x, slot.y, 84, 84, 0x76ff76, 0.28)
-            .setDepth(45).setStrokeStyle(3, 0x44cc44, 1);
-        this.tweens.add({ targets: this.tutorialHighlight, alpha: { from: 0.28, to: 0.68 }, duration: 440, yoyo: true, repeat: -1 });
+        if (this.tutorialGhostCarrot) {
+            this.tweens.killTweensOf(this.tutorialGhostCarrot);
+            this.tutorialGhostCarrot.setAlpha(0);
+        }
     }
 
     private loopTutHand(slotX: number, slotY: number) {
         if (!this.tutorialHand || !this.tutorialCarrot || !this.isTutorialActive) return;
-        const startX = this.foodContainer.x + this.tutorialCarrot.x + 15;
-        const startY = this.tutorialCarrot.y - 40;
-        const hand   = this.tutorialHand;
-        hand.setPosition(startX, startY).setAlpha(0);
+        
+        const carrotStartX = this.foodContainer.x + this.tutorialCarrot.x;
+        const carrotStartY = this.foodContainer.y + this.tutorialCarrot.y;
+        const startX = carrotStartX + 15;
+        const startY = carrotStartY + 20;
+        
+        const hand = this.tutorialHand;
+        hand.setPosition(startX, startY).setAlpha(0).setScale(1.1);
+
+        // Crear/Reiniciar el fantasma
+        if (!this.tutorialGhostCarrot) {
+            this.tutorialGhostCarrot = this.add.image(carrotStartX, carrotStartY, this.tutorialCarrot.texture.key)
+                .setDepth(48).setAlpha(0).setScale(this.tutorialCarrot.scaleX);
+        } else {
+            this.tutorialGhostCarrot.setPosition(carrotStartX, carrotStartY).setAlpha(0);
+        }
+
+        const ghost = this.tutorialGhostCarrot;
+
+        // Fase 1: Aparecer la mano
         this.tweens.add({
-            targets: hand, alpha: 1, duration: 180,
+            targets: hand, alpha: 1, duration: 300,
             onComplete: () => {
                 if (!this.isTutorialActive || !this.tutorialHand) return;
-                this.tweens.add({
-                    targets: hand, x: slotX, y: slotY - 28, duration: 750, ease: 'Power2.easeInOut',
-                    onComplete: () => {
-                        if (!this.isTutorialActive || !this.tutorialHand) return;
-                        this.tweens.add({
-                            targets: hand, alpha: 0, duration: 240, delay: 100,
-                            onComplete: () => {
-                                this.time.delayedCall(220, () => this.loopTutHand(slotX, slotY));
-                            }
-                        });
-                    }
+                
+                // Pequeña pausa antes de hacer clic
+                this.time.delayedCall(200, () => {
+                    if (!this.isTutorialActive || !this.tutorialHand) return;
+
+                    // Fase 2: Simular click (bajar escala, NO yoyo)
+                    this.tweens.add({
+                        targets: hand, scaleX: 0.9, scaleY: 0.9, duration: 350, ease: 'Sine.easeOut',
+                        onComplete: () => {
+                            if (!this.isTutorialActive || !this.tutorialHand) return;
+                            
+                            // Fase 3: Aparecer el fantasma de zanahoria como si la agarrara
+                            ghost.setAlpha(0.6);
+
+                            // Pausa breve con el click apretado antes de arrastrar
+                            this.time.delayedCall(200, () => {
+                                if (!this.isTutorialActive || !this.tutorialHand) return;
+
+                                // Fase 4: Mover mano y fantasma hacia el objetivo (más lento)
+                                this.tweens.add({
+                                    targets: [hand], x: slotX + 15, y: slotY - 8, duration: 1300, ease: 'Power2.easeInOut'
+                                });
+                                this.tweens.add({
+                                    targets: [ghost], x: slotX, y: slotY, duration: 1300, ease: 'Power2.easeInOut',
+                                    onComplete: () => {
+                                        if (!this.isTutorialActive || !this.tutorialHand) return;
+                                        
+                                        // Fase 4.5: Soltar click (restaurar escala)
+                                        this.tweens.add({
+                                            targets: hand, scaleX: 1.1, scaleY: 1.1, duration: 250
+                                        });
+
+                                        // Fase 5: Desaparecer
+                                        this.tweens.add({
+                                            targets: [hand, ghost], alpha: 0, duration: 400, delay: 300,
+                                            onComplete: () => {
+                                                this.time.delayedCall(400, () => this.loopTutHand(slotX, slotY));
+                                            }
+                                        });
+                                    }
+                                });
+                            });
+                        }
+                    });
                 });
             }
         });
@@ -1136,9 +1179,11 @@ export class Nivel1Scene extends Phaser.Scene {
         this.tweens.add({ targets: gameObject, scaleX: { from: 1.5, to: sx }, scaleY: { from: 1.5, to: sy }, duration: 380, ease: 'Back.easeOut' });
         try { this.sound.play('object_win'); } catch { void 0; }
 
-        // Detener manita y resaltado
+        // Detener manita, fantasma y resaltado
+        this.isTutorialActive = false;
         if (this.tutorialHand)      this.tweens.killTweensOf(this.tutorialHand);
         if (this.tutorialHighlight) this.tweens.killTweensOf(this.tutorialHighlight);
+        if (this.tutorialGhostCarrot) { this.tweens.killTweensOf(this.tutorialGhostCarrot); this.tutorialGhostCarrot.setAlpha(0); }
 
         // Burbuja paso 3
         this.showTutBubble('¡Excelente! Has guardado\nun nuevo alimento en\ntu inventario.');
@@ -1160,6 +1205,7 @@ export class Nivel1Scene extends Phaser.Scene {
     private endTutorial() {
         if (this.tutorialHand)      { this.tweens.killTweensOf(this.tutorialHand);      this.tutorialHand.destroy();      this.tutorialHand      = undefined; }
         if (this.tutorialHighlight) { this.tweens.killTweensOf(this.tutorialHighlight); this.tutorialHighlight.destroy(); this.tutorialHighlight = undefined; }
+        if (this.tutorialGhostCarrot) { this.tweens.killTweensOf(this.tutorialGhostCarrot); this.tutorialGhostCarrot.destroy(); this.tutorialGhostCarrot = undefined; }
         this.destroyTutBubble();
 
         // Platón se va
@@ -1172,7 +1218,6 @@ export class Nivel1Scene extends Phaser.Scene {
                 this.input.setDraggable(child, true);
             }
         });
-        this.updateFoodBarVisibility();
 
         this.tutorialCarrot   = undefined;
         this.isTutorialActive = false;
@@ -1220,7 +1265,11 @@ export class Nivel1Scene extends Phaser.Scene {
     }
 
     update() {
-        this.updateFoodBarVisibility();
+        if (window.innerWidth !== this.lastWindowWidth || window.innerHeight !== this.lastWindowHeight) {
+            this.lastWindowWidth = window.innerWidth;
+            this.lastWindowHeight = window.innerHeight;
+            this.repositionUI();
+        }
 
         // Keep drop zones aligned with bobbing basket images
         if (this.zonaBordeVerduras) {

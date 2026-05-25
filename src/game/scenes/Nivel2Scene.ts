@@ -8,7 +8,6 @@ import { getErrorMessage } from '../../data/errorMessages';
 const FOOD_ITEM_SIZE       = 70;
 const FOOD_ITEM_SPACING    = 125;
 const FOOD_LABEL_OFFSET    = 48;
-const FOOD_SCROLL_STEP     = 500;
 const CEREALES_PER_WAVE    = 4;
 const LEGUMINOSAS_PER_WAVE = 4;
 const WAVE_SIZE            = 10;
@@ -21,11 +20,6 @@ export class Nivel2Scene extends Phaser.Scene {
     private segmentoCereales!:    Phaser.GameObjects.Image;
     private segmentoLeguminosas!: Phaser.GameObjects.Image;
     private foodContainer!: Phaser.GameObjects.Container;
-    private minFoodScrollX = 0;
-    private maxFoodScrollX = 0;
-    private isFoodScrolling = false;
-    private foodViewportX = 0;
-    private foodViewportW = 0;
     private placedFoods: Phaser.GameObjects.Image[] = [];
     private isTutorialActive = false;
 
@@ -64,6 +58,16 @@ export class Nivel2Scene extends Phaser.Scene {
     private toastTxt?:   Phaser.GameObjects.Text;
     private toastTimer?: Phaser.Time.TimerEvent;
 
+    // UI Elements for resizing
+    private txtInstrucciones!: Phaser.GameObjects.Text;
+    private txtTiempo!: Phaser.GameObjects.Text;
+    private txtVidas!: Phaser.GameObjects.Text;
+    private lblCereales!: Phaser.GameObjects.Text;
+    private lblLeguminosas!: Phaser.GameObjects.Text;
+    private foodBarBg!: Phaser.GameObjects.Rectangle;
+    private lastWindowWidth = 0;
+    private lastWindowHeight = 0;
+
     constructor() { super('Nivel2Scene'); }
 
     preload() {
@@ -90,11 +94,17 @@ export class Nivel2Scene extends Phaser.Scene {
 
         const { width, height } = this.scale;
 
+        const screenScale = Math.max(window.innerWidth / width, window.innerHeight / height);
+        const visibleTop = (height - window.innerHeight / screenScale) / 2;
+        const visibleLeft = (width - window.innerWidth / screenScale) / 2;
+        const visibleWidth = window.innerWidth / screenScale;
+        const visibleBottom = visibleTop + window.innerHeight / screenScale;
+
         this.fondo_cocina = this.add.image(width / 2, height / 2, 'Fondo-cocina')
             .setScale(0.5).setDisplaySize(width, height);
         void this.fondo_cocina;
 
-        this.add.text(width / 2, 75, 'Arrastra los cereales y leguminosas a su canasta', {
+        this.txtInstrucciones = this.add.text(width / 2, visibleTop + 75, 'Arrastra los cereales y leguminosas a su canasta', {
             fontSize: '32px', color: '#000', fontFamily: 'Arial, sans-serif',
             backgroundColor: 'rgba(255,255,255,0.7)', padding: { x: 20, y: 10 },
         }).setOrigin(0.5);
@@ -105,7 +115,7 @@ export class Nivel2Scene extends Phaser.Scene {
 
         // CANASTAS
         const escalaCanasta  = 0.60;
-        const canastaCentroY = height - 490;
+        const canastaCentroY = visibleTop + (visibleBottom - visibleTop) * 0.65;
 
         const segmentoCereales = this.segmentoCereales = this.add.image(
             width / 2 - 300, canastaCentroY, 'inventario-cereales'
@@ -152,12 +162,12 @@ export class Nivel2Scene extends Phaser.Scene {
             fontSize: '22px', color: '#ffffff', fontFamily: 'Arial',
             fontStyle: 'bold', stroke: '#5E412F', strokeThickness: 5,
         };
-        this.add.text(
+        this.lblCereales = this.add.text(
             segmentoCereales.x,
             segmentoCereales.y + segmentoCereales.displayHeight / 2 + 12,
             'TU CANASTA DE CEREALES', tipStyle
         ).setOrigin(0.5).setDepth(3);
-        this.add.text(
+        this.lblLeguminosas = this.add.text(
             segmentoLeguminosas.x,
             segmentoLeguminosas.y + segmentoLeguminosas.displayHeight / 2 + 12,
             'TU CANASTA DE LEGUMINOSAS', tipStyle
@@ -167,31 +177,31 @@ export class Nivel2Scene extends Phaser.Scene {
         this.startBasketIdleAnim(this.segmentoLeguminosas, 450);
 
         // TIMER
-        this.add.text(width - 110, 110, 'TIEMPO', {
+        this.txtTiempo = this.add.text(visibleLeft + visibleWidth - 110, visibleTop + 60, 'TIEMPO', {
             fontSize: '16px', color: '#ffffff', fontFamily: 'Arial', fontStyle: 'bold',
         }).setOrigin(0.5).setDepth(20);
-        this.timerText = this.add.text(width - 110, 140, '60', {
+        this.timerText = this.add.text(visibleLeft + visibleWidth - 110, visibleTop + 90, '60', {
             fontSize: '38px', color: '#ffffff', fontFamily: 'Arial',
             fontStyle: 'bold', stroke: '#5E412F', strokeThickness: 5,
         }).setOrigin(0.5).setDepth(20);
-        this.timerWarningText = this.add.text(width - 110, 176, '¡Faltan 20 segundos!', {
+        this.timerWarningText = this.add.text(visibleLeft + visibleWidth - 110, visibleTop + 126, '¡Faltan 20 segundos!', {
             fontSize: '13px', color: '#ffaa00', fontFamily: 'Arial',
             fontStyle: 'bold', stroke: '#000000', strokeThickness: 3,
         }).setOrigin(0.5).setDepth(20).setVisible(false);
 
         // VIDAS
-        this.add.text(30, 110, 'VIDAS', {
+        this.txtVidas = this.add.text(visibleLeft + 220, visibleTop + 60, 'VIDAS', {
             fontSize: '16px', color: '#ffffff', fontFamily: 'Arial', fontStyle: 'bold',
         }).setOrigin(0, 0.5).setDepth(20);
-        this.livesText = this.add.text(30, 140, '♥ ♥', {
+        this.livesText = this.add.text(visibleLeft + 220, visibleTop + 90, '♥ ♥', {
             fontSize: '30px', color: '#ff4444', fontFamily: 'Arial', fontStyle: 'bold',
             stroke: '#000000', strokeThickness: 3,
         }).setOrigin(0, 0.5).setDepth(20);
 
-        this.platon = this.add.image(width - 200, height - 200, 'platon-feliz')
+        this.platon = this.add.image(width - 200, visibleBottom - 100, 'platon-feliz')
             .setAlpha(0).setScale(0.8);
 
-        this.buildFoodBarShell(width);
+        this.buildFoodBarShell(width, visibleTop);
         this.setupDragDrop();
 
         this.events.once('shutdown', () => this.stopTimer());
@@ -229,7 +239,6 @@ export class Nivel2Scene extends Phaser.Scene {
 
             const isLastWave = this.remainingCereales.length === 0 && this.remainingLeguminosas.length === 0;
 
-            if (this.foodContainer) this.foodContainer.x = this.foodViewportX;
             this.clearFoodBar();
             this.populateFoodBar(foods);
             this.startTimer(isLastWave ? WAVE_TIME_LAST : WAVE_TIME_NORMAL);
@@ -431,43 +440,34 @@ export class Nivel2Scene extends Phaser.Scene {
 
     // ─── FOOD BAR ─────────────────────────────────────────────────────────────
 
-    private buildFoodBarShell(width: number) {
+    private buildFoodBarShell(width: number, visibleTop: number = 0) {
         const barWidth     = Math.round(width * 0.82);
         const arrowWidth   = 64;
         const barLeft      = (width - barWidth) / 2;
         const viewportX    = barLeft + arrowWidth;
-        const viewportW    = barWidth - arrowWidth * 2;
-        const stripTop     = 128;
+        const stripTop     = visibleTop + 140;
         const stripHeight  = 148;
         const stripCenterY = stripTop + stripHeight / 2;
 
-        this.add.rectangle(width / 2, stripCenterY, barWidth, stripHeight, 0xf7cc85, 0.82)
+        this.foodBarBg = this.add.rectangle(width / 2, stripCenterY, barWidth, stripHeight, 0xf7cc85, 0.82)
             .setStrokeStyle(4, 0x5E412F).setDepth(1);
 
         this.foodContainer = this.add.container(viewportX, 0).setDepth(5);
-        this.foodViewportX = viewportX;
-        this.foodViewportW = viewportW;
     }
 
     private populateFoodBar(foods: FoodItem[]) {
         const { width } = this.scale;
+        
         const barWidth    = Math.round(width * 0.82);
         const arrowWidth  = 64;
-        const barLeft     = (width - barWidth) / 2;
-        const viewportX   = barLeft + arrowWidth;
         const viewportW   = barWidth - arrowWidth * 2;
-        const stripTop    = 128;
-        const stripHeight = 148;
-        const stripCenterY = stripTop + stripHeight / 2;
 
         const contentSpan = (foods.length - 1) * FOOD_ITEM_SPACING + FOOD_ITEM_SIZE;
         const xPad = Math.max(0, (viewportW - contentSpan) / 2);
-        this.minFoodScrollX = viewportX;
-        this.maxFoodScrollX = viewportX - Math.max(0, xPad * 2 + contentSpan - viewportW);
 
         foods.forEach((item, index) => {
             const localX = xPad + FOOD_ITEM_SIZE / 2 + index * FOOD_ITEM_SPACING;
-            const localY = stripCenterY - 10;
+            const localY = 204;
 
             const sprite = this.add.image(localX, localY, item.id)
                 .setDisplaySize(FOOD_ITEM_SIZE, FOOD_ITEM_SIZE).setAlpha(0)
@@ -501,8 +501,6 @@ export class Nivel2Scene extends Phaser.Scene {
                 this.tweens.add({ targets: texto, alpha: 1, duration: 200, delay: 120, ease: 'Power2' });
             });
         });
-
-        this.updateFoodBarVisibility();
     }
 
     // ─── DRAG & DROP ──────────────────────────────────────────────────────────
@@ -603,19 +601,7 @@ export class Nivel2Scene extends Phaser.Scene {
         });
     }
 
-    // ─── SCROLL ───────────────────────────────────────────────────────────────
 
-    private scrollFoodBar(delta: number) {
-        if (!this.foodContainer || this.isFoodScrolling || this.isTutorialActive) return;
-        const newX = Phaser.Math.Clamp(this.foodContainer.x + delta, this.maxFoodScrollX, this.minFoodScrollX);
-        if (newX === this.foodContainer.x) return;
-        this.isFoodScrolling = true;
-        this.tweens.add({
-            targets: this.foodContainer, x: newX, duration: 320, ease: 'Cubic.easeOut',
-            onUpdate:   () => this.updateFoodBarVisibility(),
-            onComplete: () => { this.isFoodScrolling = false; this.updateFoodBarVisibility(); },
-        });
-    }
 
     // ─── RETURN TO BAR ────────────────────────────────────────────────────────
 
@@ -633,7 +619,6 @@ export class Nivel2Scene extends Phaser.Scene {
                 gameObject.x = localHomeX; gameObject.y = localHomeY;
                 gameObject.clearTint();
                 this.foodContainer.add(gameObject);
-                this.updateFoodBarVisibility();
             },
         });
         if (!texto) return;
@@ -643,7 +628,6 @@ export class Nivel2Scene extends Phaser.Scene {
                 this.children.remove(texto);
                 texto.x = localHomeX; texto.y = localHomeY + FOOD_LABEL_OFFSET;
                 this.foodContainer.add(texto);
-                this.updateFoodBarVisibility();
             },
         });
     }
@@ -682,25 +666,7 @@ export class Nivel2Scene extends Phaser.Scene {
         return best;
     }
 
-    // ─── VISIBILITY ───────────────────────────────────────────────────────────
 
-    private updateFoodBarVisibility() {
-        if (!this.foodContainer) return;
-        const left  = this.foodViewportX;
-        const right = this.foodViewportX + this.foodViewportW;
-        this.foodContainer.list.forEach(child => {
-            const item   = child as Phaser.GameObjects.Image | Phaser.GameObjects.Text;
-            const worldX = this.foodContainer.x + item.x;
-            const visible = worldX >= left - 50 && worldX <= right + 50;
-            item.setVisible(visible);
-            if (!visible) { item.setAlpha(0); return; }
-            if (worldX < left + 36)       item.setAlpha(Math.max(0.2, (worldX - (left - 50)) / 86));
-            else if (worldX > right - 36) item.setAlpha(Math.max(0.2, ((right + 50) - worldX) / 86));
-            else                          item.setAlpha(1);
-        });
-    }
-
-    // ─── INTRO PLATÓN ─────────────────────────────────────────────────────────
 
     private showIntroPlaton() {
         this.isTutorialActive = true;
@@ -823,8 +789,63 @@ export class Nivel2Scene extends Phaser.Scene {
 
     // ─── UPDATE ───────────────────────────────────────────────────────────────
 
+    private repositionUI() {
+        const { width, height } = this.scale;
+        const screenScale = Math.max(window.innerWidth / width, window.innerHeight / height);
+        const visibleTop = (height - window.innerHeight / screenScale) / 2;
+        const visibleLeft = (width - window.innerWidth / screenScale) / 2;
+        const visibleWidth = window.innerWidth / screenScale;
+        const visibleBottom = visibleTop + window.innerHeight / screenScale;
+
+        if (this.txtInstrucciones) this.txtInstrucciones.setY(visibleTop + 75);
+        
+        if (this.txtTiempo) {
+            this.txtTiempo.setPosition(visibleLeft + visibleWidth - 110, visibleTop + 60);
+            this.timerText.setPosition(visibleLeft + visibleWidth - 110, visibleTop + 90);
+            this.timerWarningText.setPosition(visibleLeft + visibleWidth - 110, visibleTop + 126);
+        }
+
+        if (this.txtVidas) {
+            this.txtVidas.setPosition(visibleLeft + 220, visibleTop + 60);
+            this.livesText.setPosition(visibleLeft + 220, visibleTop + 90);
+        }
+
+        if (this.platon && !this.tweens.isTweening(this.platon)) {
+            if (this.platon.x < width / 2) {
+                this.platon.setX(visibleLeft + 300);
+            } else {
+                this.platon.setX(visibleLeft + visibleWidth - 200);
+            }
+        }
+
+        const canastaCentroY = visibleTop + (visibleBottom - visibleTop) * 0.65;
+        if (this.segmentoCereales) {
+            this.segmentoCereales.setY(canastaCentroY);
+            if (this.lblCereales) this.lblCereales.setY(canastaCentroY + this.segmentoCereales.displayHeight / 2 + 40);
+        }
+        if (this.segmentoLeguminosas) {
+            this.segmentoLeguminosas.setY(canastaCentroY);
+            if (this.lblLeguminosas) this.lblLeguminosas.setY(canastaCentroY + this.segmentoLeguminosas.displayHeight / 2 + 40);
+        }
+
+        if (this.foodBarBg) {
+            const stripTop = visibleTop + 140;
+            const stripHeight = 148;
+            this.foodBarBg.setY(stripTop + stripHeight / 2);
+            if (this.foodContainer) {
+                this.foodContainer.setY(visibleTop);
+            }
+        }
+    }
+
     update() {
-        this.updateFoodBarVisibility();
+        if (window.innerWidth !== this.lastWindowWidth || window.innerHeight !== this.lastWindowHeight) {
+            this.lastWindowWidth = window.innerWidth;
+            this.lastWindowHeight = window.innerHeight;
+            this.repositionUI();
+        }
+
+
 
         if (this.zonaBordeCereales) {
             this.zonaBordeCereales.y = this.segmentoCereales.y;
