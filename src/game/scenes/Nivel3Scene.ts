@@ -1,14 +1,9 @@
 import * as Phaser from 'phaser';
 import { createDebugSkipButton } from '../systems/DebugSkipButton';
 import { showLevelCompleteOverlay } from '../systems/LevelCompleteOverlay';
-<<<<<<< HEAD
-import { PlayerService } from '../../services/PlayerService';
-import { ProgressService } from '../../services/ProgressService';
-=======
 import { nutritionalInfo } from '../../data/nutritionalInfo';
 import type { FoodItem } from '../../data/nutritionalInfo';
 import { getErrorMessage } from '../../data/errorMessages';
->>>>>>> refs/remotes/origin/rama-Front
 
 const FOOD_ITEM_SIZE    = 70;
 const FOOD_ITEM_SPACING = 125;
@@ -120,13 +115,7 @@ export class Nivel3Scene extends Phaser.Scene {
         btnVolver.on('pointerdown', () => this.scene.start('MainMenu'));
 
         createDebugSkipButton(this, {
-<<<<<<< HEAD
-            label: 'Saltar al roadmap',
-            nextScene: 'LevelSelectScene',
-            soundKey: 'sonido-click',
-=======
             label: 'Saltar a conceptos', nextScene: 'PreTutorialConceptosScene', x: visibleLeft + 16, y: visibleTop + 58,
->>>>>>> refs/remotes/origin/rama-Front
         });
 
         // SECCIÓN ANIMAL
@@ -498,15 +487,10 @@ export class Nivel3Scene extends Phaser.Scene {
             if (texto) { texto.x = pointer.worldX; texto.y = pointer.worldY + FOOD_LABEL_OFFSET; }
         });
 
-<<<<<<< HEAD
-        this.input.on('drop', (_pointer: Phaser.Input.Pointer, gameObject: DraggableImage) => {
-            if (gameObject.placed) return;
-=======
         this.input.on('drop', (_pointer: Phaser.Input.Pointer, gameObject: Phaser.GameObjects.Image) => {
             if (this.isTutorialActive) return;
             if (!this.waveInProgress) return;
             if (gameObject.getData('placed')) return;
->>>>>>> refs/remotes/origin/rama-Front
 
             const categoria = gameObject.getData('categoria') as string;
 
@@ -675,41 +659,6 @@ export class Nivel3Scene extends Phaser.Scene {
         });
     }
 
-<<<<<<< HEAD
-    // ── Pantalla de victoria ──────────────────────────────────────────────────
-    private showWin() {
-        this.guardarProgreso();
-
-        showLevelCompleteOverlay(this, {
-            title: '\u00A1NIVEL COMPLETADO!',
-            message: 'Identificaste los alimentos de origen animal. Vuelve al recorrido para revisar tu avance.',
-            scoreText: `Puntos: ${this.score}`,
-            buttonLabel: 'Volver al recorrido',
-            nextScene: 'LevelSelectScene',
-            soundKey: 'level_win',
-        });
-    }
-
-    private guardarProgreso(): void {
-        const jugador = PlayerService.obtenerJugadorActivo();
-        if (!jugador) return;
-
-        const progreso = ProgressService.completarNivel(jugador.progreso, 3, this.score);
-        PlayerService.actualizarProgreso(jugador.id, progreso);
-    }
-
-    // ── Update: Recorte manual (Culling) ──────────────────────────────────────
-    update() {
-        if (!this.foodContainer) return;
-        
-        const left = this.foodViewportX;
-        const right = this.foodViewportX + this.foodViewportW;
-        
-        this.foodContainer.list.forEach((child) => {
-            const item = child as Phaser.GameObjects.Image | Phaser.GameObjects.Text;
-            const worldX = this.foodContainer.x + item.x;
-            const visible = worldX >= left - 50 && worldX <= right + 50;
-=======
     // ─── EDUCATIONAL FEEDBACK ─────────────────────────────────────────────────
 
     private clearToast() {
@@ -750,7 +699,6 @@ export class Nivel3Scene extends Phaser.Scene {
     private shakeWrongFood(food: Phaser.GameObjects.Image) {
         this.tweens.add({ targets: food, angle: 7, duration: 60, yoyo: true, repeat: 3, ease: 'Linear', onComplete: () => { food.setAngle(0); } });
     }
->>>>>>> refs/remotes/origin/rama-Front
 
     // ─── ANIMATIONS ───────────────────────────────────────────────────────────
 

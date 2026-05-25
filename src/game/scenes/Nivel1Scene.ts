@@ -1,14 +1,9 @@
 import * as Phaser from 'phaser';
 import { createDebugSkipButton } from '../systems/DebugSkipButton';
 import { showLevelCompleteOverlay } from '../systems/LevelCompleteOverlay';
-<<<<<<< HEAD
-import { PlayerService } from '../../services/PlayerService';
-import { ProgressService } from '../../services/ProgressService';
-=======
 import { nutritionalInfo } from '../../data/nutritionalInfo';
 import type { FoodItem } from '../../data/nutritionalInfo';
 import { getErrorMessage } from '../../data/errorMessages';
->>>>>>> refs/remotes/origin/rama-Front
 
 const FOOD_ITEM_SIZE      = 70;
 const FOOD_ITEM_SPACING   = 125;
@@ -1400,31 +1395,14 @@ export class Nivel1Scene extends Phaser.Scene {
     // ─── LEVEL COMPLETE ───────────────────────────────────────────────────────
 
     private mostrarPantallaFinal() {
-        this.guardarProgreso();
 
         showLevelCompleteOverlay(this, {
-<<<<<<< HEAD
-            title: '\u00A1EXCELENTE TRABAJO!',
-            message: 'Ordenaste frutas y verduras en su lugar correcto. Vuelve al recorrido para seguir avanzando.',
-            scoreText: `Puntos: ${this.score}`,
-            buttonLabel: 'Volver al recorrido',
-            nextScene: 'LevelSelectScene',
-=======
             title: '¡EXCELENTE TRABAJO!',
             message: 'Ordenaste todas las frutas y verduras correctamente. ¡Ahora vamos con cereales y leguminosas!',
             buttonLabel: 'Ir al Nivel 2',
             nextScene: 'Nivel2Scene',
->>>>>>> refs/remotes/origin/rama-Front
             soundKey: 'object_win',
             clickSoundKey: 'sonido-click',
         });
-    }
-
-    private guardarProgreso(): void {
-        const jugador = PlayerService.obtenerJugadorActivo();
-        if (!jugador) return;
-
-        const progreso = ProgressService.completarNivel(jugador.progreso, 1, this.score);
-        PlayerService.actualizarProgreso(jugador.id, progreso);
     }
 }
