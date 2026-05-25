@@ -54,7 +54,7 @@ const getSectionIndexFromCategories = (categories: FoodCategory | FoodCategory[]
   return 0;
 };
 
-type PhaserSceneKey = 'Nivel1Scene' | 'Nivel2Scene' | 'Nivel3Scene';
+// type PhaserSceneKey = 'Nivel1Scene' | 'Nivel2Scene' | 'Nivel3Scene';
 
 function App() {
   const [showTutorialUI, setShowTutorialUI] = useState(false);

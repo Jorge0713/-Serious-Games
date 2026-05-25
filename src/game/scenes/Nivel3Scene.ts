@@ -298,7 +298,7 @@ export class Nivel3Scene extends Phaser.Scene {
         });
     }
 
-    private clearPlacedFoods(onDone: () => void) {
+    /* private clearPlacedFoods(onDone: () => void) {
         if (this.placedFoods.length === 0) { onDone(); return; }
 
         this.placedFoods.forEach(s => { s.setData('basket', undefined); s.setData('slotRelY', undefined); });
@@ -314,7 +314,7 @@ export class Nivel3Scene extends Phaser.Scene {
             targets, alpha: 0, y: '-=40', duration: 350, ease: 'Power2',
             onComplete: () => { targets.forEach(o => o.destroy()); this.placedFoods = []; onDone(); }
         });
-    }
+    } */
 
     private clearFoodBar() {
         if (!this.foodContainer) return;

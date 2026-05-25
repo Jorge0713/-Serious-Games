@@ -2,14 +2,7 @@ import * as Phaser from 'phaser';
 import { hoverScale } from "../../componentes/HoverScale";
 import { makeResponsiveVolver } from "../../componentes/ResponsiveVolver";
 
-interface WordConfig {
-    id: string;
-    answer: string;
-    hint: string;
-    startX: number;
-    startY: number;
-    horizontal: boolean;
-}
+import { type WordConfig, generateDynamicCrossword } from '../../data/crosswordGenerator';
 
 interface Cell {
     x: number;
@@ -22,17 +15,8 @@ interface Cell {
     numberText?: Phaser.GameObjects.Text;
 }
 
-const WORDS: WordConfig[] = [
-    { id: '1H', answer: 'CARBOHIDRATOS', hint: 'Principal fuente de energía del cuerpo, como el pan o la pasta.', startX: 2, startY: 5, horizontal: true },
-    { id: '2H', answer: 'MANZANA', hint: 'Fruta roja, verde o amarilla, muy común y saludable.', startX: 3, startY: 11, horizontal: true },
-    { id: '3V', answer: 'PROTEINAS', hint: 'Ayudan a formar músculos; se encuentran en carne, huevo y leguminosas.', startX: 4, startY: 4, horizontal: false },
-    { id: '4V', answer: 'CALORIAS', hint: 'Medida de la energía que nos aportan los alimentos.', startX: 6, startY: 2, horizontal: false },
-    { id: '5V', answer: 'ENERGIA', hint: 'Lo que nos da la comida para poder jugar, correr y pensar.', startX: 8, startY: 0, horizontal: false },
-    { id: '6V', answer: 'HIDRATACION', hint: 'Acción de tomar suficiente agua para mantener el cuerpo sano.', startX: 11, startY: 1, horizontal: false },
-    { id: '7V', answer: 'BROCOLI', hint: 'Vegetal verde que parece un arbolito.', startX: 13, startY: 3, horizontal: false }
-];
-
 export class CrucigramaSaludableScene extends Phaser.Scene {
+    private currentWords: WordConfig[] = [];
     private cells: Record<string, Cell> = {};
     private activeCellKey: string | null = null;
     private currentDirection: 'H' | 'V' = 'H';
@@ -62,6 +46,7 @@ export class CrucigramaSaludableScene extends Phaser.Scene {
         this.activeCellKey = null;
         this.inputActive = true;
         this.currentDirection = 'H';
+        this.currentWords = generateDynamicCrossword(7);
     }
 
     preload() {
@@ -182,7 +167,7 @@ export class CrucigramaSaludableScene extends Phaser.Scene {
 
         this.input.on('pointermove', (pointer: Phaser.Input.Pointer) => {
             if (isDragging) {
-                let newScroll = startScrollY - (pointer.y - startY);
+                const newScroll = startScrollY - (pointer.y - startY);
                 this.cameras.main.scrollY = Phaser.Math.Clamp(newScroll, minScroll, maxScroll);
             }
         });
@@ -190,8 +175,8 @@ export class CrucigramaSaludableScene extends Phaser.Scene {
         this.input.on('pointerup', () => { isDragging = false; });
         this.input.on('pointerupoutside', () => { isDragging = false; });
 
-        this.input.on('wheel', (_pointer: Phaser.Input.Pointer, _gameObjects: any[], _deltaX: number, deltaY: number) => {
-            let newScroll = this.cameras.main.scrollY + deltaY;
+        this.input.on('wheel', (_pointer: Phaser.Input.Pointer, _gameObjects: Phaser.GameObjects.GameObject[], _deltaX: number, deltaY: number) => {
+            const newScroll = this.cameras.main.scrollY + deltaY;
             this.cameras.main.scrollY = Phaser.Math.Clamp(newScroll, minScroll, maxScroll);
         });
     }
@@ -205,7 +190,7 @@ export class CrucigramaSaludableScene extends Phaser.Scene {
 
     private buildGrid() {
         this.cells = {};
-        for (const word of WORDS) {
+        for (const word of this.currentWords) {
             let cx = word.startX;
             let cy = word.startY;
 
@@ -272,7 +257,7 @@ export class CrucigramaSaludableScene extends Phaser.Scene {
             cell.text = text;
             this.centerContainer.add([rect, text]);
 
-            for (const word of WORDS) {
+            for (const word of this.currentWords) {
                 if (word.startX === cell.x && word.startY === cell.y) {
                     const numText = this.add.text(px - cellSize / 2 + 4, py - cellSize / 2 + 2, word.id.replace(/[HV]/g, ''), {
                         fontSize: '14px',
@@ -323,10 +308,10 @@ export class CrucigramaSaludableScene extends Phaser.Scene {
         };
 
         addSectionTitle('→ Horizontales');
-        WORDS.filter(w => w.horizontal).forEach(addHint);
+        this.currentWords.filter(w => w.horizontal).forEach(addHint);
         currentY += 10;
         addSectionTitle('↓ Verticales');
-        WORDS.filter(w => !w.horizontal).forEach(addHint);
+        this.currentWords.filter(w => !w.horizontal).forEach(addHint);
     }
 
     private drawActionButtons(startX: number, startY: number) {
