@@ -27,7 +27,7 @@ declare global {
     goToNivel1?: () => void;
     goToNivel2?: () => void;
     goToNivel3?: () => void;
-    showPreTutorialConceptos?: () => void;
+    showPreTutorialConceptos?: (data?: any) => void;
   }
 }
 
@@ -103,6 +103,7 @@ const getDefaultFinishLabel = (sceneKey: string): string => {
 function App() {
   const [showTutorialUI, setShowTutorialUI] = useState(false);
   const [showConceptosUI, setShowConceptosUI] = useState(false);
+  const [conceptosNextScene, setConceptosNextScene] = useState('CrucigramaSaludableScene');
   const [currentSectionIndex, setCurrentSectionIndex] = useState(0);
   const [activeTutorialSections, setActiveTutorialSections] = useState<TutorialSection[]>(defaultTutorialSections);
   const [tutorialNextScene, setTutorialNextScene] = useState('Nivel1Scene');
@@ -115,13 +116,21 @@ function App() {
     setShowConceptosUI(false);
 
     const game = window.__phaserGame;
-    if (!game) return;
+    if (!game) {
+      console.warn('No phaser game instance found.');
+      return;
+    }
 
     game.input.enabled = true;
     game.scene.stop('TutorialScene');
     game.scene.stop('LevelSelectScene');
     game.scene.stop('PreTutorialConceptosScene');
-    game.scene.start(sceneKey);
+    
+    setTimeout(() => {
+      game.scene.start(sceneKey);
+      game.scene.bringToTop(sceneKey);
+      game.scene.resume(sceneKey);
+    }, 50);
   }, []);
 
   const startNivel1 = useCallback(() => {
@@ -171,7 +180,14 @@ function App() {
     window.goToNivel1 = startNivel1;
     window.goToNivel2 = startNivel2;
     window.goToNivel3 = startNivel3;
-    window.showPreTutorialConceptos = () => setShowConceptosUI(true);
+    window.showPreTutorialConceptos = (data?: any) => {
+      if (data && data.nextLevel) {
+        setConceptosNextScene(data.nextLevel);
+      } else {
+        setConceptosNextScene('CrucigramaSaludableScene');
+      }
+      setShowConceptosUI(true);
+    };
   }, [startNivel1, startNivel2, startNivel3]);
 
   useEffect(() => {
@@ -215,7 +231,7 @@ function App() {
         >
           <PreTutorialConceptos
             onBackToMenu={() => startPhaserScene('MainMenu')}
-            onFinish={() => startPhaserScene('CrucigramaSaludableScene')}
+            onFinish={() => startPhaserScene(conceptosNextScene)}
           />
         </div>
       )}

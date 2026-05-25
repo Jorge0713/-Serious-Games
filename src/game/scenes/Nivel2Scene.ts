@@ -7,6 +7,7 @@ import { getErrorMessage } from '../../data/errorMessages';
 import { FONT_DISPLAY } from '../../config/gameFonts';
 import { LEVEL_SELECT_HEX as HEX } from '../../config/gameColors';
 import { PrefabButtons } from '../../componentes/PrefabButtons';
+import { PlayerService } from '../../services/PlayerService';
 
 const FOOD_ITEM_SIZE       = 70;
 const FOOD_ITEM_SPACING    = 125;
@@ -222,6 +223,16 @@ export class Nivel2Scene extends Phaser.Scene {
         this.txtTiempo = this.add.text(visibleLeft + visibleWidth - 110, visibleTop + 60, 'TIEMPO', {
             fontSize: '16px', color: '#ffffff', fontFamily: 'Arial', fontStyle: 'bold',
         }).setOrigin(0.5).setDepth(20);
+
+        // BOTÓN PAUSA
+        PrefabButtons.icono(this, visibleLeft + 60, visibleTop + 60, () => {
+            this.scene.pause();
+            this.scene.launch('PauseScene', { previousScene: this.scene.key });
+        }, {
+            text: 'II',
+            fontSize: '28px'
+        }).setDepth(20);
+
         this.timerText = this.add.text(visibleLeft + visibleWidth - 110, visibleTop + 90, '60', {
             fontSize: '38px', color: '#ffffff', fontFamily: 'Arial',
             fontStyle: 'bold', stroke: '#5E412F', strokeThickness: 5,
@@ -462,11 +473,22 @@ export class Nivel2Scene extends Phaser.Scene {
         const hasMoreWaves = this.remainingCereales.length > 0 || this.remainingLeguminosas.length > 0;
 
         if (!hasMoreWaves) {
+            this.registry.set('nivel2Completado', true);
+            
+            const jugador = PlayerService.obtenerJugadorActivo();
+            if (jugador) {
+                const nuevosNiveles = new Set([...jugador.progreso.nivelesCompletados, 2]);
+                PlayerService.actualizarProgreso(jugador.id, {
+                    ...jugador.progreso,
+                    nivelesCompletados: Array.from(nuevosNiveles)
+                });
+            }
+
             this.time.delayedCall(1000, () => showLevelCompleteOverlay(this, {
                 title: '¡FELICIDADES!',
-                message: 'Completaste cereales y leguminosas. Ya puedes pasar al reto de origen animal.',
-                buttonLabel: 'Ir al Nivel 3',
-                nextScene: 'Nivel3Scene',
+                message: 'Completaste cereales y leguminosas. ¡Vuelve al mapa para continuar!',
+                buttonLabel: 'Volver al mapa',
+                nextScene: 'LevelSelectScene',
                 soundKey: 'object_win',
                 clickSoundKey: 'sonido-click',
             }));
@@ -578,8 +600,15 @@ export class Nivel2Scene extends Phaser.Scene {
         this.mostrarPlaton(false);
 
         // Save checkpoint so wave 2+ restarts from the same wave
+        // Use current placedFoods (not wave-start snapshot) so basket persists on restart
         if (this.waveNumber >= 2 && this.waveCheckpoint) {
-            this.registry.set('nivel2_checkpoint', this.waveCheckpoint);
+            this.registry.set('nivel2_checkpoint', {
+                ...this.waveCheckpoint,
+                savedInventory: this.placedFoods.map(f => ({
+                    id: f.texture.key,
+                    categoria: f.getData('categoria') as string,
+                })),
+            });
         }
 
         const { width, height } = this.scale;

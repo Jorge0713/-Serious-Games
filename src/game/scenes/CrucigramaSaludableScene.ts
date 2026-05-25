@@ -1,6 +1,7 @@
 import * as Phaser from 'phaser';
 import { hoverScale } from "../../componentes/HoverScale";
 import { makeResponsiveVolver } from "../../componentes/ResponsiveVolver";
+import { PrefabButtons } from "../../componentes/PrefabButtons";
 
 import { type WordConfig, generateDynamicCrossword } from '../../data/crosswordGenerator';
 
@@ -123,6 +124,17 @@ export class CrucigramaSaludableScene extends Phaser.Scene {
         });
 
         this.uiContainer.add([btnVolver]);
+
+        // BOTÓN PAUSA
+        const btnPausa = PrefabButtons.icono(this, width - 60, 60, () => {
+            this.scene.pause();
+            this.scene.launch('PauseScene', { previousScene: this.scene.key });
+        }, {
+            text: 'II',
+            fontSize: '28px'
+        });
+        btnPausa.setScrollFactor(0);
+        this.uiContainer.add([btnPausa]);
 
         // Re-construir grid de datos si está vacío
         if (Object.keys(this.cells).length === 0) {
@@ -554,7 +566,7 @@ export class CrucigramaSaludableScene extends Phaser.Scene {
 
         btn.on('pointerover', () => { this.hoverSound.play(); btn.setFillStyle(0x4CAF50); });
         btn.on('pointerout', () => { btn.setFillStyle(this.colorVerde); });
-        btn.on('pointerdown', () => { this.clickSound.play(); this.scene.start('MainMenu'); });
+        btn.on('pointerdown', () => { this.clickSound.play(); this.scene.start('PlatoBalanceadoScene'); });
 
         this.tweens.add({ targets: overlay, alpha: 1, duration: 500 });
         this.tweens.add({ targets: [card, t1, t2, btn, bt], scaleX: { from: 0, to: 1 }, scaleY: { from: 0, to: 1 }, duration: 500, ease: 'Back.easeOut' });

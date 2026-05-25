@@ -5,10 +5,10 @@ export class PreTutorialConceptosScene extends Phaser.Scene {
         super('PreTutorialConceptosScene');
     }
 
-    create() {
+    create(data: any) {
         if (window.showPreTutorialConceptos) {
             // Muestra la UI en React
-            window.showPreTutorialConceptos();
+            window.showPreTutorialConceptos(data);
         } else {
             console.warn('window.showPreTutorialConceptos no está definido. Asegúrate de estar en el entorno React.');
             // Fallback en caso de estar fuera de React (ej. pruebas aisladas)
