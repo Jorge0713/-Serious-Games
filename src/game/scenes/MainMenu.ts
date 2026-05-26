@@ -319,9 +319,7 @@ export class MainMenu extends Phaser.Scene {
 
     private createMainActions(): void {
         this.createPlayButton();
-        this.createTutorialButton();
-        this.createLevelsButton();
-        this.createAchievementsButton();
+        
         this.createSpaceHint();
     }
 
@@ -366,32 +364,42 @@ export class MainMenu extends Phaser.Scene {
         });
     }
 
-    private createTutorialButton(): void {
-        PrefabButtons.secundario(this, 805, 990, () => this.startTutorial(false), {
-            text: 'TUTORIAL',
-            hoverSound: this.hoverSound,
-            clickSound: this.clickSound,
-            depth: 10,
+     private createSpaceHint(): void {
+        const hint = this.add.container(WIDTH / 2, 914).setDepth(9);
+        const left = this.add.text(-174, 0, 'O PRESIONA', {
+            fontFamily: FONT_MONO,
+            fontSize: '22px',
+            color: COLORS.ink2Hex,
+        }).setOrigin(0.5);
+
+        const kbdShadow = this.add.rectangle(-28, 3, 76, 26, COLORS.ink, 1);
+        const kbd = this.add.rectangle(-30, 0, 76, 26, COLORS.bgCard, 1)
+            .setStrokeStyle(2, COLORS.ink);
+        const kbdText = this.add.text(-30, 0, '[SPACE]', {
+            fontFamily: FONT_MONO,
+            fontSize: '20px',
+            color: COLORS.inkHex,
+        }).setOrigin(0.5);
+
+        const right = this.add.text(110, 0, 'PARA EMPEZAR', {
+            fontFamily: FONT_MONO,
+            fontSize: '22px',
+            color: COLORS.ink2Hex,
+        }).setOrigin(0.5);
+
+        hint.add([left, kbdShadow, kbd, kbdText, right]);
+
+        this.tweens.add({
+            targets: hint,
+            alpha: 0.25,
+            duration: 1600,
+            ease: 'Sine.easeInOut',
+            yoyo: true,
+            repeat: -1,
         });
     }
 
-    private createLevelsButton(): void {
-        PrefabButtons.secundario(this, 960, 990, () => this.showLevelsModal(), {
-            text: 'NIVELES',
-            hoverSound: this.hoverSound,
-            clickSound: this.clickSound,
-            depth: 10,
-        });
-    }
 
-    private createAchievementsButton(): void {
-        PrefabButtons.secundario(this, 1115, 990, () => this.showAchievementsModal(), {
-            text: 'LOGROS',
-            hoverSound: this.hoverSound,
-            clickSound: this.clickSound,
-            depth: 10,
-        });
-    }
 
     private createModalButton(button: ModalButtonLayoutConfig, x: number): Phaser.GameObjects.Container {
         const factory = button.isCancel ? PrefabButtons.cerrar : PrefabButtons.continuar;
@@ -494,40 +502,6 @@ export class MainMenu extends Phaser.Scene {
         };
     }
 
-    private createSpaceHint(): void {
-        const hint = this.add.container(WIDTH / 2, 914).setDepth(9);
-        const left = this.add.text(-174, 0, 'O PRESIONA', {
-            fontFamily: FONT_MONO,
-            fontSize: '22px',
-            color: COLORS.ink2Hex,
-        }).setOrigin(0.5);
-
-        const kbdShadow = this.add.rectangle(-28, 3, 76, 26, COLORS.ink, 1);
-        const kbd = this.add.rectangle(-30, 0, 76, 26, COLORS.bgCard, 1)
-            .setStrokeStyle(2, COLORS.ink);
-        const kbdText = this.add.text(-30, 0, '[SPACE]', {
-            fontFamily: FONT_MONO,
-            fontSize: '20px',
-            color: COLORS.inkHex,
-        }).setOrigin(0.5);
-
-        const right = this.add.text(110, 0, 'PARA EMPEZAR', {
-            fontFamily: FONT_MONO,
-            fontSize: '22px',
-            color: COLORS.ink2Hex,
-        }).setOrigin(0.5);
-
-        hint.add([left, kbdShadow, kbd, kbdText, right]);
-
-        this.tweens.add({
-            targets: hint,
-            alpha: 0.25,
-            duration: 1600,
-            ease: 'Sine.easeInOut',
-            yoyo: true,
-            repeat: -1,
-        });
-    }
 
     // ─────────────────────────── Footer ───────────────────────────
 
@@ -594,14 +568,6 @@ export class MainMenu extends Phaser.Scene {
         }
 
         this.showPlayerFormOverlay();
-    }
-
-    private startTutorial(playSound = true): void {
-        if (playSound) {
-            this.clickSound?.play();
-        }
-
-        this.scene.start('TutorialScene');
     }
 
     // ─────────────────────── Player form overlay (DOM) ───────────────────────
@@ -927,7 +893,7 @@ export class MainMenu extends Phaser.Scene {
 
     // ─────────────────────────── Modals ───────────────────────────
 
-    private showLevelsModal(): void {
+    showLevelsModal(): void {
         this.showModal('Selecciona nivel', [
             'Elige una práctica para continuar tu ruta de nutrición.',
         ], [
@@ -937,12 +903,7 @@ export class MainMenu extends Phaser.Scene {
         ]);
     }
 
-    private showAchievementsModal(): void {
-        this.showModal('Logros', [
-            'Sigue jugando para desbloquear insignias saludables.',
-            'Próximamente: historial de récords y medallas.',
-        ], []);
-    }
+   
 
     private showInfoModal(): void {
         this.showModal('PLACHEF', [

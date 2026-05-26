@@ -66,6 +66,21 @@ const CONCEPTS: NutritionConcept[] = [
         ],
     },
     {
+        id: 'grasas',
+        title: 'Grasas',
+        menuLabel: 'Grasas',
+        icon: 'LIP',
+        subtitle: 'Energía concentrada y nutrientes esenciales.',
+        body: 'Las grasas aportan energía concentrada y ayudan al cuerpo a absorber ciertas vitaminas. Existen grasas saludables que conviene incluir con moderación, como las del aguacate, los pescados o los frutos secos.',
+        callout: 'Prefiere grasas saludables de origen vegetal y de pescado; modera las de productos ultraprocesados.',
+        examplesTitle: 'Fuentes de grasas saludables',
+        examples: [
+            { label: 'Aguacate', note: 'Grasa vegetal', path: '/iconsFood/frutas/avocado.png' },
+            { label: 'Salmón', note: 'Omega 3', path: '/iconsFood/animal/salmon.png' },
+            { label: 'Cacahuate', note: 'Frutos secos', path: '/iconsFood/leguminosas/peanut.png' },
+        ],
+    },
+    {
         id: 'hidratacion',
         title: 'Hidratación',
         menuLabel: 'Hidratación',

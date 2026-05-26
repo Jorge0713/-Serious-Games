@@ -642,11 +642,12 @@ export class LevelSelectScene extends Phaser.Scene {
         const icon = this.add.image(x, y - 18, assetKey)
             .setDisplaySize(34, 34)
             .setAlpha(active ? 1 : 0.58);
+        const isDarkBg = active && fill === COLORS.junk;
         const text = this.add.text(x, y + 22, label, {
             fontFamily: FONT_DISPLAY,
             fontSize: label.length > 13 ? '18px' : '21px',
             fontStyle: 'bold',
-            color: active ? HEX.ink : HEX.grayDark,
+            color: isDarkBg ? HEX.white : (active ? HEX.ink : HEX.grayDark),
         }).setOrigin(0.5);
 
         parent.add([bg, icon, text]);
