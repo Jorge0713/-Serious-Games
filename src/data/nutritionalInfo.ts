@@ -169,7 +169,7 @@ const nutritionDetails: Record<string, FoodNutritionInfo> = {
         tags: ['natural', 'fuente_de_vitamina_c', 'alto_en_fibra', 'antioxidante']
     },
     ginger: {
-        officialGroup: 'verduras_frutas',
+        officialGroup: 'cereales',
         recommendedPortion: '1 cucharada',
         portionGrams: 6,
         calories: 5,

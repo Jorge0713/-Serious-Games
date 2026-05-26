@@ -1,4 +1,4 @@
-import type { DatosAntropometricosEntrada, DatosRegistroJugador, Sexo } from '../types/player.types';
+import type { DatosAntropometricosEntrada, DatosRegistroJugador, Sexo, Patologia } from '../types/player.types';
 
 export type ResultadoValidacion = {
     valido: boolean;
@@ -6,6 +6,7 @@ export type ResultadoValidacion = {
 };
 
 const SEXOS_PERMITIDOS: Sexo[] = ['masculino', 'femenino'];
+const PATOLOGIAS_PERMITIDAS: Patologia[] = ['ninguna', 'diabetico', 'hipertenso'];
 const NOMBRE_PERMITIDO = /^[A-Za-zÁÉÍÓÚÜÑáéíóúüñ0-9]+(?: [A-Za-zÁÉÍÓÚÜÑáéíóúüñ0-9]+)*$/;
 
 function crearResultado(errores: string[]): ResultadoValidacion {
@@ -70,6 +71,16 @@ export function validarSexo(sexo: Sexo): ResultadoValidacion {
     return crearResultado(errores);
 }
 
+export function validarPatologia(patologia: Patologia): ResultadoValidacion {
+    const errores: string[] = [];
+
+    if (!PATOLOGIAS_PERMITIDAS.includes(patologia)) {
+        errores.push('La condición médica debe ser "ninguna", "diabetico" o "hipertenso".');
+    }
+
+    return crearResultado(errores);
+}
+
 export function validarPeso(pesoKg: number): ResultadoValidacion {
     const errores: string[] = [];
 
@@ -101,6 +112,7 @@ export function validarDatosJugador(datos: DatosRegistroJugador): ResultadoValid
         validarSexo(datos.sexo),
         validarPeso(datos.pesoKg),
         validarEstatura(datos.estaturaCm),
+        validarPatologia(datos.patologia),
     ];
 
     return crearResultado(validaciones.flatMap(validacion => validacion.errores));
@@ -112,6 +124,7 @@ export function validarDatosAntropometricos(datos: DatosAntropometricosEntrada):
         validarSexo(datos.sexo),
         validarPeso(datos.pesoKg),
         validarEstatura(datos.estaturaCm),
+        validarPatologia(datos.patologia),
     ];
 
     return crearResultado(validaciones.flatMap(validacion => validacion.errores));
