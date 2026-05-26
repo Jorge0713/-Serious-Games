@@ -687,9 +687,22 @@ export class LevelSelectScene extends Phaser.Scene {
     }
 
     private createExtraButtons(): void {
-        const y = 910;
+        const yTop = 840;
+        const yBot = 920;
         
-        PrefabButtons.continuar(this, WIDTH / 2 + 650, y, () => {
+        const progress = this.getProgressState();
+        if (progress.nivel3Done) {
+            PrefabButtons.continuar(this, WIDTH / 2 + 650, yTop, () => {
+                this.scene.start('CrucigramaSaludableScene');
+            }, {
+                text: 'Jugar Crucigrama',
+                width: 380,
+                height: 60,
+                fontSize: '22px'
+            });
+        }
+
+        PrefabButtons.continuar(this, WIDTH / 2 + 650, yBot, () => {
             this.scene.start('PlatoBalanceadoScene');
         }, {
             text: 'Jugar Plato Balanceado',
@@ -698,7 +711,7 @@ export class LevelSelectScene extends Phaser.Scene {
             fontSize: '22px'
         });
 
-        PrefabButtons.secundario(this, WIDTH / 2 - 250, y, () => {
+        PrefabButtons.secundario(this, WIDTH / 2 - 250, yBot, () => {
             window.showTutorial?.(['vegetable', 'fruit'], {
                 nextScene: 'LevelSelectScene',
                 title: 'Verduras y Frutas',
@@ -706,7 +719,7 @@ export class LevelSelectScene extends Phaser.Scene {
             });
         }, { text: 'Tut. Frutas', width: 200, height: 60, fontSize: '20px' });
 
-        PrefabButtons.secundario(this, WIDTH / 2, y, () => {
+        PrefabButtons.secundario(this, WIDTH / 2, yBot, () => {
             window.showTutorial?.(['legume', 'cereal'], {
                 nextScene: 'LevelSelectScene',
                 title: 'Leguminosas y Cereales',
@@ -714,7 +727,7 @@ export class LevelSelectScene extends Phaser.Scene {
             });
         }, { text: 'Tut. Cereales', width: 220, height: 60, fontSize: '20px' });
 
-        PrefabButtons.secundario(this, WIDTH / 2 + 250, y, () => {
+        PrefabButtons.secundario(this, WIDTH / 2 + 250, yBot, () => {
             window.showTutorial?.(['animal'], {
                 nextScene: 'LevelSelectScene',
                 title: 'Origen Animal',
