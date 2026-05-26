@@ -1,6 +1,5 @@
 import * as Phaser from 'phaser';
-import { hoverScale } from "../../componentes/HoverScale";
-import { makeResponsiveVolver } from "../../componentes/ResponsiveVolver";
+import { PrefabButtons } from '../../componentes/PrefabButtons';
 import { FlowProgressService } from '../../services/FlowProgressService';
 
 import { type WordConfig, generateDynamicCrossword } from '../../data/crosswordGenerator';
@@ -54,7 +53,7 @@ export class CrucigramaSaludableScene extends Phaser.Scene {
     }
 
     preload() {
-        this.load.image('btn-Volver', '/assets/Buttons/BtnBack.png');
+        PrefabButtons.preload(this);
         this.load.audio('Click', '/Sound/Click.mp3');
         this.load.audio('Hover', '/Sound/hoverSound.mp3');
         this.load.audio('sonido-exito', '/Sound/acierto.mp3');
@@ -114,22 +113,21 @@ export class CrucigramaSaludableScene extends Phaser.Scene {
 
         this.centerContainer.add([title, subtitle]);
 
-        const btnVolver = this.add.image(150, 100, 'btn-Volver')
-            .setInteractive({ useHandCursor: true });
-
-        makeResponsiveVolver(this, btnVolver);
+        const btnVolver = PrefabButtons.secundario(this, 110, 90, () => {
+            this.scene.start('PreTutorialConceptosScene', {
+                nextLevel: 'CrucigramaSaludableScene',
+            });
+        }, {
+            text: '< Volver',
+            width: 180,
+            height: 80,
+            fontSize: '30px',
+            textOffsetY: -4,
+            hoverScale: 1.04,
+            hoverSound: this.hoverSound,
+            clickSound: this.clickSound,
+        });
         btnVolver.setScrollFactor(0); // Fijo en pantalla
-
-        hoverScale(this, btnVolver, {
-            scaleOver: btnVolver.scale * 1.04,
-            duration: 150,
-            hoverSound: this.hoverSound
-        });
-
-        btnVolver.on('pointerdown', () => {
-            this.clickSound.play();
-            this.scene.start('LevelSelectScene');
-        });
 
         this.uiContainer.add([btnVolver]);
 

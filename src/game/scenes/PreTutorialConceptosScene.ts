@@ -5,7 +5,7 @@ export class PreTutorialConceptosScene extends Phaser.Scene {
         super('PreTutorialConceptosScene');
     }
 
-    create(data: any) {
+    create(data?: Record<string, unknown>) {
         if (window.showPreTutorialConceptos) {
             // Muestra la UI en React
             window.showPreTutorialConceptos(data);

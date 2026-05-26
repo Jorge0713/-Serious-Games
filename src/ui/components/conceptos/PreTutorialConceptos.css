@@ -206,6 +206,13 @@
     --item-soft: #FFE5D2;
 }
 
+.concept-grasas {
+    --theme: #E8B85A;
+    --theme-soft: #FFF3D2;
+    --item-theme: #E8B85A;
+    --item-soft: #FFF3D2;
+}
+
 .concept-hidratacion {
     --theme: var(--green);
     --theme-soft: #E4F4EA;
