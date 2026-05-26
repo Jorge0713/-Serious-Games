@@ -56,20 +56,28 @@ export class CrucigramaSaludableScene extends Phaser.Scene {
         this.load.image('btn-Volver', '/assets/Buttons/BtnBack.png');
         this.load.audio('Click', '/Sound/Click.mp3');
         this.load.audio('Hover', '/Sound/hoverSound.mp3');
-        this.load.audio('sonido-exito', '/Sound/correcto.mp3');
+        this.load.audio('sonido-exito', '/Sound/acierto.mp3');
     }
 
     create() {
-        this.cameras.main.setBackgroundColor(this.colorFondo);
+        try {
+            this.cameras.main.setBackgroundColor(this.colorFondo);
 
-        this.clickSound = this.sound.add('Click', { volume: 0.1 });
-        this.hoverSound = this.sound.add('Hover', { volume: 0.1 });
-        this.winSound = this.sound.add('sonido-exito', { volume: 0.3 });
+            this.clickSound = this.sound.add('Click', { volume: 0.1 });
+            this.hoverSound = this.sound.add('Hover', { volume: 0.1 });
+            this.winSound = this.sound.add('sonido-exito', { volume: 0.3 });
 
-        this.setupUI();
+            this.setupUI();
 
-        this.input.keyboard?.on('keydown', this.handleKeydown, this);
-        this.scale.on('resize', () => this.handleResize());
+            this.input.keyboard?.on('keydown', this.handleKeydown, this);
+            this.scale.on('resize', () => this.handleResize());
+            
+            // Para asegurar que la escena se muestre
+            this.scene.bringToTop();
+        } catch (e: any) {
+            console.error("Error en CrucigramaSaludableScene:", e);
+            alert("Error en crucigrama: " + e.message);
+        }
     }
 
     private setupUI() {
