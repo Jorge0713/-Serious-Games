@@ -1,6 +1,6 @@
 import * as Phaser from 'phaser';
 import { PlayerService } from '../../services/PlayerService';
-import type { Jugador } from '../../types/player.types';
+import type { Jugador } from '../../types/player-types';
 import { createDebugSkipButton } from '../systems/DebugSkipButton';
 import { PrefabButtons } from '../../componentes/PrefabButtons';
 import { FONT_DISPLAY, FONT_MONO } from '../../config/gameFonts';
@@ -695,7 +695,7 @@ export class PlatoBalanceadoScene extends Phaser.Scene {
         // ── SECCIÓN: FEEDBACK ────────────────────────────────────────────────
         this.add.rectangle(sx + sw / 2, curY + 16, sw, 36, P.ink, 1).setDepth(6);
         this.add.text(sx + sw / 2, curY + 16, 'RESULTADO', {
-            fontFamily: MFT, fontSize: '20px', color: '#FF6E6E',
+            fontFamily: MFT, fontSize: '20px', color: P.coralHex,
         }).setOrigin(0.5).setDepth(7);
         curY += 42;
 
@@ -707,7 +707,7 @@ export class PlatoBalanceadoScene extends Phaser.Scene {
             sx + 22, curY + 14,
             'Arma tu plato y presiona\n"Evaluar" para ver el resultado.',
             {
-                fontFamily: MFT, fontSize: '19px', color: '#000000',
+                fontFamily: MFT, fontSize: '19px', color: P.mutedHex,
                 lineSpacing: 4, wordWrap: { width: sw - 44 },
             },
         ).setDepth(7);
@@ -1028,9 +1028,8 @@ export class PlatoBalanceadoScene extends Phaser.Scene {
     // ─── EVALUACIÓN ──────────────────────────────────────────────────────────
     private evaluatePlate() {
         const total = this.placedFoods.length;
-        if (total <= 0) {
-            this.feedbackText.setColor('#FF0000').setText('Tu plato está vacío.\nArrastra alimentos primero.');
-            this.scoreText.setText('★  0');
+        if (total === 0) {
+            this.feedbackText.setColor(P.coralHex).setText('Tu plato está vacío.\nArrastra alimentos primero.');
             return;
         }
 
@@ -1108,7 +1107,7 @@ export class PlatoBalanceadoScene extends Phaser.Scene {
         });
 
         let msg = `Score: ${score}/100`;
-        let color = score >= 70 ? '#0000FF' : '#FF0000';
+        let color = score >= 70 ? P.routeHex : P.coralHex;
         
         const partes: string[] = [];
         partes.push(`Meta Calórica (${this.tipoComida}): ~${Math.round(metaCalorias)} kcal`);
@@ -1118,7 +1117,7 @@ export class PlatoBalanceadoScene extends Phaser.Scene {
         
         if (partes.length === 1 && score === 100) {
             msg += `\n¡Plato perfecto para tu IMC y patologías!`;
-            color = '#00AA00';
+            color = P.greenHex;
         } else {
             msg += `\n${partes.join('\n')}`;
         }

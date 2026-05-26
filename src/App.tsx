@@ -126,6 +126,13 @@ function App() {
     game.scene.stop('TutorialScene');
     game.scene.stop('LevelSelectScene');
     game.scene.stop('PreTutorialConceptosScene');
+    game.scene.stop('MainMenu');
+    game.scene.stop('CrucigramaSaludableScene');
+    game.scene.stop('PlatoBalanceadoScene');
+    game.scene.stop('Nivel1Scene');
+    game.scene.stop('Nivel2Scene');
+    game.scene.stop('Nivel3Scene');
+    game.scene.stop('PauseScene');
     
     setTimeout(() => {
       game.scene.start(sceneKey);
