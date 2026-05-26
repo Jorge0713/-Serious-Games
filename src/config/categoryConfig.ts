@@ -12,7 +12,7 @@ export const categoryConfig = {
     emoji: '🫘'
   },
     cereal: {
-    label: 'Cereales',
+    label: 'Cereales y Tubérculos',
     emoji: '🌾'
   },
     animal: {

@@ -283,12 +283,54 @@ export class Nivel2Scene extends Phaser.Scene {
         this.createBackButton();
 
         this.events.once('shutdown', () => this.stopTimer());
-        if (this.registry.get('introCompleted_Nivel2')) {
+        
+        const checkpoint = this.registry.get('nivel2_checkpoint') as {
+            waveNumber: number;
+            remainingCereales: FoodItem[];
+            remainingLeguminosas: FoodItem[];
+            seboPool: FoodItem[];
+            savedInventory?: { id: string, categoria: string }[];
+        } | undefined;
+
+        if (checkpoint) {
+            this.registry.remove('nivel2_checkpoint');
+            this.remainingCereales = [...checkpoint.remainingCereales];
+            this.remainingLeguminosas = [...checkpoint.remainingLeguminosas];
+            this.seboPool = [...checkpoint.seboPool];
+            this.waveNumber = checkpoint.waveNumber - 1;
+            
+            if (checkpoint.savedInventory) {
+                this.restoreInventory(checkpoint.savedInventory);
+            }
+            
+            this.time.delayedCall(400, () => this.startNextWave());
+        } else if (this.registry.get('introCompleted_Nivel2')) {
             this.time.delayedCall(400, () => this.initWavePools());
         } else {
             this.time.delayedCall(400, () => this.showIntroPlaton());
         }
+    }
 
+    private restoreInventory(savedInventory: { id: string, categoria: string }[]) {
+        savedInventory.forEach(item => {
+            const foodItem = nutritionalInfo.find(f => f.id === item.id);
+            if (!foodItem) return;
+            const targetPanel = item.categoria === 'cereal' ? this.segmentoCereales : this.segmentoLeguminosas;
+            const slot = this.findNearestFreeInventorySlot(targetPanel, targetPanel.x, targetPanel.y);
+            if (!slot) return;
+            
+            const sprite = this.add.image(slot.x, slot.y, item.id).setDisplaySize(FOOD_ITEM_SIZE, FOOD_ITEM_SIZE);
+            const texto = this.add.text(slot.x, slot.y + FOOD_LABEL_OFFSET, foodItem.nameES, {
+                fontSize: '15px', color: '#ffffff', fontStyle: 'bold', fontFamily: FONT_DISPLAY, stroke: '#5E412F', strokeThickness: 4,
+            }).setOrigin(0.5).setDepth(31);
+            
+            sprite.setData('categoria', item.categoria);
+            sprite.setData('texto', texto);
+            sprite.setData('placed', true);
+            sprite.setData('basket', targetPanel);
+            sprite.setData('slotRelY', sprite.y - targetPanel.y);
+            this.placedFoods.push(sprite);
+        });
     }
     private returnToFoodGrid(): void {
         this.stopTimer();
@@ -342,17 +384,39 @@ export class Nivel2Scene extends Phaser.Scene {
         this.waveAciertos = 0;
         this.waveInProgress = false;
 
-        this.clearPlacedFoods(() => {
+        this.registry.set('nivel2_checkpoint', {
+            waveNumber: this.waveNumber,
+            remainingCereales: [...this.remainingCereales],
+            remainingLeguminosas: [...this.remainingLeguminosas],
+            seboPool: [...this.seboPool],
+            savedInventory: this.placedFoods.map(f => ({ id: f.texture.key, categoria: f.getData("categoria") as string }))
+        });
+
+        const proceed = () => {
             const { foods, correctCount } = this.pickWaveFoods();
             this.waveCorrectTarget = correctCount;
-
             const isLastWave = this.remainingCereales.length === 0 && this.remainingLeguminosas.length === 0;
-
             this.clearFoodBar();
             this.populateFoodBar(foods);
             this.startTimer(isLastWave ? WAVE_TIME_LAST : WAVE_TIME_NORMAL);
             this.waveInProgress = true;
-        });
+        };
+
+        // Solo limpiar la canasta cuando alcance los 12 elementos exactos.
+        const cerealesFull    = this.placedFoods.filter(f => f.getData('basket') === this.segmentoCereales).length    >= 12;
+        const leguminosasFull = this.placedFoods.filter(f => f.getData('basket') === this.segmentoLeguminosas).length >= 12;
+
+        if (cerealesFull && leguminosasFull) {
+            this.clearBasketFoods(this.segmentoCereales, () => {
+                this.clearBasketFoods(this.segmentoLeguminosas, proceed);
+            });
+        } else if (cerealesFull) {
+            this.clearBasketFoods(this.segmentoCereales, proceed);
+        } else if (leguminosasFull) {
+            this.clearBasketFoods(this.segmentoLeguminosas, proceed);
+        } else {
+            proceed();
+        }
     }
 
     private pickWaveFoods(): { foods: FoodItem[], correctCount: number } {
@@ -376,13 +440,20 @@ export class Nivel2Scene extends Phaser.Scene {
         return { foods: Phaser.Utils.Array.Shuffle(mixed) as FoodItem[], correctCount };
     }
 
-    private clearPlacedFoods(onDone: () => void) {
-        if (this.placedFoods.length === 0) { onDone(); return; }
 
-        this.placedFoods.forEach(s => { s.setData('basket', undefined); s.setData('slotRelY', undefined); });
+
+    private clearBasketFoods(panel: Phaser.GameObjects.Image, onDone?: () => void) {
+        const foods = this.placedFoods.filter(f => f.getData('basket') === panel);
+        if (foods.length === 0) { onDone?.(); return; }
+
+        panel.setTint(0x44ff44);
+        this.time.delayedCall(500, () => { panel.clearTint(); });
+
+        foods.forEach(s => { s.setData('basket', undefined); s.setData('slotRelY', undefined); });
+        this.placedFoods = this.placedFoods.filter(f => !foods.includes(f));
 
         const targets: Phaser.GameObjects.GameObject[] = [];
-        this.placedFoods.forEach(sprite => {
+        foods.forEach(sprite => {
             const texto = sprite.getData('texto') as Phaser.GameObjects.Text | undefined;
             if (texto) targets.push(texto);
             targets.push(sprite);
@@ -390,7 +461,7 @@ export class Nivel2Scene extends Phaser.Scene {
 
         this.tweens.add({
             targets, alpha: 0, y: '-=40', duration: 350, ease: 'Power2',
-            onComplete: () => { targets.forEach(o => o.destroy()); this.placedFoods = []; onDone(); }
+            onComplete: () => { targets.forEach(o => o.destroy()); onDone?.(); },
         });
     }
 

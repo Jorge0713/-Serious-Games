@@ -1880,7 +1880,7 @@ export const nutritionalInfo: FoodItem[] = ([
         name: 'Edamame',
         nameES: 'Edamame',
         category: 'legume',
-        image: '/iconsFood/leguminosas/soy.png',
+        image: '/iconsFood/leguminosas/edamame.png',
         description: 'Vainas de soya tiernas llenas de proteína vegetal, fibra y vitaminas K y folato. Un excelente snack que promueve la saciedad y la recuperación muscular.'
     },
     {
@@ -2031,7 +2031,7 @@ export const nutritionalInfo: FoodItem[] = ([
         name: 'Milk',
         nameES: 'Leche',
         category: 'animal',
-        image: '/iconsFood/animal/milk_bottled.png',
+        image: '/iconsFood/animal/milk-carton.png',
         description: 'Excelente fuente de calcio asimilable y vitamina D, esenciales para el desarrollo y mantenimiento de los huesos y dientes. Aporta proteínas e hidratación.'
     },
     {
