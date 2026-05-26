@@ -1,32 +1,49 @@
 import * as Phaser from 'phaser';
+import { PlayerService } from '../../services/PlayerService';
+import type { Jugador } from '../../types/player.types';
 import { createDebugSkipButton } from '../systems/DebugSkipButton';
-import { FONT_DISPLAY } from '../../config/gameFonts';
-import { PrefabButtons } from "../../componentes/PrefabButtons";
+import { PrefabButtons } from '../../componentes/PrefabButtons';
+import { FONT_DISPLAY, FONT_MONO } from '../../config/gameFonts';
 import { nutritionalInfo } from '../../data/nutritionalInfo';
 import type { FoodItem } from '../../data/nutritionalInfo';
 
-// ─── Paleta Bosque Cálido ────────────────────────────────────────────────────
-const PALETTE = {
-    verdePrincipal: 0x58B15B,
-    verdePrincipalHex: '#58B15B',
-    marronClaro: 0x8D6E63,
-    marronClaroHex: '#8D6E63',
-    marronOscuro: 0x5D4037,
-    marronOscuroHex: '#5D4037',
-    crema: 0xF5FBF2,
-    cremaHex: '#F5FBF2',
-    terracota: 0xD2691E,
-    terracotaHex: '#D2691E',
+// ─── Paleta (alineada con el estilo global del juego) ────────────────────────
+const P = {
+    bg:           0xf2eadb,
+    bgHex:        '#F2EADB',
+    paper:        0xfffbf0,
+    paperHex:     '#FFFBF0',
+    paperAlt:     0xfff7e8,
+    ink:          0x2e3142,
+    inkHex:       '#2E3142',
+    muted:        0x6b6f7f,
+    mutedHex:     '#6B6F7F',
+    grayDark:     0x77736d,
+    grayDarkHex:  '#77736D',
+    green:        0x77d39d,
+    greenHex:     '#77D39D',
+    route:        0x75c995,
+    routeHex:     '#75C995',
+    yellow:       0xffcf55,
+    yellowHex:    '#FFCF55',
+    coral:        0xff907f,
+    coralHex:     '#FF907F',
+    legume:       0xe7a59b,
+    lumeHex:      '#E7A59B',
+    cereal:       0xf7ce63,
+    cerealHex:    '#F7CE63',
+    animal:       0xf4a36f,
+    animalHex:    '#F4A36F',
+    white:        0xffffff,
+    whiteHex:     '#FFFFFF',
 };
 
-const SCENE_FONT = FONT_DISPLAY;
+const SFT = FONT_DISPLAY;
+const MFT = FONT_MONO;
 
 // ─── Tipos ───────────────────────────────────────────────────────────────────
-
-// Grupo visible en el Plato del Buen Comer — derivado de officialGroup
 type Grupo = 'verduras_frutas' | 'cereal' | 'leguminosa_aoa';
 
-/** Mapea officialGroup de nutritionalInfo al grupo de este plato. */
 function mapToGrupo(item: FoodItem): Grupo {
     if (item.officialGroup === 'verduras_frutas') return 'verduras_frutas';
     if (item.officialGroup === 'cereales')         return 'cereal';
@@ -34,400 +51,365 @@ function mapToGrupo(item: FoodItem): Grupo {
 }
 
 interface NutritionTotals {
-    calories: number;
-    protein:  number;
-    carbs:    number;
-    fat:      number;
-    fiber:    number;
-    sugar:    number;
-    sodium:   number;
-    scoreSum: number;
+    calories: number; protein: number; carbs: number; fat: number;
+    fiber:    number; sugar:   number; sodium: number; scoreSum: number;
 }
 
 interface DraggableFood extends Phaser.GameObjects.Image {
-    grupo:       Grupo;
-    foodItem:    FoodItem;
-    localHomeX:  number;
-    localHomeY:  number;
-    fromBar:     boolean;
-    placed:      boolean;
-    labelText?:  Phaser.GameObjects.Text;
-}
-
-interface SectionTab {
-    id:    Grupo;
-    label: string;
+    grupo:      Grupo;
+    foodItem:   FoodItem;
+    localHomeX: number;
+    localHomeY: number;
+    fromBar:    boolean;
+    placed:     boolean;
+    labelText?: Phaser.GameObjects.Text;
 }
 
 interface SafeArea {
-    left:   number;
-    right:  number;
-    top:    number;
-    bottom: number;
-    width:  number;
-    height: number;
+    left: number; right: number; top: number; bottom: number;
+    width: number; height: number;
 }
 
-// ─── Configuración de tabs ────────────────────────────────────────────────────
-const TABS: SectionTab[] = [
-    { id: 'verduras_frutas', label: 'Verduras y Frutas' },
-    { id: 'cereal',          label: 'Cereales' },
-    { id: 'leguminosa_aoa',  label: 'Leguminosas / A.O.A.' },
+// ─── Constantes ───────────────────────────────────────────────────────────────
+const TABS = [
+    { id: 'verduras_frutas' as Grupo, label: 'Verduras y Frutas' },
+    { id: 'cereal'          as Grupo, label: 'Cereales'           },
+    { id: 'leguminosa_aoa'  as Grupo, label: 'Leguminosas / AOA'  },
 ];
 
-const IDEAL: Record<Grupo, number> = {
-    verduras_frutas: 50,
-    cereal:          25,
-    leguminosa_aoa:  25,
-};
+const IDEAL: Record<Grupo, number>    = { verduras_frutas: 50, cereal: 25, leguminosa_aoa: 25 };
+const GRUPO_COLOR: Record<Grupo, number>  = { verduras_frutas: P.green,  cereal: P.cereal,    leguminosa_aoa: P.animal  };
+const GRUPO_COLOR_HEX: Record<Grupo, string> = { verduras_frutas: P.greenHex, cereal: P.cerealHex, leguminosa_aoa: P.animalHex };
 
-const GRUPO_COLOR_HEX: Record<Grupo, string> = {
-    verduras_frutas: PALETTE.verdePrincipalHex,
-    cereal:          PALETTE.terracotaHex,
-    leguminosa_aoa:  PALETTE.marronClaroHex,
-};
-
-// ─── Constantes de layout sidebar ────────────────────────────────────────────
-const TAB_HEIGHT  = 56;
-const TAB_GAP     = 8;
-const ITEM_SIZE   = 96;
+const ITEM_SIZE   = 68;
 const ITEM_COLS   = 2;
-const ITEM_GAP_X  = 28;
-const ITEM_ROW_H  = ITEM_SIZE + 52;
-const SCROLL_STEP = ITEM_ROW_H;
+const ITEM_GAP_X  = 14;
+const CARD_H      = 120;
+const IMG_SZ_BAR  = 48;
+const ITEM_ROW_H  = CARD_H + 12;    // 132
+// SCROLL_STEP eliminado por estar sin uso
+const TAB_H       = 50;
+const TAB_GAP     = 6;
 
 // ─── Escena ───────────────────────────────────────────────────────────────────
 export class PlatoBalanceadoScene extends Phaser.Scene {
 
-    // Estado
-    private activeTab:    Grupo  = 'verduras_frutas';
+    // Estado de juego
+    private activeTab:    Grupo = 'verduras_frutas';
     private placedCounts: Record<Grupo, number> = { verduras_frutas: 0, cereal: 0, leguminosa_aoa: 0 };
     private placedFoods:  DraggableFood[] = [];
     private nutritionTotals: NutritionTotals = {
-        calories: 0, protein: 0, carbs: 0, fat: 0, fiber: 0, sugar: 0, sodium: 0, scoreSum: 0,
+        calories: 0, protein: 0, carbs: 0, fat: 0,
+        fiber: 0, sugar: 0, sodium: 0, scoreSum: 0,
     };
+    private jugadorActivo: Jugador | null = null;
+    private tmb: number = 2000;
+    private tipoComida: 'desayuno' | 'comida' | 'cena' = 'comida';
 
     // Layout
-    private sidebarViewportY  = 0;
-    private sidebarViewportH  = 0;
-    private foodListContainer!: Phaser.GameObjects.Container;
-    private sidebarMaskGfx!:   Phaser.GameObjects.Graphics;
-    private minScrollY        = 0;
-    private maxScrollY        = 0;
     private safeArea: SafeArea = { left: 0, right: 0, top: 0, bottom: 0, width: 0, height: 0 };
     private sidebarX  = 0;
     private sidebarW  = 0;
     private sidebarTop    = 0;
     private sidebarBottom = 0;
-    private contentX  = 0;
-    private contentW  = 0;
+    private statsX    = 0;
+    private statsW    = 0;
+    private statsTop  = 0;
     private proportionBarW = 0;
 
     // Plato
-    private platoCenterX  = 0;
-    private platoCenterY  = 0;
-    private platoRadius   = 0;
+    private platoCenterX = 0;
+    private platoCenterY = 0;
+    private platoSize    = 0;
     private platoDropZone!: Phaser.GameObjects.Zone;
+
+    // Sidebar scroll (camera-based — no Container/GeometryMask)
+    private sidebarViewportY  = 0;
+    private sidebarViewportH  = 0;
+    private listCam!:         Phaser.Cameras.Scene2D.Camera;
+    private listBaseScrollX   = 0;
+    private listScrollY       = 0;
+    private listMaxScrollY    = 0;
+    private listAllItems:     Phaser.GameObjects.GameObject[] = [];
 
     // UI dinámica
     private progressText!:  Phaser.GameObjects.Text;
     private nutritionText!: Phaser.GameObjects.Text;
     private scoreText!:     Phaser.GameObjects.Text;
-    private starText!:      Phaser.GameObjects.Text;
     private barFills:    Record<Grupo, Phaser.GameObjects.Rectangle> = {} as never;
     private barPercents: Record<Grupo, Phaser.GameObjects.Text>      = {} as never;
     private feedbackText!: Phaser.GameObjects.Text;
-    private tabButtons: { id: Grupo; bg: Phaser.GameObjects.Rectangle; text: Phaser.GameObjects.Text }[] = [];
+    private feedbackBg!:   Phaser.GameObjects.Rectangle;
+    private tabButtons: { id: Grupo; bg: Phaser.GameObjects.Rectangle; lbl: Phaser.GameObjects.Text }[] = [];
 
-    constructor() {
-        super('PlatoBalanceadoScene');
-    }
+    constructor() { super('PlatoBalanceadoScene'); }
 
-    // ─── PRELOAD ──────────────────────────────────────────────────────────────
+    // ─── PRELOAD ─────────────────────────────────────────────────────────────
     preload() {
-        // Carga dinámica desde la base de datos nutricional central
         nutritionalInfo.forEach(food => this.load.image(food.id, food.image));
+        this.load.image('pb_plate', '/assets/Plato/plateSquare.webp');
+        this.load.image('pb_bg', '/assets/Backgrounds/Fondo_Cocina.png');
         this.load.audio('pb_click',   '/Sound/Click.mp3');
         this.load.audio('pb_correct', '/Sound/ObjectWIN.mp3');
         this.load.audio('pb_error',   '/Sound/incorrecto.mp3');
+        PrefabButtons.precargar(this);
     }
 
-    // ─── CREATE ───────────────────────────────────────────────────────────────
+    // ─── CREATE ──────────────────────────────────────────────────────────────
     create() {
+        this.jugadorActivo = PlayerService.obtenerJugadorActivo();
+        if (this.jugadorActivo) {
+            const da = this.jugadorActivo.datosAntropometricos;
+            let basal = (10 * da.pesoKg) + (6.25 * da.estaturaCm) - (5 * da.edad);
+            basal += (da.sexo === 'masculino') ? 5 : -161;
+            this.tmb = Math.round(basal * 1.2);
+        }
+
         const { width, height } = this.scale;
         this.resetState();
         this.setupLayout(width, height);
 
-        this.add.rectangle(width / 2, height / 2, width, height, PALETTE.crema, 1);
-        this.add.rectangle(width / 2, height / 2, width, height, PALETTE.verdePrincipal, 0.04);
-
+        this.buildBackground(width, height);
         this.buildHeader();
-        this.buildInfoPanel();
-        this.buildProportionPanel();
         this.buildSidebar();
-        this.buildPlato();
+        this.buildPlatZone();
+        this.buildStatsPanel();
         this.buildEvaluateButton();
-        this.buildFeedbackPanel();
-
         this.setupDragEvents();
 
         createDebugSkipButton(this, {
-            label: '← Volver al menú',
-            nextScene: 'MainMenu',
+            label: '← Mapa',
+            nextScene: 'LevelSelectScene',
             soundKey: 'pb_click',
             x: this.safeArea.left + 8,
-            y: this.safeArea.top + 8,
+            y: this.safeArea.top - 64,
         });
 
-        // BOTÓN PAUSA
-        PrefabButtons.icono(this, this.safeArea.right - 8, this.safeArea.top + 8, () => {
-            this.scene.pause();
-            this.scene.launch('PauseScene', { previousScene: this.scene.key });
-        }, {
-            text: 'II',
-            fontSize: '28px'
-        }).setDepth(50);
+        // CRT overlay cosmético
+        this.ensureCrtTexture();
+        this.add.tileSprite(width / 2, height / 2, width, height, 'pb_crt')
+            .setAlpha(0.18).setDepth(998);
+
+        // Hide all non-list objects from listCam (so they don't render twice in the viewport)
+        const listItemSet = new Set(this.listAllItems);
+        const listCamId   = this.listCam.id;
+        this.children.getAll().forEach(child => {
+            if (!listItemSet.has(child as Phaser.GameObjects.GameObject)) {
+                (child as Phaser.GameObjects.GameObject).cameraFilter = listCamId;
+            }
+        });
     }
 
-    // ─── ESTADO ───────────────────────────────────────────────────────────────
+    // ─── ESTADO ──────────────────────────────────────────────────────────────
     private resetState() {
         this.activeTab    = 'verduras_frutas';
         this.placedCounts = { verduras_frutas: 0, cereal: 0, leguminosa_aoa: 0 };
         this.placedFoods  = [];
         this.tabButtons   = [];
-        this.nutritionTotals = {
-            calories: 0, protein: 0, carbs: 0, fat: 0,
-            fiber: 0, sugar: 0, sodium: 0, scoreSum: 0,
-        };
+        this.nutritionTotals = { calories: 0, protein: 0, carbs: 0, fat: 0, fiber: 0, sugar: 0, sodium: 0, scoreSum: 0 };
     }
 
-    // ─── LAYOUT ───────────────────────────────────────────────────────────────
+    // ─── LAYOUT ──────────────────────────────────────────────────────────────
     private setupLayout(width: number, height: number) {
         const safe = this.getSafeArea(width, height);
         this.safeArea = safe;
 
-        const gutter = 32;
-        this.sidebarX     = safe.left;
-        this.sidebarW     = Math.round(Phaser.Math.Clamp(safe.width * 0.23, 360, 410));
-        this.sidebarTop   = safe.top + 150;
-        this.sidebarBottom = safe.bottom - 46;
+        const gutter = 20;
 
-        this.platoRadius   = Math.round(Math.min(340, safe.width * 0.2, safe.height * 0.32));
-        this.platoCenterX  = Math.round(safe.right - this.platoRadius - 42);
-        this.platoCenterY  = Math.round(Phaser.Math.Clamp(
-            safe.top + safe.height * 0.55,
-            safe.top + this.platoRadius + 150,
-            safe.bottom - this.platoRadius - 120,
-        ));
+        // Sidebar izquierdo (selección de alimentos)
+        this.sidebarW   = Math.round(Phaser.Math.Clamp(safe.width * 0.195, 310, 350));
+        this.sidebarX   = safe.left;
+        this.sidebarTop    = safe.top + 100;
+        this.sidebarBottom = safe.bottom - 16;
 
-        const plateLeft = this.platoCenterX - this.platoRadius - 20;
-        this.contentX = this.sidebarX + this.sidebarW + gutter;
-        this.contentW = Math.round(Phaser.Math.Clamp(
-            plateLeft - gutter - this.contentX,
-            380,
-            520,
-        ));
+        // Panel de stats (derecho)
+        this.statsW = Math.round(Phaser.Math.Clamp(safe.width * 0.215, 340, 390));
+        this.statsX = safe.right - this.statsW;
+        this.statsTop = safe.top + 100;
+        this.proportionBarW = this.statsW - 52;
+
+        // Plato (centro)
+        const plateAreaL = this.sidebarX + this.sidebarW + gutter;
+        const plateAreaR = this.statsX - gutter;
+        const plateAreaW = plateAreaR - plateAreaL;
+        const plateAreaH = safe.height - 100 - 80; // minus header and eval btn row
+        const rawSize    = Math.min(plateAreaW * 0.84, plateAreaH * 0.82, 590);
+        this.platoSize   = Math.round(rawSize);
+        this.platoCenterX = Math.round((plateAreaL + plateAreaR) / 2);
+        this.platoCenterY = Math.round(safe.top + 100 + plateAreaH * 0.47);
     }
 
     private getSafeArea(width: number, height: number): SafeArea {
-        const viewportW = typeof window === 'undefined' ? width  : window.innerWidth;
-        const viewportH = typeof window === 'undefined' ? height : window.innerHeight;
-        const viewportAspect = viewportW / viewportH;
-        const gameAspect     = width / height;
-
-        let visibleW = width;
-        let visibleH = height;
-        let left = 0;
-        let top  = 0;
-
-        if (viewportAspect < gameAspect) {
-            visibleW = height * viewportAspect;
-            left = (width - visibleW) / 2;
-        } else if (viewportAspect > gameAspect) {
-            visibleH = width / viewportAspect;
-            top = (height - visibleH) / 2;
-        }
-
-        const pad = 80;
+        const vW = typeof window === 'undefined' ? width  : window.innerWidth;
+        const vH = typeof window === 'undefined' ? height : window.innerHeight;
+        const vAspect = vW / vH;
+        const gAspect = width / height;
+        let visW = width, visH = height, left = 0, top = 0;
+        if (vAspect < gAspect) { visW = height * vAspect; left = (width - visW) / 2; }
+        else if (vAspect > gAspect) { visH = width / vAspect; top = (height - visH) / 2; }
+        const pad = 72;
         return {
-            left:   left + pad,
-            right:  left + visibleW - pad,
-            top:    top  + pad,
-            bottom: top  + visibleH - pad,
-            width:  Math.max(0, visibleW - pad * 2),
-            height: Math.max(0, visibleH - pad * 2),
+            left: left + pad, right: left + visW - pad, top: top + pad, bottom: top + visH - pad,
+            width: Math.max(0, visW - pad * 2), height: Math.max(0, visH - pad * 2),
         };
     }
 
-    // ─── HEADER ───────────────────────────────────────────────────────────────
+    // ─── FONDO ───────────────────────────────────────────────────────────────
+    private buildBackground(width: number, height: number) {
+        this.add.image(width / 2, height / 2, 'pb_bg').setDisplaySize(width, height).setDepth(0);
+        this.add.rectangle(width / 2, height / 2, width, height, P.white, 0.7).setDepth(1);
+        
+        // Dot tile sutil
+        this.ensureDotTexture();
+        this.add.tileSprite(width / 2, height / 2, width, height, 'pb_dot').setAlpha(0.65).setDepth(1);
+    }
+
+    private ensureDotTexture() {
+        if (this.textures.exists('pb_dot')) return;
+        const cvs = document.createElement('canvas');
+        cvs.width = 28; cvs.height = 28;
+        const ctx = cvs.getContext('2d');
+        if (!ctx) return;
+        ctx.fillStyle = 'rgba(46,49,66,0.055)';
+        ctx.fillRect(13, 13, 2, 2);
+        ctx.fillStyle = 'rgba(255,255,255,0.22)';
+        ctx.fillRect(0, 0, 28, 1);
+        ctx.fillRect(0, 0, 1, 28);
+        this.textures.addCanvas('pb_dot', cvs);
+    }
+
+    private ensureCrtTexture() {
+        if (this.textures.exists('pb_crt')) return;
+        const cvs = document.createElement('canvas');
+        cvs.width = 4; cvs.height = 4;
+        const ctx = cvs.getContext('2d');
+        if (!ctx) return;
+        ctx.fillStyle = 'rgba(46,49,66,0.05)';
+        ctx.fillRect(0, 0, 4, 1);
+        this.textures.addCanvas('pb_crt', cvs);
+    }
+
+    // ─── HEADER ──────────────────────────────────────────────────────────────
     private buildHeader() {
-        const safe    = this.safeArea;
-        const cx      = safe.left + safe.width / 2;
-        const headerY = safe.top + 46;
-        const headerBg = this.add.rectangle(cx, headerY, safe.width, 90, PALETTE.crema, 1)
-            .setStrokeStyle(3, PALETTE.marronClaro);
-        void headerBg;
+        const safe = this.safeArea;
+        const cx   = safe.left + safe.width / 2;
+        const cy   = safe.top + 46;
+        const w    = safe.width;
 
-        const badgeX = safe.left + 222;
-        const titleX = badgeX + 42;
-        this.add.circle(badgeX, headerY, 26, PALETTE.verdePrincipal, 1);
-        this.add.text(badgeX, headerY, 'PB', {
-            fontFamily: SCENE_FONT, fontSize: '20px',
-            color: PALETTE.cremaHex, fontStyle: 'bold',
-        }).setOrigin(0.5);
+        // Sombra del panel
+        this.add.rectangle(cx + 8, cy + 8, w, 84, P.ink, 1).setDepth(4);
+        // Panel principal
+        this.add.rectangle(cx, cy, w, 84, P.paper, 1)
+            .setStrokeStyle(4, P.ink).setDepth(5);
 
-        this.add.text(titleX, headerY - 22, 'Mi Plato Balanceado', {
-            fontFamily: SCENE_FONT, fontSize: '34px',
-            color: PALETTE.marronOscuroHex, fontStyle: 'bold',
-        }).setOrigin(0, 0.5);
+        // Badge izquierdo
+        const badgeX = safe.left + 52;
+        this.add.rectangle(badgeX + 4, cy + 4, 70, 44, P.ink, 1).setDepth(5);
+        this.add.rectangle(badgeX, cy, 70, 44, P.green, 1)
+            .setStrokeStyle(3, P.ink).setDepth(6);
+        this.add.text(badgeX, cy, 'PB', {
+            fontFamily: SFT, fontSize: '28px', fontStyle: 'bold', color: P.inkHex,
+        }).setOrigin(0.5).setDepth(7);
 
-        this.add.text(titleX, headerY + 18, 'Nivel 1: Conoce los grupos', {
-            fontFamily: SCENE_FONT, fontSize: '24px',
-            color: PALETTE.marronClaroHex,
-        }).setOrigin(0, 0.5);
-
-        this.add.text(safe.right - 170, headerY - 20, 'PUNTAJE', {
-            fontFamily: SCENE_FONT, fontSize: '20px',
-            color: PALETTE.marronOscuroHex,
-        }).setOrigin(0, 0.5);
-
-        this.starText = this.add.text(safe.right - 170, headerY + 18, '★ 0', {
-            fontFamily: SCENE_FONT, fontSize: '28px',
-            color: PALETTE.terracotaHex, fontStyle: 'bold',
-        }).setOrigin(0, 0.5);
-        this.scoreText = this.starText;
-
-        const resetBtn = this.add.circle(safe.right - 32, headerY, 24, PALETTE.crema, 1)
-            .setStrokeStyle(3, PALETTE.marronClaro)
-            .setInteractive({ useHandCursor: true });
-        const resetIcon = this.add.text(safe.right - 32, headerY, '⟳', {
-            fontFamily: SCENE_FONT, fontSize: '28px', color: PALETTE.marronOscuroHex,
-        }).setOrigin(0.5);
-        resetBtn.on('pointerover', () => resetBtn.setFillStyle(PALETTE.verdePrincipal, 0.2));
-        resetBtn.on('pointerout',  () => resetBtn.setFillStyle(PALETTE.crema, 1));
-        resetBtn.on('pointerdown', () => {
-            try { this.sound.play('pb_click'); } catch { void 0; }
-            this.scene.restart();
-        });
-        void resetIcon;
-    }
-
-    // ─── PANEL DE INFORMACIÓN ─────────────────────────────────────────────────
-    private buildInfoPanel() {
-        const panelX = this.contentX;
-        const panelY = this.safeArea.top + 142;
-        const panelW = this.contentW;
-        const panelH = 148;
-
-        this.add.rectangle(panelX + panelW / 2, panelY + panelH / 2, panelW, panelH, PALETTE.crema, 1)
-            .setStrokeStyle(3, PALETTE.marronClaro);
-
-        this.add.circle(panelX + 32, panelY + 32, 14, PALETTE.marronClaro, 0.2)
-            .setStrokeStyle(2, PALETTE.marronClaro);
-        this.add.text(panelX + 32, panelY + 30, 'i', {
-            fontFamily: SCENE_FONT, fontSize: '20px',
-            color: PALETTE.marronOscuroHex, fontStyle: 'bold',
-        }).setOrigin(0.5);
-
-        this.add.text(panelX + 60, panelY + 18, 'Progreso', {
-            fontFamily: SCENE_FONT, fontSize: '20px',
-            color: PALETTE.marronOscuroHex, fontStyle: 'bold',
-        });
-
-        this.progressText = this.add.text(panelX + 60, panelY + 46,
-            '¡Arrastra los alimentos al plato para comenzar!', {
-                fontFamily: SCENE_FONT, fontSize: '19px',
-                color: PALETTE.marronClaroHex, lineSpacing: 3,
-                wordWrap: { width: panelW - 84 },
-            },
-        );
-
-        // Texto de resumen nutricional en tiempo real
-        this.nutritionText = this.add.text(panelX + 24, panelY + 96, '', {
-            fontFamily: SCENE_FONT, fontSize: '17px',
-            color: PALETTE.marronOscuroHex, lineSpacing: 2,
-            wordWrap: { width: panelW - 48 },
-        });
-    }
-
-    // ─── PANEL DE PROPORCIÓN IDEAL ────────────────────────────────────────────
-    private buildProportionPanel() {
-        const panelX = this.contentX;
-        const panelY = this.safeArea.top + 318;
-        const panelW = this.contentW;
-        const panelH = 248;
-        this.proportionBarW = panelW - 48;
-
-        this.add.rectangle(panelX + panelW / 2, panelY + panelH / 2, panelW, panelH, PALETTE.crema, 1)
-            .setStrokeStyle(3, PALETTE.marronClaro);
-
-        this.add.text(panelX + 24, panelY + 16, 'Proporción ideal', {
-            fontFamily: SCENE_FONT, fontSize: '22px',
-            color: PALETTE.marronOscuroHex, fontStyle: 'bold',
-        });
-
-        const grupos: { id: Grupo; label: string }[] = [
-            { id: 'verduras_frutas', label: 'Verduras y Frutas (50%)' },
-            { id: 'cereal',          label: 'Cereales (25%)' },
-            { id: 'leguminosa_aoa',  label: 'Leguminosas / A.O.A. (25%)' },
+        // Título
+        this.add.text(badgeX + 48, cy - 14, 'Mi Plato Balanceado', {
+            fontFamily: SFT, fontSize: '32px', fontStyle: 'bold', color: P.inkHex,
+        }).setOrigin(0, 0.5).setDepth(7);
+        
+        // Botones de Tipo de Comida
+        const btnY = cy + 16;
+        const tipos = [
+            { id: 'desayuno', label: 'Desayuno' },
+            { id: 'comida', label: 'Comida' },
+            { id: 'cena', label: 'Cena' }
         ];
-
-        let cursorY = panelY + 60;
-        grupos.forEach((g) => {
-            const colorHex = GRUPO_COLOR_HEX[g.id];
-            this.add.text(panelX + 24, cursorY, g.label, {
-                fontFamily: SCENE_FONT, fontSize: '19px',
-                color: colorHex, fontStyle: 'bold',
-                wordWrap: { width: this.proportionBarW - 68 },
+        
+        let curX = badgeX + 48;
+        tipos.forEach(t => {
+            const isSelected = this.tipoComida === t.id;
+            
+            PrefabButtons.secundario(this, curX + 55, btnY, () => {
+                if (this.tipoComida === t.id) return;
+                this.tipoComida = t.id as any;
+                try { this.sound.play('pb_click'); } catch {}
+                this.scene.restart();
+            }, {
+                text: t.label,
+                width: 110,
+                height: 38,
+                fontSize: '18px',
+                textColor: isSelected ? '#77D39D' : '#2E3142',
+                depth: 8
             });
-            this.barPercents[g.id] = this.add.text(panelX + panelW - 24, cursorY, '0%', {
-                fontFamily: SCENE_FONT, fontSize: '19px',
-                color: PALETTE.marronOscuroHex,
-            }).setOrigin(1, 0);
-
-            this.add.rectangle(panelX + 24, cursorY + 34, this.proportionBarW, 8, PALETTE.marronClaro, 0.18)
-                .setOrigin(0, 0.5);
-            this.barFills[g.id] = this.add.rectangle(
-                panelX + 24, cursorY + 34, 0, 8,
-                Phaser.Display.Color.HexStringToColor(colorHex).color, 1,
-            ).setOrigin(0, 0.5);
-
-            cursorY += 62;
+            
+            curX += 118;
         });
+
+        // Score (derecha)
+        const scoreX = safe.right - 130;
+        this.add.rectangle(scoreX + 4, cy + 4, 190, 60, P.ink, 1).setDepth(5);
+        this.add.rectangle(scoreX, cy, 190, 60, P.paperAlt, 1)
+            .setStrokeStyle(3, P.ink).setDepth(6);
+        this.add.text(scoreX, cy - 14, 'PUNTAJE', {
+            fontFamily: MFT, fontSize: '18px', color: P.mutedHex,
+        }).setOrigin(0.5, 0.5).setDepth(7);
+        this.scoreText = this.add.text(scoreX, cy + 12, '★  0', {
+            fontFamily: SFT, fontSize: '26px', fontStyle: 'bold', color: P.coralHex,
+        }).setOrigin(0.5, 0.5).setDepth(7);
+
+        // Botón reset
+        const rstX = safe.right - 30;
+        const rstBg = this.add.rectangle(rstX + 3, cy + 3, 44, 44, P.ink, 1).setDepth(5);
+        void rstBg;
+        const rstBtn = this.add.rectangle(rstX, cy, 44, 44, P.paperAlt, 1)
+            .setStrokeStyle(3, P.ink).setInteractive({ useHandCursor: true }).setDepth(6);
+        const rstIcon = this.add.text(rstX, cy, '↺', {
+            fontFamily: SFT, fontSize: '28px', color: P.inkHex,
+        }).setOrigin(0.5).setDepth(7);
+        void rstIcon;
+        rstBtn.on('pointerover',  () => rstBtn.setFillStyle(P.green));
+        rstBtn.on('pointerout',   () => rstBtn.setFillStyle(P.paperAlt));
+        rstBtn.on('pointerdown',  () => { try { this.sound.play('pb_click'); } catch { void 0; } this.scene.restart(); });
     }
 
-    // ─── SIDEBAR ──────────────────────────────────────────────────────────────
+    // ─── SIDEBAR ─────────────────────────────────────────────────────────────
     private buildSidebar() {
-        const totalH = this.sidebarBottom - this.sidebarTop;
-        const tabsH  = TABS.length * (TAB_HEIGHT + TAB_GAP);
+        const sx   = this.sidebarX;
+        const sw   = this.sidebarW;
+        const st   = this.sidebarTop;
+        const sb   = this.sidebarBottom;
+        const totalH = sb - st;
 
-        this.add.rectangle(
-            this.sidebarX + this.sidebarW / 2,
-            this.sidebarTop + totalH / 2,
-            this.sidebarW, totalH, PALETTE.crema, 1,
-        ).setStrokeStyle(3, PALETTE.marronClaro);
+        // Panel shadow + bg
+        this.add.rectangle(sx + sw / 2 + 8, st + totalH / 2 + 8, sw, totalH, P.ink, 1).setDepth(4);
+        this.add.rectangle(sx + sw / 2, st + totalH / 2, sw, totalH, P.paper, 1)
+            .setStrokeStyle(4, P.ink).setDepth(5);
 
-        this.add.text(this.sidebarX + this.sidebarW / 2, this.sidebarTop + 26, '¡Arrastra la comida!', {
-            fontFamily: SCENE_FONT, fontSize: '24px',
-            color: PALETTE.marronOscuroHex, fontStyle: 'bold',
-        }).setOrigin(0.5);
+        // Título sidebar
+        const titleBg = this.add.rectangle(sx + sw / 2, st + 28, sw, 48, P.ink, 1).setDepth(6);
+        void titleBg;
+        this.add.text(sx + sw / 2, st + 28, '¡ ARRASTRA COMIDA !', {
+            fontFamily: MFT, fontSize: '24px', color: P.greenHex,
+        }).setOrigin(0.5).setDepth(7);
 
-        const tabsTop = this.sidebarTop + 60;
+        // Tabs
+        const tabsTop = st + 62;
+        const tabW    = (sw - 24 - (TABS.length - 1) * TAB_GAP) / TABS.length;
         TABS.forEach((tab, i) => {
-            const ty = tabsTop + i * (TAB_HEIGHT + TAB_GAP);
-            const bg = this.add.rectangle(
-                this.sidebarX + this.sidebarW / 2, ty + TAB_HEIGHT / 2,
-                this.sidebarW - 32, TAB_HEIGHT, PALETTE.crema, 1,
-            ).setStrokeStyle(2, PALETTE.marronClaro).setInteractive({ useHandCursor: true });
-            const txt = this.add.text(this.sidebarX + this.sidebarW / 2, ty + TAB_HEIGHT / 2, tab.label, {
-                fontFamily: SCENE_FONT, fontSize: '20px',
-                color: PALETTE.marronOscuroHex, fontStyle: 'bold',
-            }).setOrigin(0.5);
+            const tx = sx + 12 + i * (tabW + TAB_GAP) + tabW / 2;
+            const ty = tabsTop + TAB_H / 2;
 
-            bg.on('pointerover', () => {
-                if (this.activeTab !== tab.id) bg.setFillStyle(PALETTE.verdePrincipal, 0.12);
-            });
-            bg.on('pointerout', () => this.refreshTabStyles());
+            const shadow = this.add.rectangle(tx + 4, ty + 4, tabW, TAB_H, P.ink, 1).setDepth(6);
+            void shadow;
+            const bg = this.add.rectangle(tx, ty, tabW, TAB_H, P.paperAlt, 1)
+                .setStrokeStyle(3, P.ink).setInteractive({ useHandCursor: true }).setDepth(7);
+            const lbl = this.add.text(tx, ty, tab.label, {
+                fontFamily: MFT, fontSize: '18px', color: P.inkHex, align: 'center',
+                wordWrap: { width: tabW - 8 },
+            }).setOrigin(0.5).setDepth(8);
+
+            bg.on('pointerover', () => { if (this.activeTab !== tab.id) bg.setFillStyle(P.green, 0.35); });
+            bg.on('pointerout',  () => this.refreshTabStyles());
             bg.on('pointerdown', () => {
                 if (this.activeTab === tab.id) return;
                 try { this.sound.play('pb_click'); } catch { void 0; }
@@ -435,64 +417,37 @@ export class PlatoBalanceadoScene extends Phaser.Scene {
                 this.refreshTabStyles();
                 this.rebuildFoodList();
             });
-
-            this.tabButtons.push({ id: tab.id, bg, text: txt });
+            this.tabButtons.push({ id: tab.id, bg, lbl });
         });
 
-        const listTop    = tabsTop + tabsH + 12;
-        const listBottom = this.sidebarTop + totalH - 16;
+        // Zona de lista
+        const listTop    = tabsTop + TAB_H + 10;
+        const listBottom = sb - 12;
         this.sidebarViewportY = listTop;
         this.sidebarViewportH = listBottom - listTop;
 
         this.add.rectangle(
-            this.sidebarX + this.sidebarW / 2,
-            listTop + this.sidebarViewportH / 2,
-            this.sidebarW - 24, this.sidebarViewportH,
-            PALETTE.marronClaro, 0.04,
-        ).setStrokeStyle(1, PALETTE.marronClaro, 0.18);
+            sx + sw / 2, listTop + this.sidebarViewportH / 2,
+            sw - 20, this.sidebarViewportH, P.paperAlt, 0.6,
+        ).setStrokeStyle(1, P.ink, 0.2).setDepth(5);
 
-        this.foodListContainer = this.add.container(this.sidebarX + 18, listTop).setDepth(5);
-
-        this.sidebarMaskGfx = this.add.graphics();
-        this.sidebarMaskGfx.fillStyle(0xffffff, 1);
-        this.sidebarMaskGfx.fillRect(
-            this.sidebarX + 12, listTop, this.sidebarW - 24, this.sidebarViewportH,
+        // Dedicated camera: viewport = list area, transparent bg (main cam renders panel behind)
+        this.listCam = this.cameras.add(
+            Math.round(sx + 10), Math.round(listTop),
+            Math.round(sw - 20), Math.round(this.sidebarViewportH),
+            false, 'listCam',
         );
-        this.sidebarMaskGfx.setVisible(false);
-        this.foodListContainer.setMask(this.sidebarMaskGfx.createGeometryMask());
-
-        const arrowX = this.sidebarX + this.sidebarW - 22;
-        const btnUp  = this.add.text(arrowX, listTop + 8, '▲', {
-            fontFamily: SCENE_FONT, fontSize: '20px',
-            color: PALETTE.marronOscuroHex, backgroundColor: PALETTE.cremaHex,
-            padding: { x: 6, y: 2 },
-        }).setOrigin(1, 0).setDepth(10).setInteractive({ useHandCursor: true });
-        const btnDown = this.add.text(arrowX, listBottom - 8, '▼', {
-            fontFamily: SCENE_FONT, fontSize: '20px',
-            color: PALETTE.marronOscuroHex, backgroundColor: PALETTE.cremaHex,
-            padding: { x: 6, y: 2 },
-        }).setOrigin(1, 1).setDepth(10).setInteractive({ useHandCursor: true });
-
-        btnUp.on('pointerover',  () => btnUp.setColor(PALETTE.verdePrincipalHex));
-        btnUp.on('pointerout',   () => btnUp.setColor(PALETTE.marronOscuroHex));
-        btnUp.on('pointerdown',  () => this.scrollList(+SCROLL_STEP));
-        btnDown.on('pointerover', () => btnDown.setColor(PALETTE.verdePrincipalHex));
-        btnDown.on('pointerout',  () => btnDown.setColor(PALETTE.marronOscuroHex));
-        btnDown.on('pointerdown', () => this.scrollList(-SCROLL_STEP));
+        this.listBaseScrollX = sx + 10;
+        this.listCam.setScroll(this.listBaseScrollX, listTop);
 
         this.input.on('wheel', (
             _ptr: Phaser.Input.Pointer,
             _over: Phaser.GameObjects.GameObject[],
             _dx: number, dy: number,
         ) => {
-            const pointer = this.input.activePointer;
-            if (
-                pointer.x >= this.sidebarX &&
-                pointer.x <= this.sidebarX + this.sidebarW &&
-                pointer.y >= this.sidebarViewportY &&
-                pointer.y <= this.sidebarViewportY + this.sidebarViewportH
-            ) {
-                this.scrollList(-dy);
+            const ptr = this.input.activePointer;
+            if (ptr.x >= sx && ptr.x <= sx + sw && ptr.y >= this.sidebarViewportY && ptr.y <= this.sidebarViewportY + this.sidebarViewportH) {
+                this.scrollList(dy);
             }
         });
 
@@ -501,290 +456,585 @@ export class PlatoBalanceadoScene extends Phaser.Scene {
     }
 
     private refreshTabStyles() {
-        this.tabButtons.forEach(({ id, bg, text }) => {
+        this.tabButtons.forEach(({ id, bg, lbl }) => {
             if (id === this.activeTab) {
-                bg.setFillStyle(PALETTE.verdePrincipal, 1);
-                bg.setStrokeStyle(2, PALETTE.marronOscuro);
-                text.setColor(PALETTE.cremaHex);
+                bg.setFillStyle(P.green, 1);
+                bg.setStrokeStyle(3, P.ink);
+                lbl.setColor(P.inkHex);
             } else {
-                bg.setFillStyle(PALETTE.crema, 1);
-                bg.setStrokeStyle(2, PALETTE.marronClaro);
-                text.setColor(PALETTE.marronOscuroHex);
+                bg.setFillStyle(P.paperAlt, 1);
+                bg.setStrokeStyle(3, P.ink);
+                lbl.setColor(P.mutedHex);
             }
         });
     }
 
-    /**
-     * Construye la lista de alimentos del tab activo a partir de nutritionalInfo.
-     * No hay arrays hardcodeados — todo se filtra desde la base de datos central.
-     */
     private rebuildFoodList() {
-        this.foodListContainer.removeAll(true);
-        this.foodListContainer.y = this.sidebarViewportY;
+        // Destroy previous items
+        this.listAllItems.forEach(item => item.destroy());
+        this.listAllItems = [];
 
-        // Filtrar alimentos del tab activo directamente desde nutritionalInfo
-        const items = nutritionalInfo.filter(f => mapToGrupo(f) === this.activeTab);
-        const innerW = this.sidebarW - 54;
+        // Reset scroll
+        this.listScrollY = 0;
+        this.listCam.setScroll(this.listBaseScrollX, this.sidebarViewportY);
+
+        const items  = nutritionalInfo.filter(f => mapToGrupo(f) === this.activeTab);
+        const innerW = this.sidebarW - 42;
         const colW   = (innerW - ITEM_GAP_X) / ITEM_COLS;
+        const ox     = this.sidebarX + 14;        // world X origin of list
+        const oy     = this.sidebarViewportY;     // world Y origin of list
+        const MAIN_ID = this.cameras.main.id;
 
         items.forEach((foodItem, i) => {
             if (!this.textures.exists(foodItem.id)) return;
+            const col  = i % ITEM_COLS;
+            const row  = Math.floor(i / ITEM_COLS);
+            // local offsets (same as before)
+            const lx   = col * (colW + ITEM_GAP_X) + colW / 2 + 2;
+            const ly   = row * ITEM_ROW_H + CARD_H / 2 + 6;
+            const lImgY = ly - CARD_H / 2 + 8 + IMG_SZ_BAR / 2;
+            const lLblY = ly - CARD_H / 2 + 8 + IMG_SZ_BAR + 6;
+            // world positions
+            const wx    = ox + lx;
+            const wy    = oy + ly;
+            const wImgY = oy + lImgY;
+            const wLblY = oy + lLblY;
 
-            const col = i % ITEM_COLS;
-            const row = Math.floor(i / ITEM_COLS);
-            const lx  = col * (colW + ITEM_GAP_X) + colW / 2 + 4;
-            const ly  = row * ITEM_ROW_H + ITEM_SIZE / 2 + 8;
+            const cardShadow = this.add.rectangle(wx + 4, wy + 4, colW, CARD_H, P.ink, 1).setDepth(9);
+            const card = this.add.rectangle(wx, wy, colW, CARD_H, P.paper, 1)
+                .setStrokeStyle(3, P.ink).setDepth(9);
 
-            const card = this.add.rectangle(lx, ly + 10, colW, ITEM_SIZE + 40, PALETTE.crema, 1)
-                .setStrokeStyle(2, PALETTE.marronClaro);
-            void card;
-
-            const img = this.add.image(lx, ly, foodItem.id) as DraggableFood;
-            img.setDisplaySize(ITEM_SIZE - 24, ITEM_SIZE - 24);
+            const img = this.add.image(wx, wImgY, foodItem.id) as DraggableFood;
+            img.setDisplaySize(IMG_SZ_BAR, IMG_SZ_BAR).setDepth(10);
             img.grupo      = mapToGrupo(foodItem);
             img.foodItem   = foodItem;
-            img.localHomeX = lx;
-            img.localHomeY = ly;
+            img.localHomeX = wx;
+            img.localHomeY = wImgY;
             img.fromBar    = true;
             img.placed     = false;
             img.setInteractive({ useHandCursor: true });
             this.input.setDraggable(img);
 
-            const lbl = this.add.text(lx, ly + ITEM_SIZE / 2 + 8, foodItem.nameES, {
-                fontFamily: SCENE_FONT, fontSize: '16px',
-                color: PALETTE.marronOscuroHex, fontStyle: 'bold',
-            }).setOrigin(0.5, 0);
+            const lbl = this.add.text(wx, wLblY, foodItem.nameES, {
+                fontFamily: MFT, fontSize: '16px', color: P.inkHex,
+                align: 'center', wordWrap: { width: colW - 12 },
+            }).setOrigin(0.5, 0).setDepth(10);
             img.labelText = lbl;
 
+            // Hide from main camera — only visible through listCam viewport
+            cardShadow.cameraFilter = MAIN_ID;
+            card.cameraFilter       = MAIN_ID;
+            img.cameraFilter        = MAIN_ID;
+            lbl.cameraFilter        = MAIN_ID;
+
+            // Hover: absolute targets — no Y drift if interrupted
             img.on('pointerover', () => {
                 if (img.placed) return;
-                this.tweens.add({ targets: img, scale: img.scale * 1.08, duration: 110 });
+                this.tweens.killTweensOf([img, card, lbl]);
+                this.tweens.add({ targets: img,  y: wImgY - 4, duration: 100 });
+                this.tweens.add({ targets: card, y: wy    - 4, duration: 100 });
+                this.tweens.add({ targets: lbl,  y: wLblY - 4, duration: 100 });
             });
             img.on('pointerout', () => {
                 if (img.placed) return;
-                this.tweens.killTweensOf(img);
-                img.setScale(1);
-                img.setDisplaySize(ITEM_SIZE - 24, ITEM_SIZE - 24);
+                this.tweens.killTweensOf([img, card, lbl]);
+                this.tweens.add({ targets: img,  y: wImgY, duration: 100 });
+                this.tweens.add({ targets: card, y: wy,    duration: 100 });
+                this.tweens.add({ targets: lbl,  y: wLblY, duration: 100 });
             });
 
-            this.foodListContainer.add([card, img, lbl]);
+            this.listAllItems.push(cardShadow, card, img, lbl);
         });
 
         const rows     = Math.ceil(items.length / ITEM_COLS);
-        const contentH = rows * ITEM_ROW_H + 16;
-        this.minScrollY = this.sidebarViewportY;
-        this.maxScrollY = this.sidebarViewportY - Math.max(0, contentH - this.sidebarViewportH);
+        const contentH = rows * ITEM_ROW_H + 20;
+        this.listMaxScrollY = Math.max(0, contentH - this.sidebarViewportH);
     }
 
     private scrollList(delta: number) {
-        if (!this.foodListContainer) return;
-        const newY = Phaser.Math.Clamp(this.foodListContainer.y + delta, this.maxScrollY, this.minScrollY);
-        if (newY === this.foodListContainer.y) return;
-        this.tweens.add({ targets: this.foodListContainer, y: newY, duration: 220, ease: 'Cubic.easeOut' });
+        const newScrollY = Phaser.Math.Clamp(this.listScrollY + delta, 0, this.listMaxScrollY);
+        if (newScrollY === this.listScrollY) return;
+        this.listScrollY = newScrollY;
+        this.tweens.killTweensOf(this.listCam);
+        this.tweens.add({
+            targets:  this.listCam,
+            scrollY:  this.sidebarViewportY + newScrollY,
+            duration: 200,
+            ease:     'Cubic.easeOut',
+        });
     }
 
-    // ─── PLATO PRINCIPAL ──────────────────────────────────────────────────────
-    private buildPlato() {
-        const cx     = this.platoCenterX;
-        const cy     = this.platoCenterY;
-        const radius = this.platoRadius;
+    // ─── PLATO ───────────────────────────────────────────────────────────────
+    private buildPlatZone() {
+        const cx   = this.platoCenterX;
+        const cy   = this.platoCenterY;
+        const size = this.platoSize;
+        const pad  = 24;
 
-        this.add.circle(cx + 6, cy + 8, radius + 16, PALETTE.marronOscuro, 0.18);
-        this.add.circle(cx, cy, radius + 16, PALETTE.verdePrincipal, 0.15)
-            .setStrokeStyle(3, PALETTE.verdePrincipal, 0.5);
-        this.add.circle(cx, cy, radius, 0xffffff, 1).setStrokeStyle(4, PALETTE.marronClaro);
+        // Shadow exterior
+        this.add.rectangle(cx + 10, cy + 12, size + pad + 10, size + pad + 10, P.ink, 0.30).setDepth(4);
 
-        const g = this.add.graphics();
-        g.lineStyle(2, PALETTE.marronClaro, 0.35);
-        g.beginPath(); g.moveTo(cx, cy - radius); g.lineTo(cx, cy + radius); g.strokePath();
-        g.beginPath(); g.moveTo(cx, cy); g.lineTo(cx + radius, cy); g.strokePath();
+        // Marco del plato (fondo de madera)
+        this.add.rectangle(cx, cy, size + pad, size + pad, P.paper, 1)
+            .setStrokeStyle(6, P.ink).setDepth(5);
 
-        const labelStyle = { fontFamily: SCENE_FONT, fontSize: '18px', color: PALETTE.marronClaroHex };
-        this.add.text(cx - radius / 2, cy - radius - 18, 'Verduras y Frutas', labelStyle).setOrigin(0.5);
-        this.add.text(cx + radius / 2, cy - radius - 18, 'Cereales', labelStyle).setOrigin(0.5);
-        this.add.text(cx + radius / 2, cy + radius + 8,  'Leguminosas / A.O.A.', labelStyle).setOrigin(0.5);
+        // Imagen real del plato
+        this.add.image(cx, cy, 'pb_plate')
+            .setDisplaySize(size, size)
+            .setDepth(6);
 
-        this.add.circle(cx, cy, 8, PALETTE.marronClaro, 0.35);
+        // Etiqueta "TU PLATO" encima
+        this.add.rectangle(cx + 4, cy - size / 2 - 34 + 4, 180, 38, P.ink, 1).setDepth(6);
+        this.add.rectangle(cx, cy - size / 2 - 34, 180, 38, P.green, 1)
+            .setStrokeStyle(3, P.ink).setDepth(7);
+        this.add.text(cx, cy - size / 2 - 34, 'TU PLATO', {
+            fontFamily: SFT, fontSize: '22px', fontStyle: 'bold', color: P.inkHex,
+        }).setOrigin(0.5).setDepth(8);
 
-        this.platoDropZone = this.add.zone(cx, cy, radius * 2, radius * 2)
-            .setRectangleDropZone(radius * 2, radius * 2);
+        // Zona drop: cubre el plato completo (forma circular)
+        // ======= AJUSTES DEL ÁREA DEL PLATO =======
+        // Cambia este número si quieres que la zona donde se suelta la comida
+        // sea más pequeña (ejemplo: size / 2.5) o más grande.
+        const radioPlato = size / 2; 
+        const radioInterno = radioPlato * 0.70; // 70% del radio exterior (círculo gris interior)
+
+        this.platoDropZone = this.add.zone(cx, cy, size, size)
+            // Usamos un rectángulo amplio para el detector nativo de Phaser
+            // para evitar los bugs del hit area circular desfasada.
+            // Nuestra validación matemática en el evento 'drop' filtrará esto 
+            // a un círculo perfecto.
+            .setRectangleDropZone(size, size)
+            .setDepth(9);
         this.platoDropZone.setData('isPlato', true);
+        this.platoDropZone.setData('radioPlato', radioPlato);
+        this.platoDropZone.setData('radioInterno', radioInterno);
+
+        // El debug visual fue removido a peticion del usuario.
+        // ==========================================
+
+        // Texto guía (solo si está vacío)
+        this.progressText = this.add.text(cx, cy, '¡Arrastra alimentos\nal plato!', {
+            fontFamily: MFT, fontSize: '28px', color: P.mutedHex,
+            align: 'center', lineSpacing: 6,
+        }).setOrigin(0.5).setDepth(7).setAlpha(0.6);
+    }
+
+    // ─── PANEL DE STATS (DERECHO) ─────────────────────────────────────────────
+    private buildStatsPanel() {
+        const sx = this.statsX;
+        const sw = this.statsW;
+        const st = this.statsTop;
+        const h  = this.sidebarBottom - st;
+
+        // Shadow
+        this.add.rectangle(sx + sw / 2 + 8, st + h / 2 + 8, sw, h, P.ink, 1).setDepth(4);
+        // BG
+        this.add.rectangle(sx + sw / 2, st + h / 2, sw, h, P.paper, 1)
+            .setStrokeStyle(4, P.ink).setDepth(5);
+
+        let curY = st + 18;
+
+        // ── SECCIÓN: PROPORCIÓN ──────────────────────────────────────────────
+        this.add.rectangle(sx + sw / 2, curY + 18, sw, 42, P.ink, 1).setDepth(6);
+        this.add.text(sx + sw / 2, curY + 18, 'PROPORCIÓN IDEAL', {
+            fontFamily: MFT, fontSize: '22px', color: P.greenHex,
+        }).setOrigin(0.5).setDepth(7);
+        curY += 48;
+
+        const gruposInfo: { id: Grupo; label: string }[] = [
+            { id: 'verduras_frutas', label: 'Verduras y Frutas  50%' },
+            { id: 'cereal',          label: 'Cereales  25%'           },
+            { id: 'leguminosa_aoa',  label: 'Leguminosas / AOA  25%'  },
+        ];
+
+        gruposInfo.forEach(g => {
+            const colorHex = GRUPO_COLOR_HEX[g.id];
+            const color    = GRUPO_COLOR[g.id];
+
+            // Etiqueta + porcentaje
+            this.add.rectangle(sx + 14, curY + 4, 10, 24, color, 1).setDepth(6);
+            this.add.text(sx + 30, curY - 2, g.label, {
+                fontFamily: MFT, fontSize: '18px', color: P.inkHex,
+            }).setDepth(6);
+            this.barPercents[g.id] = this.add.text(sx + sw - 16, curY - 2, '0 %', {
+                fontFamily: MFT, fontSize: '18px', color: colorHex,
+            }).setOrigin(1, 0).setDepth(7);
+
+            // Barra de progreso
+            const barY = curY + 22;
+            this.add.rectangle(sx + 14, barY, this.proportionBarW, 12, P.ink, 0.12)
+                .setOrigin(0, 0.5)
+                .setStrokeStyle(1, P.ink, 0.3).setDepth(6);
+            this.barFills[g.id] = this.add.rectangle(sx + 14, barY, 0, 12, color, 1)
+                .setOrigin(0, 0.5).setDepth(7);
+
+            curY += 48;
+        });
+
+        // Divisor
+        this.add.rectangle(sx + sw / 2, curY + 2, sw - 20, 2, P.ink, 0.18).setDepth(6);
+        curY += 14;
+
+        // ── SECCIÓN: NUTRICIÓN ───────────────────────────────────────────────
+        this.add.rectangle(sx + sw / 2, curY + 16, sw, 36, P.ink, 1).setDepth(6);
+        this.add.text(sx + sw / 2, curY + 16, 'NUTRICIÓN', {
+            fontFamily: MFT, fontSize: '20px', color: P.yellowHex,
+        }).setOrigin(0.5).setDepth(7);
+        curY += 42;
+
+        this.nutritionText = this.add.text(sx + 18, curY, '—', {
+            fontFamily: MFT, fontSize: '19px', color: P.mutedHex,
+            lineSpacing: 4, wordWrap: { width: sw - 36 },
+        }).setDepth(6);
+        curY += 70;
+
+        // Divisor
+        this.add.rectangle(sx + sw / 2, curY + 2, sw - 20, 2, P.ink, 0.18).setDepth(6);
+        curY += 14;
+
+        // ── SECCIÓN: FEEDBACK ────────────────────────────────────────────────
+        this.add.rectangle(sx + sw / 2, curY + 16, sw, 36, P.ink, 1).setDepth(6);
+        this.add.text(sx + sw / 2, curY + 16, 'RESULTADO', {
+            fontFamily: MFT, fontSize: '20px', color: '#FF6E6E',
+        }).setOrigin(0.5).setDepth(7);
+        curY += 42;
+
+        const feedbackH = this.sidebarBottom - curY - 20;
+        this.feedbackBg = this.add.rectangle(sx + sw / 2, curY + feedbackH / 2, sw - 20, feedbackH, P.paperAlt, 1)
+            .setStrokeStyle(2, P.ink, 0.3).setDepth(6);
+        void this.feedbackBg;
+        this.feedbackText = this.add.text(
+            sx + 22, curY + 14,
+            'Arma tu plato y presiona\n"Evaluar" para ver el resultado.',
+            {
+                fontFamily: MFT, fontSize: '19px', color: '#000000',
+                lineSpacing: 4, wordWrap: { width: sw - 44 },
+            },
+        ).setDepth(7);
     }
 
     // ─── BOTÓN EVALUAR ────────────────────────────────────────────────────────
     private buildEvaluateButton() {
-        const cx = this.platoCenterX;
-        const cy = Math.min(this.safeArea.bottom - 52, this.platoCenterY + this.platoRadius + 82);
+        const cx  = this.platoCenterX;
+        const cy  = this.platoCenterY + this.platoSize / 2 + 48;
 
-        const btnBg = this.add.rectangle(cx, cy, 320, 70, PALETTE.verdePrincipal, 1)
-            .setStrokeStyle(4, PALETTE.marronOscuro).setInteractive({ useHandCursor: true });
-        const btnText = this.add.text(cx, cy, 'Evaluar plato', {
-            fontFamily: SCENE_FONT, fontSize: '28px',
-            color: PALETTE.cremaHex, fontStyle: 'bold',
-        }).setOrigin(0.5);
-
-        btnBg.on('pointerover', () => {
-            btnBg.setFillStyle(PALETTE.terracota, 1);
-            this.tweens.add({ targets: [btnBg, btnText], scale: 1.04, duration: 120 });
-        });
-        btnBg.on('pointerout', () => {
-            btnBg.setFillStyle(PALETTE.verdePrincipal, 1);
-            this.tweens.add({ targets: [btnBg, btnText], scale: 1, duration: 120 });
-        });
-        btnBg.on('pointerdown', () => {
+        PrefabButtons.confirmar(this, cx, cy, () => {
             try { this.sound.play('pb_click'); } catch { void 0; }
             this.evaluatePlate();
+        }, {
+            text: 'EVALUAR PLATO',
+            width: 290,
+            height: 68,
+            fontSize: '28px',
+            depth: 10
         });
     }
 
-    // ─── PANEL DE FEEDBACK ────────────────────────────────────────────────────
-    private buildFeedbackPanel() {
-        const panelW = this.contentW;
-        const panelH = 126;
-        const cx = this.contentX + panelW / 2;
-        const cy = Math.min(this.safeArea.bottom - panelH / 2 - 24, this.safeArea.top + 654);
-
-        this.add.rectangle(cx, cy, panelW, panelH, PALETTE.crema, 1).setStrokeStyle(3, PALETTE.marronClaro);
-
-        this.feedbackText = this.add.text(cx, cy,
-            'Arma tu plato y presiona "Evaluar plato" para ver qué tal te quedó.', {
-                fontFamily: SCENE_FONT, fontSize: '19px',
-                color: PALETTE.marronClaroHex, align: 'center',
-                lineSpacing: 3, wordWrap: { width: panelW - 36 },
-            },
-        ).setOrigin(0.5);
-    }
-
-    // ─── DRAG & DROP ──────────────────────────────────────────────────────────
+    // ─── DRAG & DROP ─────────────────────────────────────────────────────────
     private setupDragEvents() {
-        this.input.on('dragstart', (ptr: Phaser.Input.Pointer, obj: DraggableFood) => {
-            if (obj.placed) return;
+        this.input.on('dragstart', (_ptr: Phaser.Input.Pointer, obj: DraggableFood) => {
             if (obj.fromBar) {
-                this.foodListContainer.remove(obj, false);
+                // Cálculo de la Y visual exacta en la pantalla al inicio del clic
+                const visualY = obj.localHomeY - this.listCam.scrollY + this.sidebarViewportY;
+                
+                // Guardamos el offset real absoluto entre la punta del mouse y el centro del sprite.
+                // Usamos _ptr.x y _ptr.y que son coordenadas nativas de pantalla sin afectación de cámara
+                obj.setData('dragOffsetX', obj.x - _ptr.x);
+                obj.setData('dragOffsetY', visualY - _ptr.y);
+
+                obj.y = visualY;
                 if (obj.labelText) {
-                    this.foodListContainer.remove(obj.labelText, false);
-                    obj.labelText.setVisible(false);
+                    obj.labelText.y = visualY + IMG_SZ_BAR / 2 + 14;
+                    obj.labelText.cameraFilter = this.listCam.id;
+                    obj.labelText.setDepth(51);
                 }
-                this.add.existing(obj);
-                obj.clearMask();
+
+                obj.cameraFilter = this.listCam.id;
                 obj.setDepth(50);
+                obj.setTint(0xdddddd);
+                obj.setDisplaySize(ITEM_SIZE, ITEM_SIZE);
+                obj.setAlpha(0.88);
+            } else {
+                // Es un PlacedFood ya en el plato. 
+                // En este caso su Y global ya es su Y visual porque está en mainCam.
+                obj.setData('dragOffsetX', obj.x - _ptr.x);
+                obj.setData('dragOffsetY', obj.y - _ptr.y);
+
+                obj.setDepth(50);
+                if (obj.labelText) obj.labelText.setDepth(51);
+                obj.setTint(0xdddddd);
+                obj.setAlpha(0.88);
             }
-            obj.x = ptr.worldX;
-            obj.y = ptr.worldY;
-            obj.setAlpha(0.9);
         });
 
-        this.input.on('drag', (ptr: Phaser.Input.Pointer, obj: DraggableFood) => {
-            if (obj.placed) return;
-            obj.x = ptr.worldX;
-            obj.y = ptr.worldY;
+        this.input.on('drag', (_ptr: Phaser.Input.Pointer, obj: DraggableFood, _dragX: number, _dragY: number) => {
+            // IGNORAMOS _dragX y _dragY porque el InputManager de Phaser los corrompe
+            // al cambiar el cameraFilter y modificar obj.y en el frame anterior.
+            // Forzamos la posición usando el offset real bloqueado en el mouse.
+            const newX = _ptr.x + obj.getData('dragOffsetX');
+            const newY = _ptr.y + obj.getData('dragOffsetY');
+            
+            obj.x = newX;
+            obj.y = newY;
+            if (obj.labelText) {
+                obj.labelText.x = newX;
+                obj.labelText.y = newY + ITEM_SIZE / 2 + 10;
+            }
         });
 
-        this.input.on('drop', (ptr: Phaser.Input.Pointer, obj: DraggableFood, zone: Phaser.GameObjects.Zone) => {
-            if (obj.placed) return;
-            if (!zone.getData('isPlato')) { this.returnToBar(obj); return; }
+        this.input.on('drop', (_ptr: Phaser.Input.Pointer, obj: DraggableFood, zone: Phaser.GameObjects.Zone) => {
+            const isOriginal = obj.fromBar;
+            
+            let esUnDropValido = false;
+            let distanceToCenter = 0;
+            let angulo = 0;
+            
+            if (zone.getData('isPlato')) { 
+                distanceToCenter = Phaser.Math.Distance.Between(_ptr.x, _ptr.y, zone.x, zone.y);
+                const radioPlato = zone.getData('radioPlato') || (zone.width / 2);
+                angulo = Phaser.Math.Angle.Between(zone.x, zone.y, _ptr.x, _ptr.y);
+                
+                if (distanceToCenter <= radioPlato) {
+                    esUnDropValido = true;
+                }
+            }
 
-            const dx = ptr.worldX - this.platoCenterX;
-            const dy = ptr.worldY - this.platoCenterY;
-            if (Math.sqrt(dx * dx + dy * dy) > this.platoRadius - 10) { this.returnToBar(obj); return; }
+            if (!esUnDropValido) { 
+                if (isOriginal) {
+                    this.returnToBar(obj); 
+                } else {
+                    this.removeFoodFromPlate(obj);
+                }
+                return; 
+            }
 
-            // Colocar en el plato
-            obj.x      = ptr.worldX;
-            obj.y      = ptr.worldY;
-            obj.placed = true;
-            obj.setAlpha(1);
-            obj.setDepth(8);
-            obj.disableInteractive();
-            this.placedFoods.push(obj);
-            this.placedCounts[obj.grupo]++;
+            // Calculamos si necesita "autodirección" al círculo interior
+            const radioInterno = zone.getData('radioInterno') || (zone.width / 2) * 0.7;
+            let finalX = obj.x;
+            let finalY = obj.y;
+            let deslizar = false;
 
-            // Acumular valores nutricionales de la porción del alimento
-            const fi = obj.foodItem;
-            this.nutritionTotals.calories += fi.calories  ?? 0;
-            this.nutritionTotals.protein  += fi.protein   ?? 0;
-            this.nutritionTotals.carbs    += fi.carbs     ?? 0;
-            this.nutritionTotals.fat      += fi.fat       ?? 0;
-            this.nutritionTotals.fiber    += fi.fiber     ?? 0;
-            this.nutritionTotals.sugar    += fi.sugar     ?? 0;
-            this.nutritionTotals.sodium   += fi.sodium    ?? 0;
-            this.nutritionTotals.scoreSum += fi.score;
+            if (distanceToCenter > radioInterno) {
+                // Lo empujamos hacia el borde interior para que no toque el aro oscuro
+                const distanciaSegura = radioInterno - (ITEM_SIZE / 3);
+                finalX = zone.x + Math.cos(angulo) * distanciaSegura;
+                finalY = zone.y + Math.sin(angulo) * distanciaSegura;
+                deslizar = true;
+            }
 
-            try { this.sound.play('pb_correct'); } catch { void 0; }
-            this.updateProgressLive();
+            if (isOriginal) {
+                // Instanciar clon y agregarlo al plato. Inicialmente en obj.x, obj.y.
+                // Si hay autodirección, createPlacedFood lo deslizará.
+                this.createPlacedFood(obj, obj.x, obj.y, finalX, finalY, deslizar);
+                // Devolver el original silenciosamente a la barra
+                this.resetOriginalToBar(obj);
+            } else {
+                // Ya estaba en el plato, solo se reacomodó
+                obj.clearTint();
+                obj.setAlpha(1);
+                obj.setDepth(12 + this.placedFoods.length);
+                if (obj.labelText) obj.labelText.setDepth(12 + this.placedFoods.length);
+                
+                if (deslizar) {
+                    this.tweens.add({ targets: obj, x: finalX, y: finalY, duration: 300, ease: 'Back.easeOut' });
+                    if (obj.labelText) {
+                        this.tweens.add({ targets: obj.labelText, x: finalX, y: finalY + ITEM_SIZE / 2 + 10, duration: 300, ease: 'Back.easeOut' });
+                    }
+                }
+                
+                this.tweens.add({ targets: obj, scale: 1.18, duration: 90, yoyo: true, ease: 'Sine.easeOut' });
+                try { this.sound.play('pb_correct'); } catch { void 0; }
+            }
         });
 
         this.input.on('dragend', (_ptr: Phaser.Input.Pointer, obj: DraggableFood, dropped: boolean) => {
-            if (obj.placed) return;
-            if (!dropped) this.returnToBar(obj);
+            if (!dropped) {
+                if (obj.fromBar) {
+                    this.returnToBar(obj);
+                } else {
+                    this.removeFoodFromPlate(obj);
+                }
+            }
         });
+    }
+
+    private createPlacedFood(original: DraggableFood, startX: number, startY: number, finalX: number, finalY: number, deslizar: boolean) {
+        const clone = this.add.image(startX, startY, original.foodItem.id) as DraggableFood;
+        clone.setDisplaySize(ITEM_SIZE - 8, ITEM_SIZE - 8);
+        clone.setDepth(12 + this.placedFoods.length);
+        clone.setInteractive({ useHandCursor: true });
+        this.input.setDraggable(clone);
+        
+        clone.grupo = original.grupo;
+        clone.foodItem = original.foodItem;
+        clone.localHomeX = 0; 
+        clone.localHomeY = 0; 
+        clone.fromBar = false;
+        clone.placed = true;
+
+        if (original.labelText) {
+            const txt = this.add.text(startX, startY + ITEM_SIZE / 2 + 10, original.foodItem.nameES, {
+                fontFamily: MFT, fontSize: '16px', color: P.inkHex,
+                align: 'center', wordWrap: { width: ITEM_SIZE * 1.5 },
+                stroke: P.paperHex, strokeThickness: 3
+            }).setOrigin(0.5, 0).setDepth(12 + this.placedFoods.length);
+            clone.labelText = txt;
+        }
+
+        if (deslizar) {
+            this.tweens.add({ targets: clone, x: finalX, y: finalY, duration: 300, ease: 'Back.easeOut' });
+            if (clone.labelText) {
+                this.tweens.add({ targets: clone.labelText, x: finalX, y: finalY + ITEM_SIZE / 2 + 10, duration: 300, ease: 'Back.easeOut' });
+            }
+        }
+
+        this.placedFoods.push(clone);
+        this.placedCounts[clone.grupo]++;
+
+        const fi = clone.foodItem;
+        this.nutritionTotals.calories += fi.calories  ?? 0;
+        this.nutritionTotals.protein  += fi.protein   ?? 0;
+        this.nutritionTotals.carbs    += fi.carbs     ?? 0;
+        this.nutritionTotals.fat      += fi.fat       ?? 0;
+        this.nutritionTotals.fiber    += fi.fiber     ?? 0;
+        this.nutritionTotals.sugar    += fi.sugar     ?? 0;
+        this.nutritionTotals.sodium   += fi.sodium    ?? 0;
+        this.nutritionTotals.scoreSum += fi.score;
+
+        this.tweens.add({ targets: clone, scale: 1.18, duration: 90, yoyo: true, ease: 'Sine.easeOut' });
+        try { this.sound.play('pb_correct'); } catch { void 0; }
+
+        this.updateProgressLive();
+    }
+
+    private removeFoodFromPlate(obj: DraggableFood) {
+        this.placedFoods = this.placedFoods.filter(f => f !== obj);
+        this.placedCounts[obj.grupo] = Math.max(0, this.placedCounts[obj.grupo] - 1);
+
+        const fi = obj.foodItem;
+        this.nutritionTotals.calories -= fi.calories  ?? 0;
+        this.nutritionTotals.protein  -= fi.protein   ?? 0;
+        this.nutritionTotals.carbs    -= fi.carbs     ?? 0;
+        this.nutritionTotals.fat      -= fi.fat       ?? 0;
+        this.nutritionTotals.fiber    -= fi.fiber     ?? 0;
+        this.nutritionTotals.sugar    -= fi.sugar     ?? 0;
+        this.nutritionTotals.sodium   -= fi.sodium    ?? 0;
+        this.nutritionTotals.scoreSum -= fi.score;
+
+        obj.disableInteractive();
+        this.tweens.add({
+            targets: obj.labelText ? [obj, obj.labelText] : [obj],
+            alpha: 0, scale: 0.5, duration: 200,
+            onComplete: () => {
+                obj.destroy();
+                if (obj.labelText) obj.labelText.destroy();
+            }
+        });
+
+        try { this.sound.play('pb_error'); } catch { void 0; }
+        this.updateProgressLive();
+    }
+
+    private resetOriginalToBar(obj: DraggableFood) {
+        obj.clearTint();
+        obj.setAlpha(1);
+        obj.setDepth(10);
+        obj.setDisplaySize(IMG_SZ_BAR, IMG_SZ_BAR);
+        
+        obj.x = obj.localHomeX;
+        obj.y = obj.localHomeY;
+        obj.cameraFilter = this.cameras.main.id;
+        
+        if (obj.labelText) {
+            obj.labelText.x = obj.localHomeX;
+            obj.labelText.y = obj.localHomeY + IMG_SZ_BAR / 2 + 14;
+            obj.labelText.setDepth(10);
+            obj.labelText.cameraFilter = this.cameras.main.id;
+        }
     }
 
     private returnToBar(obj: DraggableFood) {
-        const targetWorldX = this.sidebarX + 18 + obj.localHomeX;
-        const targetWorldY = this.foodListContainer.y + obj.localHomeY;
+        // Bloqueamos interacciones mientras regresa
+        obj.disableInteractive();
+
+        obj.clearTint();
+        obj.setTint(0xffaaaa); 
+
+        // Posición visual en mainCam a la que debe viajar
+        const targetVisualY = obj.localHomeY - this.listCam.scrollY + this.sidebarViewportY;
+        const labelVisualY = targetVisualY + (IMG_SZ_BAR / 2) + 14;
 
         this.tweens.add({
-            targets: obj, x: targetWorldX, y: targetWorldY, duration: 280, ease: 'Back.easeOut',
+            targets: obj, x: obj.localHomeX, y: targetVisualY,
+            duration: 260, ease: 'Back.easeOut',
             onComplete: () => {
-                this.children.remove(obj);
-                obj.x = obj.localHomeX;
-                obj.y = obj.localHomeY;
+                if (!obj || !obj.active) return;
+                obj.clearTint();
                 obj.setAlpha(1);
-                obj.setDepth(5);
-                obj.setDisplaySize(ITEM_SIZE - 24, ITEM_SIZE - 24);
-                this.foodListContainer.add(obj);
-                if (obj.labelText) {
-                    obj.labelText.setVisible(true);
-                    this.foodListContainer.add(obj.labelText);
-                }
-                obj.setMask(this.sidebarMaskGfx.createGeometryMask());
-            },
+                obj.setDepth(10);
+                obj.setDisplaySize(IMG_SZ_BAR, IMG_SZ_BAR);
+                
+                // Regresamos al mundo real y a la cámara de la lista
+                obj.y = obj.localHomeY;
+                obj.cameraFilter = this.cameras.main.id;
+                obj.setInteractive({ useHandCursor: true });
+            }
         });
+
+        if (obj.labelText) {
+            this.tweens.add({
+                targets: obj.labelText, x: obj.localHomeX, y: labelVisualY,
+                duration: 260, ease: 'Back.easeOut',
+                onComplete: () => {
+                    if (!obj.labelText || !obj.labelText.active) return;
+                    obj.labelText.y = obj.localHomeY + IMG_SZ_BAR / 2 + 14;
+                    obj.labelText.setDepth(10);
+                    obj.labelText.cameraFilter = this.cameras.main.id;
+                }
+            });
+        }
     }
 
-    // ─── ACTUALIZACIÓN EN TIEMPO REAL ─────────────────────────────────────────
+    // ─── ACTUALIZACIÓN EN TIEMPO REAL ────────────────────────────────────────
     private updateProgressLive() {
         const total = this.placedFoods.length;
         const nt    = this.nutritionTotals;
 
+        // Ocultar texto guía cuando hay alimentos
+        if (this.progressText) this.progressText.setVisible(total === 0);
+
         if (total === 0) {
-            this.progressText.setText('¡Arrastra los alimentos al plato para comenzar!');
-            this.nutritionText.setText('');
+            this.nutritionTotals = { calories: 0, protein: 0, carbs: 0, fat: 0, fiber: 0, sugar: 0, sodium: 0, scoreSum: 0 };
+            this.nutritionText.setText('—');
         } else {
-            this.progressText.setText(
-                `${total} alimento${total === 1 ? '' : 's'} en el plato. Presiona "Evaluar plato" cuando termines.`,
-            );
-            // Resumen nutricional acumulado en tiempo real
             this.nutritionText.setText(
-                `Kcal: ${Math.round(nt.calories)}  Prot: ${nt.protein.toFixed(1)}g  ` +
-                `Carbs: ${nt.carbs.toFixed(1)}g  Grasas: ${nt.fat.toFixed(1)}g  ` +
-                `Fibra: ${nt.fiber.toFixed(1)}g`,
+                `Kcal: ${Math.round(nt.calories)}\n` +
+                `Prot: ${Math.max(0, nt.protein).toFixed(1)}g   Carbs: ${Math.max(0, nt.carbs).toFixed(1)}g\n` +
+                `Grasas: ${Math.max(0, nt.fat).toFixed(1)}g   Fibra: ${Math.max(0, nt.fiber).toFixed(1)}g`
             );
         }
 
-        (Object.keys(this.placedCounts) as Grupo[]).forEach((g) => {
+        (Object.keys(this.placedCounts) as Grupo[]).forEach(g => {
             const pct = total === 0 ? 0 : Math.round((this.placedCounts[g] / total) * 100);
-            this.barPercents[g].setText(`${pct}%`);
+            this.barPercents[g].setText(`${pct} %`);
             this.tweens.add({
                 targets: this.barFills[g],
                 width: (pct / 100) * this.proportionBarW,
-                duration: 240, ease: 'Cubic.easeOut',
+                duration: 280, ease: 'Cubic.easeOut',
             });
         });
     }
 
-    // ─── EVALUACIÓN ───────────────────────────────────────────────────────────
+    // ─── EVALUACIÓN ──────────────────────────────────────────────────────────
     private evaluatePlate() {
         const total = this.placedFoods.length;
-        if (total === 0) {
-            this.feedbackText.setColor(PALETTE.terracotaHex)
-                .setText('Tu plato está vacío. Arrastra alimentos antes de evaluar.');
+        if (total <= 0) {
+            this.feedbackText.setColor('#FF0000').setText('Tu plato está vacío.\nArrastra alimentos primero.');
+            this.scoreText.setText('★  0');
             return;
         }
 
         const nt = this.nutritionTotals;
-
-        // — Proporción por grupo —
         const realPct: Record<Grupo, number> = {
             verduras_frutas: (this.placedCounts.verduras_frutas / total) * 100,
             cereal:          (this.placedCounts.cereal          / total) * 100,
@@ -793,39 +1043,62 @@ export class PlatoBalanceadoScene extends Phaser.Scene {
 
         let desviacion = 0;
         (Object.keys(IDEAL) as Grupo[]).forEach(g => { desviacion += Math.abs(IDEAL[g] - realPct[g]); });
-
         let score = Math.max(0, Math.round(100 - desviacion / 1.5));
 
-        // Bonus por los 3 grupos presentes
         const gruposPresentes = (Object.keys(this.placedCounts) as Grupo[])
             .filter(g => this.placedCounts[g] > 0).length;
         if (gruposPresentes === 3) score = Math.min(100, score + 10);
         else if (gruposPresentes === 1) score = Math.max(0, score - 15);
 
-        // Penalización nutricional por excesos detectados desde nutritionalInfo
         const warnings: string[] = [];
-        if (total > 0) {
-            const avgSodium = nt.sodium / total;
-            const avgSugar  = nt.sugar  / total;
-            const avgFat    = nt.fat    / total;
-            if (avgSodium > 300) { score = Math.max(0, score - 8); warnings.push('alto en sodio'); }
-            if (avgSugar  > 10)  { score = Math.max(0, score - 6); warnings.push('alto en azúcar'); }
-            if (avgFat    > 15)  { score = Math.max(0, score - 6); warnings.push('alto en grasas'); }
+        
+        // --- CÁLCULOS METABÓLICOS Y CLÍNICOS ---
+        let metaCalorias = 0;
+        if (this.tipoComida === 'desayuno') metaCalorias = this.tmb * 0.25;
+        else if (this.tipoComida === 'comida') metaCalorias = this.tmb * 0.35;
+        else metaCalorias = this.tmb * 0.25;
+        
+        const diffCalorias = nt.calories - metaCalorias;
+        if (Math.abs(diffCalorias) > 150) {
+            const penalizacionKcal = Math.floor((Math.abs(diffCalorias) - 50) / 100) * 10;
+            score -= penalizacionKcal;
+            if (diffCalorias > 0) warnings.push(`Exceso calórico (+${Math.round(diffCalorias)} kcal)`);
+            else warnings.push(`Déficit calórico (${Math.round(diffCalorias)} kcal)`);
         }
 
-        // Bonus por score nutricional promedio de los alimentos
+        // Patologías
+        const patologia = this.jugadorActivo?.datosAntropometricos?.patologia || 'ninguna';
+        if (patologia === 'diabetico') {
+            if (nt.carbs > 60) {
+                score -= 20;
+                warnings.push('PELIGRO: Exceso de Carbohidratos para diabético (>60g)');
+            }
+            if (nt.sugar > 15) {
+                score -= 20;
+                warnings.push('PELIGRO: Exceso de Azúcar para diabético (>15g)');
+            }
+        } else if (patologia === 'hipertenso') {
+            if (nt.sodium > 500) {
+                score -= 20;
+                warnings.push('PELIGRO: Exceso de Sodio para hipertenso (>500mg)');
+            }
+        } else {
+            // Evaluaciones genéricas (Warnings antiguos pero ajustados a Totales en vez de Averages)
+            if (nt.sodium > 800) { score -= 8; warnings.push('Alto en sodio general'); }
+            if (nt.sugar > 25) { score -= 6; warnings.push('Alto en azúcar general'); }
+        }
+        
+        score = Math.max(0, score);
+        
         const avgFoodScore = nt.scoreSum / total;
         if (avgFoodScore >= 2.5) score = Math.min(100, score + 5);
 
-        this.scoreText.setText(`★ ${score}`);
+        this.scoreText.setText(`★  ${score}`);
 
-        // — Construir mensaje de feedback —
         const faltantes: string[] = [];
         const excesos:   string[] = [];
         const nombres: Record<Grupo, string> = {
-            verduras_frutas: 'verduras y frutas',
-            cereal:          'cereales',
-            leguminosa_aoa:  'leguminosas o de origen animal',
+            verduras_frutas: 'Verduras', cereal: 'Cereales', leguminosa_aoa: 'AOA/Leguminosas'
         };
 
         (Object.keys(IDEAL) as Grupo[]).forEach(g => {
@@ -834,33 +1107,30 @@ export class PlatoBalanceadoScene extends Phaser.Scene {
             else if (diff > 12)                            excesos.push(nombres[g]);
         });
 
-        let msg: string;
-        let color: string;
-
-        if (faltantes.length === 0 && excesos.length === 0 && warnings.length === 0) {
-            msg   = `¡Plato equilibrado! Score ${score}/100. Excelente combinación.`;
-            color = PALETTE.verdePrincipalHex;
+        let msg = `Score: ${score}/100`;
+        let color = score >= 70 ? '#0000FF' : '#FF0000';
+        
+        const partes: string[] = [];
+        partes.push(`Meta Calórica (${this.tipoComida}): ~${Math.round(metaCalorias)} kcal`);
+        if (faltantes.length) partes.push(`Faltan: ${faltantes.join(', ')}`);
+        if (excesos.length)   partes.push(`Exceso: ${excesos.join(', ')}`);
+        if (warnings.length)  partes.push(`\nAVISOS MÉDICOS:\n• ` + warnings.join('\n• '));
+        
+        if (partes.length === 1 && score === 100) {
+            msg += `\n¡Plato perfecto para tu IMC y patologías!`;
+            color = '#00AA00';
         } else {
-            const partes: string[] = [];
-            if (faltantes.length) partes.push(`te faltan ${faltantes.join(', ')}`);
-            if (excesos.length)   partes.push(`tienes demasiados ${excesos.join(', ')}`);
-            if (warnings.length)  partes.push(`tu plato es ${warnings.join(', ')}`);
-            msg   = `Score ${score}/100 — ${partes.join('; ')}.`;
-            color = score >= 70 ? PALETTE.verdePrincipalHex : PALETTE.terracotaHex;
+            msg += `\n${partes.join('\n')}`;
         }
-
-        // Agregar resumen nutricional al feedback
-        msg += `\nKcal totales: ${Math.round(nt.calories)} · Prot: ${nt.protein.toFixed(1)}g · ` +
-               `Sodio: ${Math.round(nt.sodium)}mg`;
+        
+        msg += `\n\nTu Plato -> Kcal: ${Math.round(nt.calories)} | Sodio: ${Math.round(nt.sodium)}mg | Carbs: ${Math.round(nt.carbs)}g`;
 
         this.feedbackText.setColor(color).setText(msg);
 
-        // Colorear barras: verde si ±10% del ideal, terracota si fuera
+        // Colorear barras según tolerancia ±10%
         (Object.keys(IDEAL) as Grupo[]).forEach(g => {
-            const ok = Math.abs(realPct[g] - IDEAL[g]) <= 10
-                ? Phaser.Display.Color.HexStringToColor(PALETTE.verdePrincipalHex).color
-                : Phaser.Display.Color.HexStringToColor(PALETTE.terracotaHex).color;
-            this.barFills[g].setFillStyle(ok, 1);
+            const ok = Math.abs(realPct[g] - IDEAL[g]) <= 10;
+            this.barFills[g].setFillStyle(ok ? P.route : P.coral, 1);
         });
 
         try { this.sound.play(score >= 70 ? 'pb_correct' : 'pb_error'); } catch { void 0; }

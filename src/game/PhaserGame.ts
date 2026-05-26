@@ -20,7 +20,7 @@ export const createGame = (parent: HTMLElement): Phaser.Game => {
         backgroundColor: '#000000',
         scene: [MainMenu, MusicManagerScene, TutorialScene, Nivel1Scene, Nivel2Scene, Nivel3Scene, LevelSelectScene, PreTutorialConceptosScene, PlatoBalanceadoScene, CrucigramaSaludableScene, PauseScene],
         scale: {
-            mode: Phaser.Scale.FIT,
+            mode: Phaser.Scale.ENVELOP,
             autoCenter: Phaser.Scale.CENTER_BOTH,
             width: 1920,
             height: 1080,
