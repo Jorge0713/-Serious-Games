@@ -7,6 +7,7 @@ import { FONT_DISPLAY, FONT_MONO } from '../../config/gameFonts';
 import { LEVEL_SELECT_COLORS as COLORS, LEVEL_SELECT_HEX as HEX } from '../../config/gameColors';
 import { PrefabButtons } from "../../componentes/PrefabButtons";
 import { PlayerService } from '../../services/PlayerService';
+import { FlowProgressService } from '../../services/FlowProgressService';
 
 const WIDTH = 1920;
 const BACKGROUND_OVERLAY_ALPHA = 0.38;
@@ -590,7 +591,7 @@ export class Nivel1Scene extends Phaser.Scene {
                 fontSize: '15px',
                 color: '#ffffff',
                 fontStyle: 'bold',
-                fontFamily: 'Arial, sans-serif',
+                fontFamily: FONT_DISPLAY,
                 stroke: '#5E412F',
                 strokeThickness: 4,
             }).setOrigin(0.5).setAlpha(0);
@@ -720,19 +721,19 @@ export class Nivel1Scene extends Phaser.Scene {
         this.add.rectangle(width / 2, height / 2, width, height, 0x000000, 0.65).setDepth(100);
 
         this.add.text(width / 2, height / 2 - 65, '¡FALLASTE!', {
-            fontSize: '64px', color: '#ff4444', fontFamily: 'Arial',
+            fontSize: '64px', color: '#ff4444', fontFamily: FONT_DISPLAY,
             fontStyle: 'bold', stroke: '#000000', strokeThickness: 6,
         }).setOrigin(0.5).setDepth(101);
 
         this.add.text(width / 2, height / 2 + 5, reason, {
-            fontSize: '28px', color: '#ffffff', fontFamily: 'Arial',
+            fontSize: '28px', color: '#ffffff', fontFamily: FONT_MONO,
             stroke: '#000000', strokeThickness: 4,
         }).setOrigin(0.5).setDepth(101);
 
         this.time.delayedCall(1000, () => {
             const restartTxt = this.add.text(width / 2, height / 2 + 72,
                 'Toca aquí para intentarlo de nuevo', {
-                fontSize: '26px', color: '#ffdd88', fontFamily: 'Arial',
+                fontSize: '26px', color: '#ffdd88', fontFamily: FONT_DISPLAY,
                 fontStyle: 'bold', stroke: '#000000', strokeThickness: 4,
             }
             ).setOrigin(0.5).setDepth(101).setAlpha(0);
@@ -776,10 +777,10 @@ export class Nivel1Scene extends Phaser.Scene {
         this.toastLabel = this.add.text(
             width / 2 - toastW / 2 + 22, toastY - 30,
             'Dato nutricional:',
-            { fontSize: '17px', color: '#f0a000', fontFamily: 'Gill Sans MT', fontStyle: 'bold' }
+            { fontSize: '17px', color: '#f0a000', fontFamily: FONT_DISPLAY, fontStyle: 'bold' }
         ).setOrigin(0, 0.5).setDepth(201).setAlpha(0);
         this.toastTxt = this.add.text(width / 2, toastY + 14, msg, {
-            fontSize: '19px', color: '#ffffff', fontFamily: 'Gill Sans MT',
+            fontSize: '19px', color: '#ffffff', fontFamily: FONT_MONO,
             wordWrap: { width: toastW - 48 }, align: 'center',
         }).setOrigin(0.5, 0.5).setDepth(201).setAlpha(0);
 
@@ -841,7 +842,7 @@ export class Nivel1Scene extends Phaser.Scene {
 
         // Caja de texto centrada a la izquierda
         const titleTxt = this.add.text(cx - 60, cy - 90, '¡OLEADA\nCOMPLETADA!', {
-            fontSize: '52px', color: '#FFD700', fontFamily: 'Arial',
+            fontSize: '52px', color: '#FFD700', fontFamily: FONT_DISPLAY,
             fontStyle: 'bold', stroke: '#000000', strokeThickness: 7, align: 'center',
         }).setOrigin(0.5).setDepth(103).setAlpha(0);
 
@@ -849,7 +850,7 @@ export class Nivel1Scene extends Phaser.Scene {
             cx - 60, cy + 40,
             '¡Ganaste un nuevo conjunto de\nalimentos para armar tu gran plato!',
             {
-                fontSize: '24px', color: '#ffffff', fontFamily: 'Arial',
+                fontSize: '24px', color: '#ffffff', fontFamily: FONT_MONO,
                 fontStyle: 'bold', stroke: '#000000', strokeThickness: 5, align: 'center',
             }
         ).setOrigin(0.5).setDepth(103).setAlpha(0);
@@ -1128,7 +1129,7 @@ export class Nivel1Scene extends Phaser.Scene {
                 fontSize: '15px',
                 color: '#ffffff',
                 fontStyle: 'bold',
-                fontFamily: 'Arial, sans-serif',
+                fontFamily: FONT_DISPLAY,
                 stroke: '#5E412F',
                 strokeThickness: 4,
             }).setOrigin(0.5).setAlpha(1);
@@ -1650,6 +1651,7 @@ export class Nivel1Scene extends Phaser.Scene {
     private mostrarPantallaFinal() {
 
         this.registry.set('nivel1Completado', true);
+        FlowProgressService.markCompleted('tutorialFrutasCompleted');
         
         const jugador = PlayerService.obtenerJugadorActivo();
         if (jugador) {

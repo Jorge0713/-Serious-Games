@@ -1,8 +1,4 @@
-<<<<<<< HEAD
-import type { DatosAntropometricosEntrada, DatosRegistroJugador, Sexo } from '../types/player-types';
-=======
-import type { DatosAntropometricosEntrada, DatosRegistroJugador, Sexo, Patologia } from '../types/player.types';
->>>>>>> origin/ramaSecundaria
+import type { DatosAntropometricosEntrada, DatosRegistroJugador, Sexo, Patologia } from '../types/player-types';
 
 export type ResultadoValidacion = {
     valido: boolean;

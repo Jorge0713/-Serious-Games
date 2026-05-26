@@ -812,17 +812,22 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 290px;
-    height: 96px;
-    padding: 0 34px 10px;
+    width: min(420px, calc(100vw - 64px));
+    min-width: 360px;
+    min-height: 104px;
+    padding: 0 46px 12px;
     color: var(--ink);
     background: transparent url('/assets/Buttons/MainButton.png') center / 100% 100% no-repeat;
     border: 0;
     border-radius: 0;
     box-shadow: none;
     image-rendering: pixelated;
-    line-height: 1;
+    font-size: clamp(22px, 2.1vw, 26px);
+    line-height: 0.95;
     text-align: center;
+    white-space: normal;
+    overflow-wrap: normal;
+    text-wrap: balance;
 }
 
 /* ─── Animaciones ──────────────────────────────────────────────────────── */
@@ -983,5 +988,13 @@
     .spotlight-topline {
         align-items: flex-start;
         flex-direction: column;
+    }
+
+    .btn-next.is-final {
+        width: min(360px, 100%);
+        min-width: 0;
+        min-height: 92px;
+        padding: 0 34px 10px;
+        font-size: 20px;
     }
 }

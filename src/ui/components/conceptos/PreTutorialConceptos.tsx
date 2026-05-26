@@ -135,7 +135,7 @@ export const PreTutorialConceptos: React.FC<PreTutorialConceptosProps> = ({ onBa
             <div className="conceptos-overlay"></div>
 
             <button className="conceptos-btn-back" onClick={() => { playClick(); onBackToMenu(); }}>
-                <img src="/assets/Buttons/BtnBack.png" alt="Volver" />
+                {'< Volver'}
             </button>
 
             <div className="conceptos-header">

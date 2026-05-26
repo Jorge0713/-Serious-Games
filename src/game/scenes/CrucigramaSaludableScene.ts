@@ -1,6 +1,7 @@
 import * as Phaser from 'phaser';
 import { hoverScale } from "../../componentes/HoverScale";
 import { makeResponsiveVolver } from "../../componentes/ResponsiveVolver";
+import { FlowProgressService } from '../../services/FlowProgressService';
 
 import { type WordConfig, generateDynamicCrossword } from '../../data/crosswordGenerator';
 
@@ -119,7 +120,7 @@ export class CrucigramaSaludableScene extends Phaser.Scene {
 
         btnVolver.on('pointerdown', () => {
             this.clickSound.play();
-            this.scene.start('MainMenu');
+            this.scene.start('LevelSelectScene');
         });
 
         this.uiContainer.add([btnVolver]);
@@ -554,7 +555,11 @@ export class CrucigramaSaludableScene extends Phaser.Scene {
 
         btn.on('pointerover', () => { this.hoverSound.play(); btn.setFillStyle(0x4CAF50); });
         btn.on('pointerout', () => { btn.setFillStyle(this.colorVerde); });
-        btn.on('pointerdown', () => { this.clickSound.play(); this.scene.start('MainMenu'); });
+        btn.on('pointerdown', () => {
+            this.clickSound.play();
+            FlowProgressService.markCompleted('crucigramaCompleted');
+            this.scene.start('LevelSelectScene');
+        });
 
         this.tweens.add({ targets: overlay, alpha: 1, duration: 500 });
         this.tweens.add({ targets: [card, t1, t2, btn, bt], scaleX: { from: 0, to: 1 }, scaleY: { from: 0, to: 1 }, duration: 500, ease: 'Back.easeOut' });

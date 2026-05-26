@@ -21,7 +21,7 @@ export const ConceptosMain: React.FC<ConceptosMainProps> = ({
     onNext 
 }) => {
     return (
-        <main className="conceptos-main">
+        <main className={`conceptos-main concept-${concept.id}`}>
             <div className="conceptos-main-scrollable">
                 <div className="main-header">
                     <div className="main-icon-circle">{concept.icon}</div>

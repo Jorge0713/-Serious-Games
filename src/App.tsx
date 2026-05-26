@@ -4,6 +4,7 @@ import HomePage from './ui/pages/HomePage';
 import { TutorialPage } from './ui/components/tutorial';
 import { PreTutorialConceptos } from './ui/components/conceptos/PreTutorialConceptos';
 import type { FoodCategory } from './data/nutritionalInfo';
+import { FlowProgressService } from './services/FlowProgressService';
 
 interface TutorialSection {
   id: string;
@@ -231,7 +232,10 @@ function App() {
         >
           <PreTutorialConceptos
             onBackToMenu={() => startPhaserScene('MainMenu')}
-            onFinish={() => startPhaserScene(conceptosNextScene)}
+            onFinish={() => {
+              FlowProgressService.markCompleted('preTutorialConceptosCompleted');
+              startPhaserScene(conceptosNextScene);
+            }}
           />
         </div>
       )}

@@ -80,15 +80,7 @@ export class MainMenu extends Phaser.Scene {
 
     preload(): void {
         this.load.image('menu_kitchen_bg', '/assets/Backgrounds/Fondo_Cocina.png');
-        if (!this.textures.exists('MainButton')) {
-            this.load.image('MainButton', '/assets/Buttons/MainButton.png');
-        }
-        if (!this.textures.exists('SecondaryButton')) {
-            this.load.image('SecondaryButton', '/assets/Buttons/SecondaryButton.png');
-        }
-        if (!this.textures.exists('CancelButton')) {
-            this.load.image('CancelButton', '/assets/Buttons/Cancel.png');
-        }
+        PrefabButtons.preload(this);
 
         FOOD_FLOATS.forEach(food => {
             this.load.image(food.key, food.path);
@@ -417,13 +409,6 @@ export class MainMenu extends Phaser.Scene {
         return button;
     }
 
-    private createCloseFormButton(): HTMLButtonElement {
-        const button = this.createFormButton('CERRAR', 'cancel');
-        button.type = 'button';
-        button.addEventListener('click', () => this.removePlayerFormOverlay());
-        return button;
-    }
-
     private createContinueSavedPlayerButton(
         select: HTMLSelectElement,
         errorBox: HTMLDivElement
@@ -649,7 +634,10 @@ export class MainMenu extends Phaser.Scene {
         panel.style.border = '4px solid #2E3142';
         panel.style.boxShadow = '10px 10px 0 #2E3142';
         panel.style.padding = '24px';
+        panel.style.position = 'relative';
         panel.style.color = '#2E3142';
+
+        const closeButton = this.createCloseIconFormButton();
 
         const title = document.createElement('h2');
         title.textContent = jugadores.length > 0 ? 'SELECCIONAR JUGADOR' : 'CREAR JUGADOR';
@@ -730,10 +718,7 @@ export class MainMenu extends Phaser.Scene {
 
         let editingPlayerId: string | null = null;
         const submitBtn = this.createSaveAndPlayButton();
-        actions.append(
-            submitBtn,
-            this.createCloseFormButton()
-        );
+        actions.append(submitBtn);
 
         if (jugadores.length > 0) {
             const existingBlock = this.createExistingPlayersBlock(
@@ -794,11 +779,48 @@ export class MainMenu extends Phaser.Scene {
             }
         });
 
-        panel.append(title, description, errorBox, form);
+        panel.append(closeButton, title, description, errorBox, form);
         overlay.append(panel);
         document.body.append(overlay);
         this.playerFormOverlay = overlay;
         nombre.input.focus();
+    }
+
+    private createCloseIconFormButton(): HTMLButtonElement {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.setAttribute('aria-label', 'Cerrar');
+        button.title = 'Cerrar';
+        button.style.position = 'absolute';
+        button.style.top = '8px';
+        button.style.right = '8px';
+        button.style.width = '52px';
+        button.style.height = '52px';
+        button.style.zIndex = '1';
+        button.style.border = '0';
+        button.style.padding = '0';
+        button.style.background = 'transparent url("/assets/Buttons/Close.png") center / 100% 100% no-repeat';
+        button.style.imageRendering = 'pixelated';
+        button.style.cursor = 'pointer';
+        button.style.transition = 'transform 120ms ease-out';
+
+        button.addEventListener('pointerenter', () => {
+            button.style.transform = 'scale(1.06)';
+        });
+        button.addEventListener('pointerleave', () => {
+            button.style.transform = 'scale(1)';
+        });
+        button.addEventListener('pointerdown', event => {
+            event.stopPropagation();
+            button.style.transform = 'scale(0.94)';
+        });
+        button.addEventListener('pointerup', event => {
+            event.stopPropagation();
+            button.style.transform = 'scale(1.06)';
+        });
+        button.addEventListener('click', () => this.removePlayerFormOverlay());
+
+        return button;
     }
 
     private createExistingPlayersBlock(
@@ -919,18 +941,14 @@ export class MainMenu extends Phaser.Scene {
         this.showModal('Logros', [
             'Sigue jugando para desbloquear insignias saludables.',
             'Próximamente: historial de récords y medallas.',
-        ], [
-            { label: 'CERRAR', onClick: () => this.closeModal() },
-        ]);
+        ], []);
     }
 
     private showInfoModal(): void {
         this.showModal('PLACHEF', [
             'Serious game educativo sobre el Plato del Bien Comer.',
             'Usa alimentos, niveles y retos para practicar decisiones saludables.',
-        ], [
-            { label: 'CERRAR', onClick: () => this.closeModal() },
-        ]);
+        ], []);
     }
 
     private showModal(title: string, lines: string[], buttons: ModalButtonConfig[]): void {
@@ -969,7 +987,19 @@ export class MainMenu extends Phaser.Scene {
         }).setOrigin(0.5);
         this.fitTextToBox(bodyText, bodyMaxHeight, 28, 18);
 
-        modal.add([overlay, shadow, bg, titleText, bodyText]);
+        const closeButton = PrefabButtons.cerrarIcono(
+            this,
+            modalWidth / 2 - 16,
+            -modalHeight / 2 + 16,
+            () => this.closeModal(),
+            {
+                size: 58,
+                hoverSound: this.hoverSound,
+                clickSound: this.clickSound,
+            }
+        );
+
+        modal.add([overlay, shadow, bg, titleText, bodyText, closeButton]);
 
         const modalButtons: ModalButtonLayoutConfig[] = buttons.map(button => {
             const isCancel = this.isCancelButtonLabel(button.label);

@@ -2,6 +2,7 @@ import * as Phaser from 'phaser';
 import { PrefabButtons } from '../../componentes/PrefabButtons';
 import { FONT_DISPLAY, FONT_MONO } from '../../config/gameFonts';
 import { PlayerService } from '../../services/PlayerService';
+import { FlowProgressService } from '../../services/FlowProgressService';
 
 const WIDTH = 1920;
 const HEIGHT = 1080;
@@ -35,9 +36,9 @@ const HEX = {
     white: '#FFFFFF',
 };
 
-const LOCKED_MESSAGE = 'Completa la sección anterior para desbloquear esta sección.';
+const BALANCED_PLATE_LOCKED_MESSAGE = 'Completa todos los tutoriales y el crucigrama para desbloquear este nivel.';
 
-type SectionIndex = 1 | 2 | 3;
+type SectionIndex = 1 | 2 | 3 | 4;
 
 interface SectionConfig {
     index: SectionIndex;
@@ -56,6 +57,7 @@ interface SectionConfig {
     progressValue: number;
     unlocked: boolean;
     sceneKey: string;
+    flow: 'foodGrid' | 'concepts';
 }
 
 const SECTIONS: SectionConfig[] = [
@@ -76,6 +78,7 @@ const SECTIONS: SectionConfig[] = [
         progressValue: 0 / 1,
         unlocked: true,
         sceneKey: 'Nivel1Scene',
+        flow: 'foodGrid',
     },
     {
         index: 2,
@@ -94,6 +97,7 @@ const SECTIONS: SectionConfig[] = [
         progressValue: 0/1,
         unlocked: false,
         sceneKey: 'Nivel2Scene',
+        flow: 'foodGrid',
     },
     {
         index: 3,
@@ -112,6 +116,26 @@ const SECTIONS: SectionConfig[] = [
         progressValue: 0,
         unlocked: false,
         sceneKey: 'Nivel3Scene',
+        flow: 'foodGrid',
+    },
+    {
+        index: 4,
+        sectionLabel: 'CONCEPTOS',
+        topic: 'PreTutorial + Crucigrama',
+        description: 'Repasa las ideas clave y resuelve el crucigrama.',
+        leftCategory: 'Conceptos',
+        rightCategory: 'Crucigrama',
+        leftColor: COLORS.green,
+        rightColor: COLORS.cereal,
+        leftAssetKey: 'roadmap_concepts',
+        rightAssetKey: 'roadmap_crossword',
+        leftAssetPath: '/iconsFood/comidaExtra/water.png',
+        rightAssetPath: '/iconsFood/cereales/oat.png',
+        progressText: '0/2',
+        progressValue: 0,
+        unlocked: true,
+        sceneKey: 'PreTutorialConceptosScene',
+        flow: 'concepts',
     },
 ];
 
@@ -119,6 +143,12 @@ export class LevelSelectScene extends Phaser.Scene {
     private clickSound?: Phaser.Sound.BaseSound;
     private hoverSound?: Phaser.Sound.BaseSound;
     private toast?: Phaser.GameObjects.Container;
+    private cardsContainer?: Phaser.GameObjects.Container;
+    private cardsScrollX = 0;
+    private cardsMinScrollX = 0;
+    private cardsMaxScrollX = 0;
+    private cardsScrollTrack?: Phaser.GameObjects.Rectangle;
+    private cardsScrollThumb?: Phaser.GameObjects.Rectangle;
 
     constructor() {
         super('LevelSelectScene');
@@ -126,27 +156,55 @@ export class LevelSelectScene extends Phaser.Scene {
 
     private getProgressState() {
         const jugador = PlayerService.obtenerJugadorActivo();
+        const flowProgress = FlowProgressService.getProgress();
+        let nivel1Done = Boolean(this.registry.get('nivel1Completado'));
+        let nivel2Done = Boolean(this.registry.get('nivel2Completado'));
+        let nivel3Done = Boolean(this.registry.get('nivel3Completado'));
+
         if (jugador) {
             const completados = jugador.progreso.nivelesCompletados || [];
-            return {
-                nivel1Done: completados.includes(1),
-                nivel2Done: completados.includes(2),
-                nivel3Done: completados.includes(3),
-            };
+            nivel1Done = nivel1Done || completados.includes(1);
+            nivel2Done = nivel2Done || completados.includes(2);
+            nivel3Done = nivel3Done || completados.includes(3);
         }
-        
+
+        const tutorialFrutasDone = flowProgress.tutorialFrutasCompleted || nivel1Done;
+        const tutorialCerealesDone = flowProgress.tutorialCerealesCompleted || nivel2Done;
+        const tutorialAnimalDone = flowProgress.tutorialAnimalCompleted || nivel3Done;
+        const fullFlowProgress = {
+            tutorialFrutasCompleted: tutorialFrutasDone,
+            tutorialCerealesCompleted: tutorialCerealesDone,
+            tutorialAnimalCompleted: tutorialAnimalDone,
+            preTutorialConceptosCompleted: flowProgress.preTutorialConceptosCompleted,
+            crucigramaCompleted: flowProgress.crucigramaCompleted,
+        };
+
         return {
-            nivel1Done: Boolean(this.registry.get('nivel1Completado')),
-            nivel2Done: Boolean(this.registry.get('nivel2Completado')),
-            nivel3Done: Boolean(this.registry.get('nivel3Completado')),
+            nivel1Done,
+            nivel2Done,
+            nivel3Done,
+            tutorialFrutasDone,
+            tutorialCerealesDone,
+            tutorialAnimalDone,
+            preTutorialConceptosDone: flowProgress.preTutorialConceptosCompleted,
+            crucigramaDone: flowProgress.crucigramaCompleted,
+            canPlayBalancedPlate: FlowProgressService.isMainLevelUnlocked(fullFlowProgress),
         };
     }
 
     private getActiveSection(): SectionIndex {
-        const { nivel1Done, nivel2Done } = this.getProgressState();
-        if (!nivel1Done) return 1;
-        if (!nivel2Done) return 2;
-        return 3;
+        const {
+            tutorialFrutasDone,
+            tutorialCerealesDone,
+            tutorialAnimalDone,
+            preTutorialConceptosDone,
+            crucigramaDone,
+        } = this.getProgressState();
+        if (!tutorialFrutasDone) return 1;
+        if (!tutorialCerealesDone) return 2;
+        if (!tutorialAnimalDone) return 3;
+        if (!preTutorialConceptosDone || !crucigramaDone) return 4;
+        return 4;
     }
 
     preload(): void {
@@ -261,13 +319,13 @@ export class LevelSelectScene extends Phaser.Scene {
 
     private createActiveSectionPanel(): void {
         const activeIdx = this.getActiveSection();
-        const SECTION_TOPICS = ['Verduras vs Frutas', 'Cereales y Leguminosas', 'Origen animal vs Chatarra'];
+        const SECTION_TOPICS = ['Verduras vs Frutas', 'Cereales y Leguminosas', 'Origen animal vs Chatarra', 'Conceptos y Crucigrama'];
 
         const panel = this.add.container(1758, 75).setDepth(20);
 
-        const shadow = this.add.rectangle(8, 8, 260, 110, COLORS.ink, 1);
+        const shadow = this.add.rectangle(8, 8, 292, 110, COLORS.ink, 1);
 
-        const bg = this.add.rectangle(0, 0, 260, 110, COLORS.paper, 1).setStrokeStyle(4, COLORS.ink);
+        const bg = this.add.rectangle(0, 0, 292, 110, COLORS.paper, 1).setStrokeStyle(4, COLORS.ink);
 
         const title = this.add.text(0, -38, 'SECCIÓN ACTIVA', {
             fontFamily: FONT_MONO,
@@ -277,10 +335,10 @@ export class LevelSelectScene extends Phaser.Scene {
 
         panel.add([shadow, bg, title]);
 
-        [1, 2, 3].forEach((value, index) => {
+        [1, 2, 3, 4].forEach((value, index) => {
             const active = value === activeIdx;
-            const x = -64 + index * 64;
-            const chip = this.add.rectangle(x, -7, 46, 38, active ? COLORS.green : COLORS.white, 1)
+            const x = -90 + index * 60;
+            const chip = this.add.rectangle(x, -7, 44, 38, active ? COLORS.green : COLORS.white, 1)
                 .setStrokeStyle(3, active ? COLORS.ink : COLORS.gray);
             const chipText = this.add.text(x, -7, String(value), {
                 fontFamily: FONT_DISPLAY,
@@ -300,26 +358,172 @@ export class LevelSelectScene extends Phaser.Scene {
     }
 
     private createCards(): void {
-        const { nivel1Done, nivel2Done, nivel3Done } = this.getProgressState();
+        const progress = this.getProgressState();
         const cardWidth = 588;
         const cardHeight = 720;
         const top = 158;
         const gap = 54;
         const left = 24;
+        const viewportRight = WIDTH - 24;
+        const viewportWidth = viewportRight - left;
+        const totalWidth = SECTIONS.length * cardWidth + (SECTIONS.length - 1) * gap;
+
+        this.cardsContainer = this.add.container(0, 0).setDepth(10);
+        this.cardsMaxScrollX = 0;
+        this.cardsMinScrollX = Math.min(0, viewportRight - (left + totalWidth));
 
         SECTIONS.forEach((section, index) => {
             const x = left + index * (cardWidth + gap);
-            // El usuario requirió que TODOS los niveles estén bloqueados por defecto 
-            // hasta que sean completados. Sólo se puede acceder al nivel activo a través del botón Continuar.
-            const isUnlocked = section.index === 1 ? nivel1Done
-                : section.index === 2 ? nivel2Done
-                : nivel3Done;
-            this.createSectionCard({ ...section, unlocked: isUnlocked }, x, top, cardWidth, cardHeight);
+            const sectionProgress = this.getSectionCardProgress(section, progress);
+            this.createSectionCard({
+                ...section,
+                unlocked: true,
+                progressText: sectionProgress.text,
+                progressValue: sectionProgress.value,
+            }, x, top, cardWidth, cardHeight);
         });
+
+        this.createCardsScrollControls(totalWidth, viewportWidth, top + cardHeight + 24);
+        this.setCardsScroll(0);
+    }
+
+    private getSectionCardProgress(
+        section: SectionConfig,
+        progress: ReturnType<LevelSelectScene['getProgressState']>
+    ): { text: string; value: number } {
+        if (section.index === 4) {
+            const completedSteps = [
+                progress.preTutorialConceptosDone,
+                progress.crucigramaDone,
+            ].filter(Boolean).length;
+
+            return {
+                text: `${completedSteps}/2`,
+                value: completedSteps / 2,
+            };
+        }
+
+        const completed = section.index === 1 ? progress.tutorialFrutasDone
+            : section.index === 2 ? progress.tutorialCerealesDone
+            : progress.tutorialAnimalDone;
+
+        return {
+            text: completed ? '1/1' : '0/1',
+            value: completed ? 1 : 0,
+        };
+    }
+
+    private createCardsScrollControls(totalWidth: number, viewportWidth: number, y: number): void {
+        if (this.cardsMinScrollX === 0) return;
+
+        const trackWidth = 620;
+        const trackHeight = 24;
+        const thumbWidth = Phaser.Math.Clamp((viewportWidth / totalWidth) * trackWidth, 120, trackWidth);
+
+        this.add.rectangle(WIDTH / 2 + 5, y + 5, trackWidth, trackHeight, COLORS.ink, 0.95).setDepth(22);
+        this.cardsScrollTrack = this.add.rectangle(WIDTH / 2, y, trackWidth, trackHeight, COLORS.paper, 1)
+            .setStrokeStyle(3, COLORS.ink)
+            .setDepth(23)
+            .setInteractive({ useHandCursor: true });
+
+        this.cardsScrollThumb = this.add.rectangle(WIDTH / 2, y, thumbWidth, 12, COLORS.route, 1)
+            .setStrokeStyle(2, COLORS.ink)
+            .setDepth(24)
+            .setInteractive({ useHandCursor: true });
+
+        this.input.setDraggable(this.cardsScrollThumb);
+        this.cardsScrollTrack.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
+            this.setCardsScrollFromTrack(pointer.x);
+        });
+        this.cardsScrollThumb.on('drag', (_pointer: Phaser.Input.Pointer, dragX: number) => {
+            this.setCardsScrollFromTrack(dragX);
+        });
+
+        this.createCardsScrollArrow(58, 522, '<', () => this.scrollCardsBy(642));
+        this.createCardsScrollArrow(WIDTH - 58, 522, '>', () => this.scrollCardsBy(-642));
+
+        this.input.on('wheel', this.handleCardsWheel, this);
+        this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
+            this.input.off('wheel', this.handleCardsWheel, this);
+        });
+    }
+
+    private createCardsScrollArrow(x: number, y: number, label: string, onClick: () => void): void {
+        const button = this.add.container(x, y).setDepth(25);
+        const shadow = this.add.rectangle(5, 5, 54, 72, COLORS.ink, 0.95);
+        const bg = this.add.rectangle(0, 0, 54, 72, COLORS.paper, 1)
+            .setStrokeStyle(4, COLORS.ink)
+            .setInteractive({ useHandCursor: true });
+        const text = this.add.text(0, 0, label, {
+            fontFamily: FONT_DISPLAY,
+            fontSize: '34px',
+            fontStyle: 'bold',
+            color: HEX.ink,
+        }).setOrigin(0.5);
+
+        bg.on('pointerover', () => {
+            this.hoverSound?.play();
+            button.setScale(1.04);
+        });
+        bg.on('pointerout', () => button.setScale(1));
+        bg.on('pointerdown', () => {
+            this.clickSound?.play();
+            onClick();
+        });
+
+        button.add([shadow, bg, text]);
+    }
+
+    private handleCardsWheel(
+        pointer: Phaser.Input.Pointer,
+        _gameObjects: Phaser.GameObjects.GameObject[],
+        deltaX: number,
+        deltaY: number
+    ): void {
+        if (pointer.y < 140 || pointer.y > 925 || this.cardsMinScrollX === 0) return;
+
+        const delta = Math.abs(deltaX) > Math.abs(deltaY) ? deltaX : deltaY;
+        this.setCardsScroll(this.cardsScrollX - delta * 0.7);
+    }
+
+    private scrollCardsBy(amount: number): void {
+        this.setCardsScroll(this.cardsScrollX + amount);
+    }
+
+    private setCardsScrollFromTrack(pointerX: number): void {
+        if (!this.cardsScrollTrack || !this.cardsScrollThumb) return;
+
+        const trackWidth = this.cardsScrollTrack.displayWidth;
+        const thumbWidth = this.cardsScrollThumb.displayWidth;
+        const left = this.cardsScrollTrack.x - trackWidth / 2 + thumbWidth / 2;
+        const right = this.cardsScrollTrack.x + trackWidth / 2 - thumbWidth / 2;
+        const progress = Phaser.Math.Clamp((pointerX - left) / (right - left), 0, 1);
+        const nextScroll = this.cardsMaxScrollX - progress * (this.cardsMaxScrollX - this.cardsMinScrollX);
+        this.setCardsScroll(nextScroll);
+    }
+
+    private setCardsScroll(value: number): void {
+        this.cardsScrollX = Phaser.Math.Clamp(value, this.cardsMinScrollX, this.cardsMaxScrollX);
+        this.cardsContainer?.setX(this.cardsScrollX);
+        this.updateCardsScrollThumb();
+    }
+
+    private updateCardsScrollThumb(): void {
+        if (!this.cardsScrollTrack || !this.cardsScrollThumb) return;
+
+        const range = this.cardsMaxScrollX - this.cardsMinScrollX;
+        const progress = range === 0 ? 0 : (this.cardsMaxScrollX - this.cardsScrollX) / range;
+        const trackWidth = this.cardsScrollTrack.displayWidth;
+        const thumbWidth = this.cardsScrollThumb.displayWidth;
+        const left = this.cardsScrollTrack.x - trackWidth / 2 + thumbWidth / 2;
+        const right = this.cardsScrollTrack.x + trackWidth / 2 - thumbWidth / 2;
+
+        this.cardsScrollThumb.x = Phaser.Math.Linear(left, right, Phaser.Math.Clamp(progress, 0, 1));
     }
 
     private createSectionCard(section: SectionConfig, x: number, y: number, width: number, height: number): void {
         const card = this.add.container(x, y).setDepth(10);
+        this.cardsContainer?.add(card);
         const active = section.unlocked;
         const borderColor = active ? COLORS.ink : COLORS.grayDark;
         const bgColor = active ? COLORS.card : COLORS.cardDim;
@@ -346,7 +550,35 @@ export class LevelSelectScene extends Phaser.Scene {
         this.createSectionTag(card, section.sectionLabel, active);
         this.createCategoryRow(card, section, active, width);
         this.createRoutePanel(card, section, active, width);
+        this.createSectionTutorialButton(card, section, width, height);
         this.createProgressBlock(card, section, active, width, height);
+    }
+
+    private createSectionTutorialButton(
+        parent: Phaser.GameObjects.Container,
+        section: SectionConfig,
+        width: number,
+        height: number
+    ): void {
+        const completed = section.progressValue >= 1;
+        const label = section.index === 1 ? 'Tut. Frutas'
+            : section.index === 2 ? 'Tut. Cereales'
+            : section.index === 3 ? 'Tut. Animal'
+            : 'Conceptos';
+
+        const button = PrefabButtons.continuar(this, width / 2, height - 126, () => {
+            this.handleSectionSelection(section);
+        }, {
+            text: completed ? 'Repasar' : label,
+            width: 250,
+            height: 62,
+            fontSize: '20px',
+            hoverScale: 1.03,
+            hoverSound: this.hoverSound,
+            clickSound: this.clickSound,
+        });
+
+        parent.add(button);
     }
 
     private createSectionTag(parent: Phaser.GameObjects.Container, label: string, active: boolean): void {
@@ -457,11 +689,16 @@ export class LevelSelectScene extends Phaser.Scene {
             this.drawCurve(route, left, peak, right, COLORS.gray, 8, true);
         }
 
-        const footer = this.add.text(panelX, panelY, 'CONOCER  --->  CLASIFICAR', {
+        const footer = this.add.text(
+            panelX,
+            panelY,
+            section.flow === 'concepts' ? 'REPASAR  --->  RESOLVER' : 'CONOCER  --->  CLASIFICAR',
+            {
             fontFamily: FONT_DISPLAY,
             fontSize: '18px',
             color: HEX.ink
-        }).setOrigin(0.5);
+            }
+        ).setOrigin(0.5);
 
         parent.add([panel, route]);
         this.createMarker(parent, left.x, left.y, 1, section.leftCategory, section.leftColor, active);
@@ -595,181 +832,164 @@ export class LevelSelectScene extends Phaser.Scene {
 
     private createBottomHud(): void {
         const hud = this.add.container(WIDTH / 2, 1000).setDepth(30);
-
         const shadow = this.add.rectangle(10, 10, 1870, 124, COLORS.ink, 1);
-
         const bg = this.add.rectangle(0, 0, 1870, 124, COLORS.paper, 1).setStrokeStyle(5, COLORS.ink);
+        const progress = this.getProgressState();
+        const completedSteps = [
+            progress.tutorialFrutasDone,
+            progress.tutorialCerealesDone,
+            progress.tutorialAnimalDone,
+            progress.preTutorialConceptosDone,
+            progress.crucigramaDone,
+        ].filter(Boolean).length;
 
         const levelCircle = this.add.circle(-880, 0, 34, COLORS.white, 1).setStrokeStyle(5, COLORS.ink);
-
-        const levelInner = this.add.circle(-880, 0, 24, COLORS.yellow, 0.35).setStrokeStyle(3, COLORS.yellow);
-
-        const levelText = this.add.text(-880, 0, '1', {
+        const levelInner = this.add.circle(-880, 0, 24, progress.canPlayBalancedPlate ? COLORS.green : COLORS.yellow, 0.45)
+            .setStrokeStyle(3, progress.canPlayBalancedPlate ? COLORS.green : COLORS.yellow);
+        const levelText = this.add.text(-880, 0, `${completedSteps}/5`, {
             fontFamily: FONT_DISPLAY,
-            fontSize: '30px',
+            fontSize: '24px',
             fontStyle: 'bold',
             color: HEX.ink,
         }).setOrigin(0.5);
 
-        const kicker = this.add.text(-820, -27, 'Nivel Actual:', {
-            fontFamily: FONT_DISPLAY,
-            fontSize: '30px',
-            fontStyle: 'bold',
-            color: HEX.ink,
-        }).setOrigin(0, 0.5);
-        const current = this.add.text(-638, -27, 'Clasificar', {
-            fontFamily: FONT_DISPLAY,
-            fontSize: '30px',
-            fontStyle: 'bold',
-            color: HEX.ink,
-        }).setOrigin(0, 0.5);
-        const detail = this.add.text(-820, 27, 'Reto final: 20 alimentos', {
+        const kicker = this.add.text(-820, -27, 'Ruta principal:', {
             fontFamily: FONT_DISPLAY,
             fontSize: '30px',
             fontStyle: 'bold',
             color: HEX.ink,
         }).setOrigin(0, 0.5);
 
-        const continueButton = PrefabButtons.continuar(this, 760, 0, () => {
-            const { nivel1Done, nivel2Done, nivel3Done } = this.getProgressState();
-            if (!nivel1Done) {
-                window.showTutorial?.(['vegetable', 'fruit'], {
-                    nextScene: 'Nivel1Scene',
-                    title: 'Verduras y Frutas',
-                    finishLabel: 'Empezar Nivel 1',
-                });
-            } else if (!nivel2Done) {
-                window.showTutorial?.(['legume', 'cereal'], {
-                    nextScene: 'Nivel2Scene',
-                    title: 'Leguminosas y Cereales',
-                    finishLabel: 'Empezar Nivel 2',
-                });
-            } else if (!nivel3Done) {
-                window.showTutorial?.(['animal'], {
-                    nextScene: 'Nivel3Scene',
-                    title: 'Origen Animal',
-                    finishLabel: 'Empezar Nivel 3',
-                });
-            } else {
-                this.scene.start('PlatoBalanceadoScene');
-            }
-        }, {
-            text: 'CONTINUAR >',
-            width: 300,
-            height: 76,
+        const current = this.add.text(-592, -27, 'Plato Balanceado', {
+            fontFamily: FONT_DISPLAY,
             fontSize: '30px',
+            fontStyle: 'bold',
+            color: HEX.ink,
+        }).setOrigin(0, 0.5);
+
+        const detail = this.add.text(
+            -820,
+            27,
+            progress.canPlayBalancedPlate
+                ? 'Nivel principal desbloqueado'
+                : 'Completa tutoriales, conceptos y crucigrama',
+            {
+                fontFamily: FONT_MONO,
+                fontSize: '26px',
+                color: HEX.ink,
+            }
+        ).setOrigin(0, 0.5);
+
+        const mainButton = PrefabButtons.continuar(this, 0, 0, () => {
+            if (!progress.canPlayBalancedPlate) {
+                this.showToast(BALANCED_PLATE_LOCKED_MESSAGE);
+                return;
+            }
+
+            this.scene.start('PlatoBalanceadoScene');
+        }, {
+            text: 'Plato Balanceado',
+            width: 370,
+            height: 76,
+            fontSize: '26px',
             hoverScale: 1.03,
             hoverSound: this.hoverSound,
             clickSound: this.clickSound,
         });
 
-        this.tweens.add({
-            targets: continueButton,
-            x: 758,
-            y: -2,
-            duration: 800,
-            ease: 'Sine.easeInOut',
-            yoyo: true,
-            repeat: -1,
-        });
+        if (!progress.canPlayBalancedPlate) {
+            mainButton.setButtonAlpha(0.48);
+        }
 
-
-        PrefabButtons.secundario(this, 200, 90, () => this.scene.start('TutorialScene'), {
+        const presentationButton = PrefabButtons.secundario(this, -690,-900, () => {
+            this.scene.start('TutorialScene');
+        }, {
             text: '< Presentacion',
             width: 275,
-            fontSize: 30,
+            height: 72,
+            fontSize: '26px',
+            hoverScale: 1.03,
             hoverSound: this.hoverSound,
             clickSound: this.clickSound,
-            depth: 10,
         });
 
-        hud.add([shadow, bg, levelCircle, levelInner, levelText, kicker, current, detail, continueButton]);
+        hud.add([
+            shadow,
+            bg,
+            levelCircle,
+            levelInner,
+            levelText,
+            kicker,
+            current,
+            detail,
+            presentationButton,
+            mainButton,
+        ]);
     }
 
     private createExtraButtons(): void {
-        const yTop = 840;
-        const yBot = 920;
-        
-        const progress = this.getProgressState();
-        if (progress.nivel3Done) {
-            PrefabButtons.continuar(this, WIDTH / 2 + 650, yTop, () => {
-                this.scene.start('CrucigramaSaludableScene');
-            }, {
-                text: 'Jugar Crucigrama',
-                width: 380,
-                height: 60,
-                fontSize: '22px'
-            });
-        }
-
-        PrefabButtons.continuar(this, WIDTH / 2 + 650, yBot, () => {
-            this.scene.start('PlatoBalanceadoScene');
-        }, {
-            text: 'Jugar Plato Balanceado',
-            width: 380,
-            height: 60,
-            fontSize: '22px'
-        });
-
-        PrefabButtons.secundario(this, WIDTH / 2 - 250, yBot, () => {
-            window.showTutorial?.(['vegetable', 'fruit'], {
-                nextScene: 'LevelSelectScene',
-                title: 'Verduras y Frutas',
-                finishLabel: 'Volver al mapa',
-            });
-        }, { text: 'Tut. Frutas', width: 200, height: 60, fontSize: '20px' });
-
-        PrefabButtons.secundario(this, WIDTH / 2, yBot, () => {
-            window.showTutorial?.(['legume', 'cereal'], {
-                nextScene: 'LevelSelectScene',
-                title: 'Leguminosas y Cereales',
-                finishLabel: 'Volver al mapa',
-            });
-        }, { text: 'Tut. Cereales', width: 220, height: 60, fontSize: '20px' });
-
-        PrefabButtons.secundario(this, WIDTH / 2 + 250, yBot, () => {
-            window.showTutorial?.(['animal'], {
-                nextScene: 'LevelSelectScene',
-                title: 'Origen Animal',
-                finishLabel: 'Volver al mapa',
-            });
-        }, { text: 'Tut. Animal', width: 200, height: 60, fontSize: '20px' });
+        // Tutorial, conceptos y nivel principal viven dentro de sus tarjetas o la barra inferior.
     }
 
     private handleSectionSelection(section: SectionConfig): void {
-        if (!section.unlocked) {
-            this.showToast(LOCKED_MESSAGE);
+        if (section.flow === 'concepts') {
+            this.startConceptsFlow();
             return;
         }
 
-        const progress = this.getProgressState();
-        const done = section.index === 1 ? progress.nivel1Done
-                   : section.index === 2 ? progress.nivel2Done
-                   : progress.nivel3Done;
+        this.startSectionFoodGrid(section.index);
+    }
 
-        if (!done) {
-            if (section.index === 1) {
-                window.showTutorial?.(['vegetable', 'fruit'], {
-                    nextScene: 'Nivel1Scene',
-                    title: 'Verduras y Frutas',
-                    finishLabel: 'Empezar Nivel 1',
-                });
-            } else if (section.index === 2) {
-                window.showTutorial?.(['legume', 'cereal'], {
-                    nextScene: 'Nivel2Scene',
-                    title: 'Leguminosas y Cereales',
-                    finishLabel: 'Empezar Nivel 2',
-                });
-            } else if (section.index === 3) {
-                window.showTutorial?.(['animal'], {
-                    nextScene: 'Nivel3Scene',
-                    title: 'Origen Animal',
-                    finishLabel: 'Empezar Nivel 3',
-                });
-            }
-        } else {
-            this.scene.start(section.sceneKey);
+    private startSectionFoodGrid(index: SectionIndex): void {
+        if (index === 4) {
+            this.startConceptsFlow();
+            return;
         }
+
+        if (index === 1) {
+            if (!window.showTutorial) {
+                this.scene.start('Nivel1Scene');
+                return;
+            }
+
+            window.showTutorial(['vegetable', 'fruit'], {
+                nextScene: 'Nivel1Scene',
+                title: 'Verduras y Frutas',
+                finishLabel: 'Empezar Nivel 1',
+            });
+            return;
+        }
+
+        if (index === 2) {
+            if (!window.showTutorial) {
+                this.scene.start('Nivel2Scene');
+                return;
+            }
+
+            window.showTutorial(['legume', 'cereal'], {
+                nextScene: 'Nivel2Scene',
+                title: 'Leguminosas y Cereales',
+                finishLabel: 'Empezar Nivel 2',
+            });
+            return;
+        }
+
+        if (!window.showTutorial) {
+            this.scene.start('Nivel3Scene');
+            return;
+        }
+
+        window.showTutorial(['animal'], {
+            nextScene: 'Nivel3Scene',
+            title: 'Origen Animal',
+            finishLabel: 'Empezar Nivel 3',
+        });
+    }
+
+    private startConceptsFlow(): void {
+        this.scene.start('PreTutorialConceptosScene', {
+            nextLevel: 'CrucigramaSaludableScene',
+        });
     }
 
     private showToast(message: string): void {

@@ -18,7 +18,7 @@ export const ConceptosSidebar: React.FC<ConceptosSidebarProps> = ({ concepts, cu
                     return (
                         <li 
                             key={item.id} 
-                            className={`conceptos-menu-item ${active ? 'active' : ''}`}
+                            className={`conceptos-menu-item concept-${item.id} ${active ? 'active' : ''}`}
                             onClick={() => onSelect(index)}
                         >
                             <div className="menu-icon">{item.icon}</div>
