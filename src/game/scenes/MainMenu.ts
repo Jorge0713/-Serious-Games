@@ -737,6 +737,23 @@ export class MainMenu extends Phaser.Scene {
         this.applyFieldStyles(sexo);
         sexoLabel.append(sexo);
 
+        const patologiaLabel = document.createElement('label');
+        patologiaLabel.textContent = 'Condición Médica';
+        patologiaLabel.style.display = 'grid';
+        patologiaLabel.style.gap = '6px';
+        patologiaLabel.style.fontSize = '18px';
+
+        const patologia = document.createElement('select');
+        patologia.name = 'patologia';
+        patologia.required = true;
+        patologia.append(
+            new Option('Ninguna', 'ninguna'),
+            new Option('Diabetes', 'diabetico'),
+            new Option('Hipertensión', 'hipertenso')
+        );
+        this.applyFieldStyles(patologia);
+        patologiaLabel.append(patologia);
+
         const actions = document.createElement('div');
         actions.style.display = 'flex';
         actions.style.gap = '12px';
@@ -744,10 +761,29 @@ export class MainMenu extends Phaser.Scene {
         actions.style.flexWrap = 'wrap';
         actions.style.justifyContent = 'center';
 
-        actions.append(this.createSaveAndPlayButton());
+        let editingPlayerId: string | null = null;
+        const submitBtn = this.createSaveAndPlayButton();
+        actions.append(
+            submitBtn,
+            this.createCloseFormButton()
+        );
 
         if (jugadores.length > 0) {
-            const existingBlock = this.createExistingPlayersBlock(jugadores, errorBox);
+            const existingBlock = this.createExistingPlayersBlock(
+                jugadores,
+                errorBox,
+                {
+                    nombre: nombre.input,
+                    edad: edad.input,
+                    sexo: sexo,
+                    patologia: patologia,
+                    peso: peso.input,
+                    estatura: estatura.input,
+                    titleElem: title,
+                    submitBtn: submitBtn,
+                    setEditingId: (id: string | null) => { editingPlayerId = id; }
+                }
+            );
             form.append(existingBlock);
         }
 
@@ -755,6 +791,7 @@ export class MainMenu extends Phaser.Scene {
             nombre.label,
             edad.label,
             sexoLabel,
+            patologiaLabel,
             peso.label,
             estatura.label,
             actions
@@ -765,13 +802,21 @@ export class MainMenu extends Phaser.Scene {
             errorBox.textContent = '';
 
             try {
-                PlayerService.crearJugador({
+                const datos = {
                     nombre: nombre.input.value,
                     edad: Number(edad.input.value),
                     sexo: sexo.value as Sexo,
                     pesoKg: Number(peso.input.value),
                     estaturaCm: Number(estatura.input.value),
-                });
+                    patologia: patologia.value as any,
+                };
+
+                if (editingPlayerId) {
+                    PlayerService.actualizarPerfilJugador(editingPlayerId, datos);
+                    PlayerService.establecerJugadorActivo(editingPlayerId);
+                } else {
+                    PlayerService.crearJugador(datos);
+                }
 
                 this.removePlayerFormOverlay();
                 this.scene.start('LevelSelectScene');
@@ -791,7 +836,18 @@ export class MainMenu extends Phaser.Scene {
 
     private createExistingPlayersBlock(
         jugadores: ReturnType<typeof PlayerService.obtenerJugadores>,
-        errorBox: HTMLDivElement
+        errorBox: HTMLDivElement,
+        formRefs: {
+            nombre: HTMLInputElement;
+            edad: HTMLInputElement;
+            sexo: HTMLSelectElement;
+            patologia: HTMLSelectElement;
+            peso: HTMLInputElement;
+            estatura: HTMLInputElement;
+            titleElem: HTMLDivElement;
+            submitBtn: HTMLButtonElement;
+            setEditingId: (id: string | null) => void;
+        }
     ): HTMLDivElement {
         const block = document.createElement('div');
         block.style.display = 'grid';
@@ -801,7 +857,7 @@ export class MainMenu extends Phaser.Scene {
         block.style.border = '3px solid #2E3142';
 
         const title = document.createElement('div');
-        title.textContent = 'USAR JUGADOR GUARDADO';
+        title.textContent = 'JUGADOR GUARDADO';
         title.style.fontSize = '18px';
 
         const select = document.createElement('select');
@@ -810,9 +866,32 @@ export class MainMenu extends Phaser.Scene {
         });
         this.applyFieldStyles(select);
 
-        const button = this.createContinueSavedPlayerButton(select, errorBox);
+        const continueBtn = this.createContinueSavedPlayerButton(select, errorBox);
+        const editBtn = this.createFormButton('EDITAR', 'save');
+        editBtn.type = 'button';
+        editBtn.addEventListener('click', () => {
+            const id = select.value;
+            const jugador = PlayerService.obtenerJugadorPorId(id);
+            if (jugador) {
+                formRefs.nombre.value = jugador.nombre;
+                formRefs.edad.value = jugador.datosAntropometricos.edad.toString();
+                formRefs.sexo.value = jugador.datosAntropometricos.sexo;
+                formRefs.patologia.value = jugador.datosAntropometricos.patologia || 'ninguna';
+                formRefs.peso.value = jugador.datosAntropometricos.pesoKg.toString();
+                formRefs.estatura.value = jugador.datosAntropometricos.estaturaCm.toString();
+                
+                formRefs.titleElem.textContent = 'EDITAR JUGADOR';
+                formRefs.submitBtn.textContent = 'GUARDAR CAMBIOS';
+                formRefs.setEditingId(id);
+            }
+        });
 
-        block.append(title, select, button);
+        const actionBox = document.createElement('div');
+        actionBox.style.display = 'flex';
+        actionBox.style.gap = '8px';
+        actionBox.append(continueBtn, editBtn);
+
+        block.append(title, select, actionBox);
         return block;
     }
 

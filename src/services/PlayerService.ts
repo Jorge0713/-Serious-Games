@@ -43,6 +43,7 @@ function crearMedicion(
         imc,
         clasificacionIMC,
         mensajeIMC,
+        patologia: datos.patologia,
     };
 }
 
@@ -62,6 +63,7 @@ function crearDatosAntropometricos(
         mensajeIMC: resultadoIMC.mensaje,
         normaReferencia: resultadoIMC.normaReferencia,
         fechaMedicion: fecha,
+        patologia: datos.patologia,
     };
 }
 
@@ -193,6 +195,21 @@ export class PlayerService {
         PlayerService.guardarJugadores(jugadoresActualizados);
 
         return jugadoresActualizados[index];
+    }
+
+    static actualizarPerfilJugador(id: string, datos: DatosRegistroJugador): Jugador | null {
+        const validacion = validarDatosJugador(datos);
+        if (!validacion.valido) {
+            throw crearErrorValidacion(validacion.errores);
+        }
+
+        const jugador = PlayerService.obtenerJugadorPorId(id);
+        if (!jugador) return null;
+
+        jugador.nombre = datos.nombre.trim();
+        PlayerService.actualizarJugador(jugador);
+
+        return PlayerService.actualizarDatosAntropometricos(id, datos);
     }
 
     static actualizarDatosAntropometricos(

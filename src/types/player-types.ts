@@ -1,6 +1,7 @@
 import type { ProgresoJugador } from './progress-types';
 
 export type Sexo = 'masculino' | 'femenino';
+export type Patologia = 'ninguna' | 'diabetico' | 'hipertenso';
 
 export type NormaReferencia = 'NOM-043-SSA2-2012';
 
@@ -14,6 +15,7 @@ export type DatosAntropometricos = {
     mensajeIMC: string;
     normaReferencia: NormaReferencia;
     fechaMedicion: string;
+    patologia: Patologia;
 };
 
 export type MedicionAntropometrica = {
@@ -25,6 +27,7 @@ export type MedicionAntropometrica = {
     imc: number;
     clasificacionIMC: string;
     mensajeIMC: string;
+    patologia: Patologia;
 };
 
 export type Jugador = {
@@ -43,6 +46,7 @@ export type DatosRegistroJugador = {
     sexo: Sexo;
     pesoKg: number;
     estaturaCm: number;
+    patologia: Patologia;
 };
 
 export type DatosAntropometricosEntrada = {
@@ -50,4 +54,5 @@ export type DatosAntropometricosEntrada = {
     sexo: Sexo;
     pesoKg: number;
     estaturaCm: number;
+    patologia: Patologia;
 };
