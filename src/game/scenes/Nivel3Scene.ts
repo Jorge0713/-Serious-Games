@@ -1,11 +1,10 @@
 import * as Phaser from 'phaser';
-import { createDebugSkipButton } from '../systems/DebugSkipButton';
 import { showLevelCompleteOverlay } from '../systems/LevelCompleteOverlay';
 import { nutritionalInfo } from '../../data/nutritionalInfo';
 import type { FoodItem } from '../../data/nutritionalInfo';
 import { getErrorMessage } from '../../data/errorMessages';
-import { FONT_DISPLAY } from '../../config/gameFonts';
-import { LEVEL_SELECT_HEX as HEX } from '../../config/gameColors';
+import { FONT_DISPLAY, FONT_MONO } from '../../config/gameFonts';
+import { LEVEL_SELECT_COLORS as COLORS, LEVEL_SELECT_HEX as HEX } from '../../config/gameColors';
 import { PrefabButtons } from '../../componentes/PrefabButtons';
 import { PlayerService } from '../../services/PlayerService';
 
@@ -16,6 +15,8 @@ const ANIMAL_PER_WAVE   = 4;
 const JUNK_PER_WAVE     = 6;
 const WAVE_TIME_NORMAL  = 60;
 const WAVE_TIME_LAST    = 30;
+const WIDTH = 1920;
+const BACKGROUND_OVERLAY_ALPHA = 0.38;
 
 export class Nivel3Scene extends Phaser.Scene {
     private platon!:        Phaser.GameObjects.Image;
@@ -49,7 +50,7 @@ export class Nivel3Scene extends Phaser.Scene {
     private urgentMode = false;
 
     // Lives
-    private lives = 2;
+    private lives = 3;
     private livesText!: Phaser.GameObjects.Text;
 
     // Drop zone (synced every frame to follow bobbing section)
@@ -63,12 +64,10 @@ export class Nivel3Scene extends Phaser.Scene {
     private toastTimer?: Phaser.Time.TimerEvent;
 
     // UI Elements for resizing
-    private txtInstruccionesShadow?: Phaser.GameObjects.Text;
-    private txtInstrucciones!: Phaser.GameObjects.Text;
-    private txtTiempo!: Phaser.GameObjects.Text;
-    private txtVidas!: Phaser.GameObjects.Text;
     private lblAnimal!: Phaser.GameObjects.Text;
+    private foodBarShadow!: Phaser.GameObjects.Rectangle;
     private foodBarBg!: Phaser.GameObjects.Rectangle;
+    private foodBarAccent!: Phaser.GameObjects.Rectangle;
     private lastWindowWidth = 0;
     private lastWindowHeight = 0;
 
@@ -103,19 +102,31 @@ export class Nivel3Scene extends Phaser.Scene {
         
         const screenScale = Math.max(window.innerWidth / width, window.innerHeight / height);
         const visibleTop = (height - window.innerHeight / screenScale) / 2;
-        const visibleLeft = (width - window.innerWidth / screenScale) / 2;
-        const visibleWidth = window.innerWidth / screenScale;
         const visibleBottom = visibleTop + window.innerHeight / screenScale;
 
         this.placedFoods    = [];
         this.waveNumber     = 0;
         this.waveAciertos   = 0;
         this.waveInProgress = false;
-        this.lives          = 2;
+        this.lives          = 3;
 
-        this.add.image(width / 2, height / 2, 'fondo_cocina3').setDisplaySize(width, height);
+        this.add.image(width / 2, height / 2, 'fondo_cocina3')
+            .setDisplaySize(width, height)
+            .setDepth(-2);
 
-        this.txtInstrucciones = this.add.text(width / 2, visibleTop + 75, 'Arrastra los alimentos a su seccion', {
+        this.add.rectangle(width / 2, height / 2, width, height, COLORS.bg, BACKGROUND_OVERLAY_ALPHA)
+            .setDepth(-1);
+
+        this.add.text(WIDTH / 2 + 4, 92 + 5, 'Arrastra los alimentos a su seccion', {
+            fontFamily: FONT_DISPLAY,
+            fontSize: '56px',
+            fontStyle: 'bold',
+            color: '#77D39D',
+            stroke: HEX.ink,
+            strokeThickness: 4,
+        }).setOrigin(0.5).setDepth(18);
+
+        this.add.text(WIDTH / 2, 92, 'Arrastra los alimentos a su seccion', {
             fontFamily: FONT_DISPLAY,
             fontSize: '56px',
             fontStyle: 'bold',
@@ -126,19 +137,6 @@ export class Nivel3Scene extends Phaser.Scene {
 
         this.createBackButton();
 
-        this.txtInstruccionesShadow = this.add.text(width / 2 + 4, visibleTop + 80, 'Arrastra los alimentos a su seccion', {
-            fontFamily: FONT_DISPLAY,
-            fontSize: '56px',
-            fontStyle: 'bold',
-            color: '#77D39D',
-            stroke: HEX.ink,
-            strokeThickness: 4,
-        }).setOrigin(0.5).setDepth(18);
-
-        createDebugSkipButton(this, {
-            label: 'Saltar a conceptos', nextScene: 'PreTutorialConceptosScene', x: visibleLeft + 16, y: visibleTop + 150,
-        });
-
         // SECCIÓN ANIMAL
         const escalaCanasta  = 0.60;
         const canastaCentroY = visibleTop + (visibleBottom - visibleTop) * 0.65;
@@ -147,15 +145,15 @@ export class Nivel3Scene extends Phaser.Scene {
             .setScale(escalaCanasta).setDepth(2);
 
         this.lblAnimal = this.add.text(width / 2, canastaCentroY + this.animalSection.displayHeight / 2 + 40,
-            'TU CANASTA DE ORIGEN ANIMAL', {
+            'Origen Animal', {
                 fontFamily: FONT_DISPLAY,
-                fontSize: '36px',
+                fontSize: '56px',
                 fontStyle: 'bold',
                 color: HEX.white,
                 stroke: HEX.ink,
                 strokeThickness: 4,
             }
-        ).setOrigin(0.5).setDepth(3);
+        ).setOrigin(0.5).setDepth(18);
 
         const dzW = this.animalSection.displayWidth;
         const dzH = this.animalSection.displayHeight;
@@ -165,37 +163,70 @@ export class Nivel3Scene extends Phaser.Scene {
 
         this.startSectionIdleAnim(this.animalSection);
 
-        // TIMER
-        this.txtTiempo = this.add.text(visibleLeft + visibleWidth - 110, visibleTop + 60, 'TIEMPO', {
-            fontSize: '16px', color: '#ffffff', fontFamily: 'Arial', fontStyle: 'bold',
-        }).setOrigin(0.5).setDepth(20);
-
         // BOTÓN PAUSA
-        PrefabButtons.icono(this, visibleLeft + 60, visibleTop + 60, () => {
+        
+        PrefabButtons.icono(this, 1800, 90, () => {
             this.scene.pause();
             this.scene.launch('PauseScene', { previousScene: this.scene.key });
         }, {
+            width:60,
+            height:60,
             text: 'II',
             fontSize: '28px'
         }).setDepth(20);
+        // TIMER
+        const timerX = 1700;
+        const timerY = height / 2;
+        const timerPanelWidth = 250;
+        const timerPanelHeight = 148;
+        const timerPanelCenterY = timerY + 34;
 
-        this.timerText = this.add.text(visibleLeft + visibleWidth - 110, visibleTop + 90, '60', {
-            fontSize: '38px', color: '#ffffff', fontFamily: 'Arial',
+        this.add.rectangle(timerX + 8, timerPanelCenterY + 8, timerPanelWidth, timerPanelHeight, COLORS.ink, 0.9)
+            .setDepth(18);
+        this.add.rectangle(timerX, timerPanelCenterY, timerPanelWidth, timerPanelHeight, COLORS.paper, 0.96)
+            .setStrokeStyle(4, COLORS.ink)
+            .setDepth(19);
+        this.add.rectangle(timerX, timerPanelCenterY - timerPanelHeight / 2 + 14, timerPanelWidth - 18, 12, COLORS.green, 1)
+            .setDepth(19);
+
+        this.add.text(timerX, timerY + 10, 'TIEMPO', {
+            fontSize: '34px', color: '#ffffff', fontFamily: FONT_DISPLAY, fontStyle: 'bold',
+            stroke: '#5E412F', strokeThickness: 5,
+        }).setOrigin(0.5).setDepth(20);
+
+        this.timerText = this.add.text(timerX, timerY + 53, '60', {
+            fontSize: '50px', color: '#ffffff', fontFamily: FONT_MONO,
             fontStyle: 'bold', stroke: '#5E412F', strokeThickness: 5,
         }).setOrigin(0.5).setDepth(20);
-        this.timerWarningText = this.add.text(visibleLeft + visibleWidth - 110, visibleTop + 126, '¡Faltan 20 segundos!', {
-            fontSize: '13px', color: '#ffaa00', fontFamily: 'Arial',
-            fontStyle: 'bold', stroke: '#000000', strokeThickness: 3,
+
+        this.timerWarningText = this.add.text(timerX, timerY + 94, '¡Faltan 20 segundos!', {
+            fontSize: '22px', color: '#ffffff', fontFamily: FONT_MONO,
+            fontStyle: 'bold', stroke: '#5E412F', strokeThickness: 5,
         }).setOrigin(0.5).setDepth(20).setVisible(false);
 
         // VIDAS
-        this.txtVidas = this.add.text(visibleLeft + 220, visibleTop + 60, 'VIDAS', {
-            fontSize: '16px', color: '#ffffff', fontFamily: 'Arial', fontStyle: 'bold',
-        }).setOrigin(0, 0.5).setDepth(20);
-        this.livesText = this.add.text(visibleLeft + 220, visibleTop + 90, '♥ ♥', {
-            fontSize: '30px', color: '#ff4444', fontFamily: 'Arial', fontStyle: 'bold',
-            stroke: '#000000', strokeThickness: 3,
-        }).setOrigin(0, 0.5).setDepth(20);
+        const livesX = timerX;
+        const livesPanelWidth = 250;
+        const livesPanelHeight = 112;
+        const livesPanelCenterY = timerPanelCenterY + timerPanelHeight + 100;
+        const livesY = livesPanelCenterY - 22;
+
+        this.add.rectangle(livesX + 8, livesPanelCenterY + 8, livesPanelWidth, livesPanelHeight, COLORS.ink, 0.9)
+            .setDepth(18);
+        this.add.rectangle(livesX, livesPanelCenterY, livesPanelWidth, livesPanelHeight, COLORS.paper, 0.96)
+            .setStrokeStyle(4, COLORS.ink)
+            .setDepth(19);
+        this.add.rectangle(livesX, livesPanelCenterY - livesPanelHeight / 2 + 14, livesPanelWidth - 18, 12, COLORS.animal, 1)
+            .setDepth(19);
+
+        this.add.text(livesX, livesY+10, 'VIDAS', {
+            fontSize: '34px', color: '#ffffff', fontFamily: FONT_DISPLAY, fontStyle: 'bold',
+            stroke: '#5E412F', strokeThickness: 5,
+        }).setOrigin(0.5).setDepth(20);
+        this.livesText = this.add.text(livesX, livesY + 44, '♥ ♥ ♥', {
+            fontSize: '36px', color: '#ff4444', fontFamily: FONT_MONO,
+            fontStyle: 'bold', stroke: '#5E412F', strokeThickness: 5,
+        }).setOrigin(0.5).setDepth(20);
 
         this.platon = this.add.image(width - 200, visibleBottom - 100, 'platon-feliz').setAlpha(0).setScale(0.8);
 
@@ -234,19 +265,30 @@ export class Nivel3Scene extends Phaser.Scene {
     // ─── WAVE SYSTEM ──────────────────────────────────────────────────────────
 
     private createBackButton(): void {
-        PrefabButtons.continuar(this, this.scale.width / 2, this.scale.height / 2 + 190, () => {
-            this.scene.start('PreTutorialConceptosScene', {
-                nextLevel: 'CrucigramaSaludableScene',
-                finishLabel: 'Ir al crucigrama'
-            });
+        PrefabButtons.volver(this, 110, 90, () => {
+            this.returnToFoodGrid();
         }, {
             text: '< Volver',
-            width: 150,
-            height: 90,
             fontSize: 30,
             clickSoundKey: 'sonido-click',
             depth: 20,
         });
+    }
+
+    private returnToFoodGrid(): void {
+        this.stopTimer();
+
+        if (window.showTutorial) {
+            this.scene.pause();
+            window.showTutorial(['animal'], {
+                title: 'Origen Animal',
+                nextScene: 'Nivel3Scene',
+                finishLabel: 'Volver al Nivel 3',
+            });
+            return;
+        }
+
+        this.scene.start('LevelSelectScene');
     }
 
 
@@ -394,9 +436,9 @@ export class Nivel3Scene extends Phaser.Scene {
 
             this.time.delayedCall(1000, () => showLevelCompleteOverlay(this, {
                 title: '¡NIVEL COMPLETADO!',
-                message: '¡Completaste los 3 niveles! Es hora de repasar los conceptos.',
-                buttonLabel: 'Ir a Conceptos',
-                nextScene: 'PreTutorialConceptosScene',
+                message: 'Completaste los 3 niveles. Vuelve al mapa para continuar.',
+                buttonLabel: 'Volver al mapa',
+                nextScene: 'LevelSelectScene',
                 soundKey: 'level_win',
                 clickSoundKey: 'sonido-click',
             }));
@@ -553,8 +595,13 @@ export class Nivel3Scene extends Phaser.Scene {
         const stripHeight  = 148;
         const stripCenterY = stripTop + stripHeight / 2;
 
-        this.foodBarBg = this.add.rectangle(width / 2, stripCenterY, barWidth, stripHeight, 0xf7cc85, 0.82)
-            .setStrokeStyle(4, 0x5E412F).setDepth(1);
+        this.foodBarShadow = this.add.rectangle(width / 2 + 8, stripCenterY + 8, barWidth, stripHeight, COLORS.ink, 0.9)
+            .setDepth(1);
+        this.foodBarBg = this.add.rectangle(width / 2, stripCenterY, barWidth, stripHeight, COLORS.paper, 0.96)
+            .setStrokeStyle(4, COLORS.ink)
+            .setDepth(2);
+        this.foodBarAccent = this.add.rectangle(width / 2, stripCenterY - stripHeight / 2 + 14, barWidth - 18, 12, COLORS.animal, 1)
+            .setDepth(2);
 
         this.foodContainer = this.add.container(viewportX, visibleTop).setDepth(5);
     }
@@ -820,13 +867,13 @@ export class Nivel3Scene extends Phaser.Scene {
             .setPosition(width + 300, height - 250).setAlpha(0).setDepth(10);
 
         this.tweens.add({
-            targets: this.platon, x: 220, alpha: 1, duration: 850, ease: 'Power2.easeOut',
+            targets: this.platon, x: 300, alpha: 1, duration: 850, ease: 'Power2.easeOut',
             onComplete: () => {
                 const cx = 700, cy = height - 630;
 
                 const txt = this.add.text(cx, cy,
                     'Este es el nivel 3,\nAlimentos de Origen Animal.\nEn este nivel clasificarás\nlos alimentos de\norigen animal.',
-                    { fontSize: '27px', color: '#000000', fontFamily: 'Gill Sans MT', align: 'left', wordWrap: { width: 400 } }
+                    { fontSize: '27px', color: '#000000', fontFamily: FONT_MONO, align: 'left', wordWrap: { width: 400 } }
                 ).setOrigin(0.5).setDepth(12).setAlpha(0);
 
                 const pad = 24;
@@ -954,20 +1001,6 @@ export class Nivel3Scene extends Phaser.Scene {
         const visibleWidth = window.innerWidth / screenScale;
         const visibleBottom = visibleTop + window.innerHeight / screenScale;
 
-        if (this.txtInstruccionesShadow) this.txtInstruccionesShadow.setPosition(width / 2 + 4, visibleTop + 80);
-        if (this.txtInstrucciones) this.txtInstrucciones.setPosition(width / 2, visibleTop + 75);
-        
-        if (this.txtTiempo) {
-            this.txtTiempo.setPosition(visibleLeft + visibleWidth - 110, visibleTop + 60);
-            this.timerText.setPosition(visibleLeft + visibleWidth - 110, visibleTop + 90);
-            this.timerWarningText.setPosition(visibleLeft + visibleWidth - 110, visibleTop + 126);
-        }
-
-        if (this.txtVidas) {
-            this.txtVidas.setPosition(visibleLeft + 220, visibleTop + 60);
-            this.livesText.setPosition(visibleLeft + 220, visibleTop + 90);
-        }
-
         if (this.platon && !this.tweens.isTweening(this.platon)) {
             if (this.platon.x < width / 2) {
                 this.platon.setX(visibleLeft + 300);
@@ -985,7 +1018,10 @@ export class Nivel3Scene extends Phaser.Scene {
         if (this.foodBarBg) {
             const stripTop = visibleTop + 140;
             const stripHeight = 148;
-            this.foodBarBg.setY(stripTop + stripHeight / 2);
+            const stripCenterY = stripTop + stripHeight / 2;
+            this.foodBarShadow.setY(stripCenterY + 8);
+            this.foodBarBg.setY(stripCenterY);
+            this.foodBarAccent.setY(stripCenterY - stripHeight / 2 + 14);
             if (this.foodContainer) {
                 this.foodContainer.setY(visibleTop);
             }

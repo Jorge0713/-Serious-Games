@@ -29,6 +29,8 @@
     --wood-dark-rgb: var(--ink-rgb);
     --cream-rgb: var(--paper-rgb);
     --terracotta-rgb: var(--orange-rgb);
+    --back-button-width: 180px;
+    --back-button-height: 80px;
 
     --display-font: 'Pixelify Sans', 'Trebuchet MS', system-ui, sans-serif;
     --text-font: 'VT323', 'Courier New', monospace;
@@ -185,8 +187,8 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 180px;
-    height: 80px;
+    width: var(--back-button-width);
+    height: var(--back-button-height);
     color: var(--ink);
     background: transparent url('/assets/Buttons/SecondaryButton.png') center / 100% 100% no-repeat;
     border: 0;
@@ -210,8 +212,9 @@
 }
 
 .btn-back-img {
-    width: 140px;
-    height: auto;
+    width: var(--back-button-width);
+    height: var(--back-button-height);
+    object-fit: fill;
     image-rendering: pixelated;
     transition: transform 180ms ease;
 }
@@ -895,8 +898,8 @@
     }
 
     .btn-level-select-back {
-        width: 154px;
-        height: 70px;
+        width: var(--back-button-width);
+        height: var(--back-button-height);
         font-size: 19px;
     }
 

@@ -1,5 +1,6 @@
 import * as Phaser from 'phaser';
 import { FONT_DISPLAY, FONT_MONO } from '../../config/gameFonts';
+import { BACK_BUTTON_HEIGHT, BACK_BUTTON_WIDTH } from '../../componentes/PrefabButtons';
 
 interface LevelCompleteOverlayConfig {
     title: string;
@@ -96,7 +97,11 @@ export const showLevelCompleteOverlay = (
         color: COLOR_HEX.neutral,
     }).setOrigin(0.5).setVisible(Boolean(config.scoreText));
 
-    const button = scene.add.rectangle(0, 180, 380, 70, COLORS.primary, 1)
+    const isBackButton = config.buttonLabel.toLowerCase().includes('volver');
+    const buttonWidth = isBackButton ? BACK_BUTTON_WIDTH : 380;
+    const buttonHeight = isBackButton ? BACK_BUTTON_HEIGHT : 70;
+
+    const button = scene.add.rectangle(0, 180, buttonWidth, buttonHeight, COLORS.primary, 1)
         .setStrokeStyle(5, COLORS.tertiary)
         .setInteractive({ useHandCursor: true });
     const buttonText = scene.add.text(0, 180, config.buttonLabel, {

@@ -1,7 +1,6 @@
 import * as Phaser from "phaser";
 import { PrefabButtons } from "../../componentes/PrefabButtons";
-import { PlatonSpeechBubble } from "../systems/dialog/PlatonSpeechBubble";
-
+import { PlatonSpeechBubble } from "../systems/dialog/PlatonSpeechBubble";;
 
 type PlateZoneId = "verduras" | "frutas" | "cereales" | "leguminosas" | "animal";
 

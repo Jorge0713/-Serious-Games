@@ -45,6 +45,14 @@ export const LEVEL_SELECT_HEX = {
     white: '#FFFFFF',
 } as const;
 
+export const HEX = {
+    ink: '#2E3142',
+    mutedInk: '#6B6F7F',
+    grayDark: '#77736D',
+    paper: '#FFFBF0',
+    white: '#FFFFFF',
+} as const;
+
 export type MainMenuColorKey = keyof typeof MAIN_MENU_COLORS;
 export type LevelSelectColorKey = keyof typeof LEVEL_SELECT_COLORS;
 export type LevelSelectHexColorKey = keyof typeof LEVEL_SELECT_HEX;

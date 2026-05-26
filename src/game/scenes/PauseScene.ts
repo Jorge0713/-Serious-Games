@@ -73,7 +73,8 @@ export class PauseScene extends Phaser.Scene {
         }, { text: '+', width: 50, height: 50 });
 
         // Botón: Volver al Mapa
-        PrefabButtons.salir(this, width / 2, height / 2 + 150, () => {
+        PrefabButtons.volver(this, width / 2, height / 2 + 150, () => {
+            this.clearCheckpointForPreviousScene();
             this.scene.stop(this.previousSceneKey);
             // Parar pre-tutoriales o audios adicionales si estaban corriendo
             this.scene.stop();
@@ -88,8 +89,19 @@ export class PauseScene extends Phaser.Scene {
             }
         }, {
             text: 'VOLVER AL MAPA',
-            width: 260
+            fontSize: 18
         });
+    }
+
+    private clearCheckpointForPreviousScene(): void {
+        const checkpointByScene: Record<string, string> = {
+            Nivel1Scene: 'nivel1_checkpoint',
+            Nivel3Scene: 'nivel3_checkpoint',
+        };
+        const checkpointKey = checkpointByScene[this.previousSceneKey];
+        if (checkpointKey) {
+            this.registry.remove(checkpointKey);
+        }
     }
 
     private setGlobalVolume(v: number) {

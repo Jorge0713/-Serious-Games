@@ -91,11 +91,16 @@ export const FoodDetail: React.FC<FoodDetailProps> = ({ food, onBack }) => {
                     background: #c0392b;
                     color: white;
                     border: none;
-                    padding: 12px 24px;
+                    width: 180px;
+                    height: 80px;
+                    padding: 0;
                     border-radius: 8px;
                     cursor: pointer;
                     font-size: 16px;
                     font-weight: bold;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
                     position: fixed;
                     top: 20px;
                     left: 20px;

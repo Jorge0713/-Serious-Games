@@ -1,5 +1,6 @@
 import type * as Phaser from 'phaser';
 import { FONT_DISPLAY } from '../../config/gameFonts';
+import { BACK_BUTTON_HEIGHT, BACK_BUTTON_WIDTH } from '../../componentes/PrefabButtons';
 
 interface DebugSkipButtonConfig {
     label: string;
@@ -22,7 +23,10 @@ export const createDebugSkipButton = (
         fontFamily: FONT_DISPLAY,
         fontStyle: 'bold',
         backgroundColor: '#5E412F',
-        padding: { x: 14, y: 10 },
+        align: 'center',
+        fixedWidth: BACK_BUTTON_WIDTH,
+        fixedHeight: BACK_BUTTON_HEIGHT,
+        padding: { x: 0, y: 26 },
     })
         .setDepth(1000)
         .setInteractive({ useHandCursor: true });

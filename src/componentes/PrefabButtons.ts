@@ -1,6 +1,8 @@
 import * as Phaser from 'phaser';
 import { GameButton } from './GameButton';
 import type { GameButtonConfig } from './GameButton';
+import { CloseButton } from './CloseButton';
+import type { CloseButtonConfig } from './CloseButton';
 import { FONT_DISPLAY } from '../config/gameFonts';
 
 const TEXTURES = {
@@ -16,11 +18,15 @@ const ASSET_PATHS = {
 };
 
 const INK_HEX = '#2E3142';
+export const BACK_BUTTON_WIDTH = 180;
+export const BACK_BUTTON_HEIGHT = 80;
+export const BACK_BUTTON_FONT_SIZE = 30;
 
 const HOVER_KEY_FALLBACKS = ['menu_hover', 'hoverSound', 'Hover', 'roadmap_hover'];
 const CLICK_KEY_FALLBACKS = ['menu_click', 'clickSound', 'Click', 'roadmap_click', 'sonido-click', 'pb_click'];
 
 export type PrefabOptions = Omit<Partial<GameButtonConfig>, 'x' | 'y' | 'texture' | 'onClick'>;
+export type ClosePrefabOptions = Omit<Partial<CloseButtonConfig>, 'x' | 'y' | 'onClick'>;
 
 export type IconButtonOptions = {
     text?: string;
@@ -90,6 +96,7 @@ export class PrefabButtons {
                 scene.load.image(key, path);
             }
         });
+        CloseButton.preload(scene);
     }
 
     static precargar(scene: Phaser.Scene): void {
@@ -210,9 +217,9 @@ export class PrefabButtons {
         return buildButton(scene, {
             texture: TEXTURES.secondary,
             text: 'VOLVER',
-            width: 144,
-            height: 64,
-            fontSize: '18px',
+            width: BACK_BUTTON_WIDTH,
+            height: BACK_BUTTON_HEIGHT,
+            fontSize: BACK_BUTTON_FONT_SIZE,
             textColor: INK_HEX,
             fontFamily: FONT_DISPLAY,
             hoverScale: 1.04,
@@ -255,6 +262,21 @@ export class PrefabButtons {
             fontFamily: FONT_DISPLAY,
             hoverScale: 1.04,
         }, x, y, onClick, options);
+    }
+
+    static cerrarIcono(
+        scene: Phaser.Scene,
+        x: number,
+        y: number,
+        onClick: () => void,
+        options?: ClosePrefabOptions
+    ): CloseButton {
+        return new CloseButton(scene, {
+            ...options,
+            x,
+            y,
+            onClick,
+        });
     }
 
     static guardar(

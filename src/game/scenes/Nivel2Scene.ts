@@ -1,41 +1,48 @@
 import * as Phaser from 'phaser';
-import { createDebugSkipButton } from '../systems/DebugSkipButton';
 import { showLevelCompleteOverlay } from '../systems/LevelCompleteOverlay';
 import { nutritionalInfo } from '../../data/nutritionalInfo';
 import type { FoodItem } from '../../data/nutritionalInfo';
 import { getErrorMessage } from '../../data/errorMessages';
+import { FONT_DISPLAY, FONT_MONO } from '../../config/gameFonts';
+import { LEVEL_SELECT_COLORS as COLORS, LEVEL_SELECT_HEX as HEX } from '../../config/gameColors';
+import { PrefabButtons } from "../../componentes/PrefabButtons";
+import { PlayerService } from '../../services/PlayerService';
 
-const FOOD_ITEM_SIZE       = 70;
-const FOOD_ITEM_SPACING    = 125;
-const FOOD_LABEL_OFFSET    = 48;
-const CEREALES_PER_WAVE    = 4;
+const FOOD_ITEM_SIZE = 70;
+const FOOD_ITEM_SPACING = 125;
+const FOOD_LABEL_OFFSET = 48;
+const CEREALES_PER_WAVE = 4;
 const LEGUMINOSAS_PER_WAVE = 4;
-const WAVE_SIZE            = 10;
-const WAVE_TIME_NORMAL     = 60;
-const WAVE_TIME_LAST       = 30;
+const WAVE_SIZE = 10;
+const WAVE_TIME_NORMAL = 60;
+const WAVE_TIME_LAST = 30;
+const WIDTH = 1920;
+const BACKGROUND_OVERLAY_ALPHA = 0.38;
 
 export class Nivel2Scene extends Phaser.Scene {
     private fondo_cocina!: Phaser.GameObjects.Image;
-    private platon!:       Phaser.GameObjects.Image;
-    private segmentoCereales!:    Phaser.GameObjects.Image;
+    private platon!: Phaser.GameObjects.Image;
+    private segmentoCereales!: Phaser.GameObjects.Image;
     private segmentoLeguminosas!: Phaser.GameObjects.Image;
     private foodContainer!: Phaser.GameObjects.Container;
     private placedFoods: Phaser.GameObjects.Image[] = [];
     private isTutorialActive = false;
 
     // Wave state
-    private waveNumber        = 0;
+    private waveNumber = 0;
     private waveCorrectTarget = 0;
-    private waveAciertos      = 0;
-    private remainingCereales:    FoodItem[] = [];
+    private waveAciertos = 0;
+    private remainingCereales: FoodItem[] = [];
     private remainingLeguminosas: FoodItem[] = [];
-    private seboPool:             FoodItem[] = [];
+    private seboPool: FoodItem[] = [];
     private waveInProgress = false;
+    private hoverSound!: Phaser.Sound.BaseSound;
+    private clickSound!: Phaser.Sound.BaseSound;
 
     // Timer
     private timerSeconds = WAVE_TIME_NORMAL;
     private timerEvent?: Phaser.Time.TimerEvent;
-    private timerText!:        Phaser.GameObjects.Text;
+    private timerText!: Phaser.GameObjects.Text;
     private timerWarningText!: Phaser.GameObjects.Text;
     private tickingSound?: Phaser.Sound.BaseSound;
     private urgentMode = false;
@@ -45,26 +52,26 @@ export class Nivel2Scene extends Phaser.Scene {
     private livesText!: Phaser.GameObjects.Text;
 
     // Basket drop zones (synced every frame)
-    private zonaBordeCereales!:    Phaser.GameObjects.Zone;
-    private zonaCereales!:         Phaser.GameObjects.Zone;
+    private zonaBordeCereales!: Phaser.GameObjects.Zone;
+    private zonaCereales!: Phaser.GameObjects.Zone;
     private zcOffY = 0;
     private zonaBordeLeguminosas!: Phaser.GameObjects.Zone;
-    private zonaLeguminosas!:      Phaser.GameObjects.Zone;
+    private zonaLeguminosas!: Phaser.GameObjects.Zone;
     private zlOffY = 0;
 
     // Educational feedback toast
-    private toastBg?:    Phaser.GameObjects.Rectangle;
+    private toastBg?: Phaser.GameObjects.Rectangle;
     private toastLabel?: Phaser.GameObjects.Text;
-    private toastTxt?:   Phaser.GameObjects.Text;
+    private toastTxt?: Phaser.GameObjects.Text;
     private toastTimer?: Phaser.Time.TimerEvent;
 
     // UI Elements for resizing
     private txtInstrucciones!: Phaser.GameObjects.Text;
-    private txtTiempo!: Phaser.GameObjects.Text;
-    private txtVidas!: Phaser.GameObjects.Text;
     private lblCereales!: Phaser.GameObjects.Text;
     private lblLeguminosas!: Phaser.GameObjects.Text;
+    private foodBarShadow!: Phaser.GameObjects.Rectangle;
     private foodBarBg!: Phaser.GameObjects.Rectangle;
+    private foodBarAccent!: Phaser.GameObjects.Rectangle;
     private lastWindowWidth = 0;
     private lastWindowHeight = 0;
 
@@ -77,50 +84,64 @@ export class Nivel2Scene extends Phaser.Scene {
     }
 
     preload() {
-        this.load.image('Fondo-cocina',           '/assets/Backgrounds/Fondo_Cocina.png');
-        this.load.image('inventario-cereales',    '/assets/Plato/inventoryCereals.webp');
+        this.load.image('Fondo-cocina', '/assets/Backgrounds/Fondo_Cocina.png');
+        this.load.image('inventario-cereales', '/assets/Plato/inventoryCereals.webp');
         this.load.image('inventario-leguminosas', '/assets/Plato/inventoryLegums.webp');
-        this.load.image('platon-feliz',  '/assets/Platon/platon_feliz.png');
+        this.load.image('platon-feliz', '/assets/Platon/platon_feliz.png');
         this.load.image('platon-triste', '/assets/Platon/platon_triste.png');
-        this.load.image('manita',        '/assets/Backgrounds/manita.png');
-        this.load.audio('object_win',   '/Sound/ObjectWIN.mp3');
+        this.load.image('manita', '/assets/Backgrounds/manita.png');
+        this.load.audio('object_win', '/Sound/ObjectWIN.mp3');
         this.load.audio('sonido-error', '/Sound/incorrecto.mp3');
         this.load.audio('sonido-click', '/Sound/Click.mp3');
         this.load.audio('carta-sonido', '/Sound/CartaSound.mp3');
-        this.load.audio('reloj-tic',    '/Sound/Clock.mp3');
+        this.load.audio('reloj-tic', '/Sound/Clock.mp3');
+        PrefabButtons.preload(this);
         nutritionalInfo.forEach(food => this.load.image(food.id, food.image));
     }
 
     create() {
-        this.placedFoods    = [];
-        this.waveNumber     = 0;
-        this.waveAciertos   = 0;
+        this.placedFoods = [];
+        this.waveNumber = 0;
+        this.waveAciertos = 0;
         this.waveInProgress = false;
-        this.lives          = 2;
+        this.lives = 3;
 
         const { width, height } = this.scale;
 
         const screenScale = Math.max(window.innerWidth / width, window.innerHeight / height);
         const visibleTop = (height - window.innerHeight / screenScale) / 2;
-        const visibleLeft = (width - window.innerWidth / screenScale) / 2;
-        const visibleWidth = window.innerWidth / screenScale;
         const visibleBottom = visibleTop + window.innerHeight / screenScale;
 
+        this.add.text(WIDTH / 2 + 4, 92 + 5, 'Arrastra los alimentos a su seccion', {
+            fontFamily: FONT_DISPLAY,
+            fontSize: '56px',
+            fontStyle: 'bold',
+            color: '#77D39D',
+            stroke: HEX.ink,
+            strokeThickness: 4,
+        }).setOrigin(0.5).setDepth(18);
+
+        this.add.text(WIDTH / 2, 92, 'Arrastra los alimentos a su seccion', {
+            fontFamily: FONT_DISPLAY,
+            fontSize: '56px',
+            fontStyle: 'bold',
+            color: HEX.white,
+            stroke: HEX.ink,
+            strokeThickness: 4,
+        }).setOrigin(0.5).setDepth(19);
+
         this.fondo_cocina = this.add.image(width / 2, height / 2, 'Fondo-cocina')
-            .setScale(0.5).setDisplaySize(width, height);
+            .setScale(0.5)
+            .setDisplaySize(width, height)
+            .setDepth(-2);
         void this.fondo_cocina;
 
-        this.txtInstrucciones = this.add.text(width / 2, visibleTop + 75, 'Arrastra los cereales y leguminosas a su canasta', {
-            fontSize: '32px', color: '#000', fontFamily: 'Arial, sans-serif',
-            backgroundColor: 'rgba(255,255,255,0.7)', padding: { x: 20, y: 10 },
-        }).setOrigin(0.5);
+        this.add.rectangle(width / 2, height / 2, width, height, COLORS.bg, BACKGROUND_OVERLAY_ALPHA)
+            .setDepth(-1);
 
-        createDebugSkipButton(this, {
-            label: 'Saltar a Nivel 3', nextScene: 'Nivel3Scene', soundKey: 'sonido-click',
-        });
 
         // CANASTAS
-        const escalaCanasta  = 0.60;
+        const escalaCanasta = 0.60;
         const canastaCentroY = visibleTop + (visibleBottom - visibleTop) * 0.65;
 
         const segmentoCereales = this.segmentoCereales = this.add.image(
@@ -134,7 +155,7 @@ export class Nivel2Scene extends Phaser.Scene {
         ).setRectangleDropZone(zcBordW, zcBordH);
         this.zonaBordeCereales.setData('categoria', 'cereal');
 
-        const zcW = segmentoCereales.displayWidth  * 0.75;
+        const zcW = segmentoCereales.displayWidth * 0.75;
         const zcH = segmentoCereales.displayHeight * 0.75;
         this.zcOffY = segmentoCereales.displayHeight * 0.03;
         this.zonaCereales = this.add.zone(
@@ -154,7 +175,7 @@ export class Nivel2Scene extends Phaser.Scene {
         ).setRectangleDropZone(zlBordW, zlBordH);
         this.zonaBordeLeguminosas.setData('categoria', 'leguminosa');
 
-        const zlW = segmentoLeguminosas.displayWidth  * 0.75;
+        const zlW = segmentoLeguminosas.displayWidth * 0.75;
         const zlH = segmentoLeguminosas.displayHeight * 0.75;
         this.zlOffY = segmentoLeguminosas.displayHeight * 0.03;
         this.zonaLeguminosas = this.add.zone(
@@ -163,52 +184,102 @@ export class Nivel2Scene extends Phaser.Scene {
         this.zonaLeguminosas.setData('categoria', 'leguminosa');
         this.zonaBordeLeguminosas.setData('snapToZone', this.zonaLeguminosas);
 
-        // LABELS
-        const tipStyle: Phaser.Types.GameObjects.Text.TextStyle = {
-            fontSize: '22px', color: '#ffffff', fontFamily: 'Arial',
-            fontStyle: 'bold', stroke: '#5E412F', strokeThickness: 5,
-        };
+        PrefabButtons.icono(this, 1800, 90, () => {
+            this.scene.pause();
+            this.scene.launch('PauseScene', { previousScene: this.scene.key });
+        }, {
+            width:60,
+            height:60,
+            text: 'II',
+            fontSize: '28px'
+        }).setDepth(20);
+
         this.lblCereales = this.add.text(
             segmentoCereales.x,
             segmentoCereales.y + segmentoCereales.displayHeight / 2 + 12,
-            'TU CANASTA DE CEREALES', tipStyle
-        ).setOrigin(0.5).setDepth(3);
+            'Cereales y Tuberculos', {
+            fontFamily: FONT_DISPLAY,
+            fontSize: '56px',
+            fontStyle: 'bold',
+            color: HEX.white,
+            stroke: HEX.ink,
+            strokeThickness: 4,
+        }).setOrigin(0.5).setDepth(18);
+
         this.lblLeguminosas = this.add.text(
             segmentoLeguminosas.x,
             segmentoLeguminosas.y + segmentoLeguminosas.displayHeight / 2 + 12,
-            'TU CANASTA DE LEGUMINOSAS', tipStyle
-        ).setOrigin(0.5).setDepth(3);
-
-        this.startBasketIdleAnim(this.segmentoCereales,    0);
+            'Leguminosas', {
+            fontFamily: FONT_DISPLAY,
+            fontSize: '56px',
+            fontStyle: 'bold',
+            color: HEX.white,
+            stroke: HEX.ink,
+            strokeThickness: 4,
+        }).setOrigin(0.5).setDepth(18);
+        this.startBasketIdleAnim(this.segmentoCereales, 0);
         this.startBasketIdleAnim(this.segmentoLeguminosas, 450);
 
         // TIMER
-        this.txtTiempo = this.add.text(visibleLeft + visibleWidth - 110, visibleTop + 60, 'TIEMPO', {
-            fontSize: '16px', color: '#ffffff', fontFamily: 'Arial', fontStyle: 'bold',
+        const timerX = 1700;
+        const timerY = height / 2;
+        const timerPanelWidth = 250;
+        const timerPanelHeight = 148;
+        const timerPanelCenterY = timerY + 34;
+
+        this.add.rectangle(timerX + 8, timerPanelCenterY + 8, timerPanelWidth, timerPanelHeight, COLORS.ink, 0.9)
+            .setDepth(18);
+        this.add.rectangle(timerX, timerPanelCenterY, timerPanelWidth, timerPanelHeight, COLORS.paper, 0.96)
+            .setStrokeStyle(4, COLORS.ink)
+            .setDepth(19);
+        this.add.rectangle(timerX, timerPanelCenterY - timerPanelHeight / 2 + 14, timerPanelWidth - 18, 12, COLORS.green, 1)
+            .setDepth(19);
+
+        this.add.text(timerX, timerY - 2, 'TIEMPO', {
+            fontSize: '34px', color: '#ffffff', fontFamily: FONT_DISPLAY, fontStyle: 'bold',
+            stroke: '#5E412F', strokeThickness: 5
         }).setOrigin(0.5).setDepth(20);
-        this.timerText = this.add.text(visibleLeft + visibleWidth - 110, visibleTop + 90, '60', {
-            fontSize: '38px', color: '#ffffff', fontFamily: 'Arial',
+
+        this.timerText = this.add.text(timerX, timerY + 53, '60', {
+            fontSize: '50px', color: '#ffffff', fontFamily: FONT_MONO,
             fontStyle: 'bold', stroke: '#5E412F', strokeThickness: 5,
         }).setOrigin(0.5).setDepth(20);
-        this.timerWarningText = this.add.text(visibleLeft + visibleWidth - 110, visibleTop + 126, '¡Faltan 20 segundos!', {
-            fontSize: '13px', color: '#ffaa00', fontFamily: 'Arial',
-            fontStyle: 'bold', stroke: '#000000', strokeThickness: 3,
+
+        this.timerWarningText = this.add.text(timerX, timerY + 94, '¡Faltan 20 segundos!', {
+            fontSize: '22px', color: '#ffffff', fontFamily: FONT_MONO,
+            fontStyle: 'bold', stroke: '#5E412F', strokeThickness: 5,
         }).setOrigin(0.5).setDepth(20).setVisible(false);
 
         // VIDAS
-        this.txtVidas = this.add.text(visibleLeft + 220, visibleTop + 60, 'VIDAS', {
-            fontSize: '16px', color: '#ffffff', fontFamily: 'Arial', fontStyle: 'bold',
-        }).setOrigin(0, 0.5).setDepth(20);
-        this.livesText = this.add.text(visibleLeft + 220, visibleTop + 90, '♥ ♥ ♥', {
-            fontSize: '30px', color: '#ff4444', fontFamily: 'Arial', fontStyle: 'bold',
-            stroke: '#000000', strokeThickness: 3,
-        }).setOrigin(0, 0.5).setDepth(20);
+        const livesX = timerX;
+        const livesPanelWidth = 250;
+        const livesPanelHeight = 112;
+        const livesPanelCenterY = timerPanelCenterY + timerPanelHeight + 100;
+        const livesY = livesPanelCenterY - 22;
+
+        this.add.rectangle(livesX + 8, livesPanelCenterY + 8, livesPanelWidth, livesPanelHeight, COLORS.ink, 0.9)
+            .setDepth(18);
+        this.add.rectangle(livesX, livesPanelCenterY, livesPanelWidth, livesPanelHeight, COLORS.paper, 0.96)
+            .setStrokeStyle(4, COLORS.ink)
+            .setDepth(19);
+        this.add.rectangle(livesX, livesPanelCenterY - livesPanelHeight / 2 + 14, livesPanelWidth - 18, 12, COLORS.cereal, 1)
+            .setDepth(19);
+
+        this.add.text(livesX, livesY + 10, 'VIDAS', {
+            fontSize: '34px', color: '#ffffff', fontFamily: FONT_DISPLAY, fontStyle: 'bold',
+            stroke: '#5E412F', strokeThickness: 5,
+        }).setOrigin(0.5).setDepth(20);
+        this.livesText = this.add.text(livesX, livesY + 44, '♥ ♥ ♥', {
+            fontSize: '36px', color: '#ff4444', fontFamily: FONT_MONO,
+            fontStyle: 'bold', stroke: '#5E412F', strokeThickness: 5,
+        }).setOrigin(0.5).setDepth(20);
 
         this.platon = this.add.image(width - 200, visibleBottom - 100, 'platon-feliz')
             .setAlpha(0).setScale(0.8);
 
         this.buildFoodBarShell(width, visibleTop);
         this.setupDragDrop();
+        this.createBackButton();
 
         this.events.once('shutdown', () => this.stopTimer());
         if (this.registry.get('introCompleted_Nivel2')) {
@@ -216,18 +287,45 @@ export class Nivel2Scene extends Phaser.Scene {
         } else {
             this.time.delayedCall(400, () => this.showIntroPlaton());
         }
+
+    }
+    private returnToFoodGrid(): void {
+        this.stopTimer();
+
+        if (window.showTutorial) {
+            this.scene.pause();
+            window.showTutorial(['legume', 'cereal'], {
+                title: 'Leguminosas y Cereales',
+                nextScene: 'Nivel2Scene',
+                finishLabel: 'Volver al Nivel 2',
+            });
+            return;
+        }
+
+        this.scene.start('LevelSelectScene');
+    }
+    private createBackButton(): void {
+        PrefabButtons.volver(this, 110, 90, () => {
+            this.returnToFoodGrid();
+        }, {
+            text: "< Volver",
+            fontSize: 30,
+            hoverSound: this.hoverSound,
+            clickSound: this.clickSound,
+            depth: 20,
+        });
     }
 
     // ─── WAVE SYSTEM ──────────────────────────────────────────────────────────
 
     private initWavePools() {
-        const allCereales    = nutritionalInfo.filter(f => f.category === 'cereal');
+        const allCereales = nutritionalInfo.filter(f => f.category === 'cereal');
         const allLeguminosas = nutritionalInfo.filter(f => f.category === 'legume');
-        const allSebos       = nutritionalInfo.filter(f => f.category !== 'cereal' && f.category !== 'legume');
+        const allSebos = nutritionalInfo.filter(f => f.category !== 'cereal' && f.category !== 'legume');
 
-        this.remainingCereales    = Phaser.Utils.Array.Shuffle([...allCereales])    as FoodItem[];
+        this.remainingCereales = Phaser.Utils.Array.Shuffle([...allCereales]) as FoodItem[];
         this.remainingLeguminosas = Phaser.Utils.Array.Shuffle([...allLeguminosas]) as FoodItem[];
-        this.seboPool             = Phaser.Utils.Array.Shuffle([...allSebos])       as FoodItem[];
+        this.seboPool = Phaser.Utils.Array.Shuffle([...allSebos]) as FoodItem[];
 
         // Arroz primero en la oleada 1
         const riceIdx = this.remainingCereales.findIndex(f => f.id === 'rice');
@@ -240,7 +338,7 @@ export class Nivel2Scene extends Phaser.Scene {
 
     private startNextWave() {
         this.waveNumber++;
-        this.waveAciertos   = 0;
+        this.waveAciertos = 0;
         this.waveInProgress = false;
 
         this.clearPlacedFoods(() => {
@@ -257,7 +355,7 @@ export class Nivel2Scene extends Phaser.Scene {
     }
 
     private pickWaveFoods(): { foods: FoodItem[], correctCount: number } {
-        const numC = Math.min(CEREALES_PER_WAVE,    this.remainingCereales.length);
+        const numC = Math.min(CEREALES_PER_WAVE, this.remainingCereales.length);
         const numL = Math.min(LEGUMINOSAS_PER_WAVE, this.remainingLeguminosas.length);
 
         const waveC = this.remainingCereales.splice(0, numC);
@@ -309,11 +407,22 @@ export class Nivel2Scene extends Phaser.Scene {
         const hasMoreWaves = this.remainingCereales.length > 0 || this.remainingLeguminosas.length > 0;
 
         if (!hasMoreWaves) {
+            this.registry.set('nivel2Completado', true);
+
+            const jugador = PlayerService.obtenerJugadorActivo();
+            if (jugador) {
+                const nuevosNiveles = new Set([...jugador.progreso.nivelesCompletados, 2]);
+                PlayerService.actualizarProgreso(jugador.id, {
+                    ...jugador.progreso,
+                    nivelesCompletados: Array.from(nuevosNiveles)
+                });
+            }
+
             this.time.delayedCall(1000, () => showLevelCompleteOverlay(this, {
                 title: '¡FELICIDADES!',
-                message: 'Completaste cereales y leguminosas. Ya puedes pasar al reto de origen animal.',
-                buttonLabel: 'Ir al Nivel 3',
-                nextScene: 'Nivel3Scene',
+                message: 'Completaste cereales y leguminosas. Vuelve al mapa para continuar.',
+                buttonLabel: 'Volver al mapa',
+                nextScene: 'LevelSelectScene',
                 soundKey: 'object_win',
                 clickSoundKey: 'sonido-click',
             }));
@@ -327,17 +436,17 @@ export class Nivel2Scene extends Phaser.Scene {
         const { width, height } = this.scale;
         const cx = width / 2, cy = height / 2;
 
-        const overlay   = this.add.rectangle(cx, cy, width, height, 0x000000, 0.72).setDepth(100).setAlpha(0);
+        const overlay = this.add.rectangle(cx, cy, width, height, 0x000000, 0.72).setDepth(100).setAlpha(0);
         const platonBig = this.add.image(width * 0.78, cy + 30, 'platon-feliz').setScale(0).setDepth(101);
-        const titleTxt  = this.add.text(cx - 60, cy - 90, '¡OLEADA\nCOMPLETADA!', {
+        const titleTxt = this.add.text(cx - 60, cy - 90, '¡OLEADA\nCOMPLETADA!', {
             fontSize: '52px', color: '#FFD700', fontFamily: 'Arial',
             fontStyle: 'bold', stroke: '#000000', strokeThickness: 7, align: 'center',
         }).setOrigin(0.5).setDepth(103).setAlpha(0);
         const msgTxt = this.add.text(cx - 60, cy + 40,
             '¡Ganaste un nuevo conjunto de\nalimentos para armar tu gran plato!', {
-                fontSize: '24px', color: '#ffffff', fontFamily: 'Arial',
-                fontStyle: 'bold', stroke: '#000000', strokeThickness: 5, align: 'center',
-            }
+            fontSize: '24px', color: '#ffffff', fontFamily: 'Arial',
+            fontStyle: 'bold', stroke: '#000000', strokeThickness: 5, align: 'center',
+        }
         ).setOrigin(0.5).setDepth(103).setAlpha(0);
 
         try { this.sound.play('object_win'); } catch { void 0; }
@@ -389,9 +498,9 @@ export class Nivel2Scene extends Phaser.Scene {
     private updateTimerDisplay() {
         if (!this.timerText) return;
         this.timerText.setText(String(this.timerSeconds));
-        if (this.timerSeconds <= 10)      this.timerText.setColor('#ff2222');
+        if (this.timerSeconds <= 10) this.timerText.setColor('#ff2222');
         else if (this.timerSeconds <= 20) this.timerText.setColor('#ffaa00');
-        else                               this.timerText.setColor('#ffffff');
+        else this.timerText.setColor('#ffffff');
 
         if (this.timerSeconds <= 20 && !this.urgentMode) {
             this.urgentMode = true;
@@ -438,9 +547,9 @@ export class Nivel2Scene extends Phaser.Scene {
         this.time.delayedCall(1000, () => {
             const restartTxt = this.add.text(width / 2, height / 2 + 72,
                 'Toca aquí para intentarlo de nuevo', {
-                    fontSize: '26px', color: '#ffdd88', fontFamily: 'Arial',
-                    fontStyle: 'bold', stroke: '#000000', strokeThickness: 4,
-                }
+                fontSize: '26px', color: '#ffdd88', fontFamily: 'Arial',
+                fontStyle: 'bold', stroke: '#000000', strokeThickness: 4,
+            }
             ).setOrigin(0.5).setDepth(101).setAlpha(0);
             this.tweens.add({ targets: restartTxt, alpha: 1, duration: 350 });
             this.tweens.add({ targets: restartTxt, alpha: { from: 1, to: 0.25 }, duration: 600, yoyo: true, repeat: -1, ease: 'Sine.easeInOut', delay: 400 });
@@ -451,26 +560,31 @@ export class Nivel2Scene extends Phaser.Scene {
     // ─── FOOD BAR ─────────────────────────────────────────────────────────────
 
     private buildFoodBarShell(width: number, visibleTop: number = 0) {
-        const barWidth     = Math.round(width * 0.82);
-        const arrowWidth   = 64;
-        const barLeft      = (width - barWidth) / 2;
-        const viewportX    = barLeft + arrowWidth;
-        const stripTop     = visibleTop + 140;
-        const stripHeight  = 148;
+        const barWidth = Math.round(width * 0.82);
+        const arrowWidth = 64;
+        const barLeft = (width - barWidth) / 2;
+        const viewportX = barLeft + arrowWidth;
+        const stripTop = visibleTop + 140;
+        const stripHeight = 148;
         const stripCenterY = stripTop + stripHeight / 2;
 
-        this.foodBarBg = this.add.rectangle(width / 2, stripCenterY, barWidth, stripHeight, 0xf7cc85, 0.82)
-            .setStrokeStyle(4, 0x5E412F).setDepth(1);
+        this.foodBarShadow = this.add.rectangle(width / 2 + 8, stripCenterY + 8, barWidth, stripHeight, COLORS.ink, 0.9)
+            .setDepth(1);
+        this.foodBarBg = this.add.rectangle(width / 2, stripCenterY, barWidth, stripHeight, COLORS.paper, 0.96)
+            .setStrokeStyle(4, COLORS.ink)
+            .setDepth(2);
+        this.foodBarAccent = this.add.rectangle(width / 2, stripCenterY - stripHeight / 2 + 14, barWidth - 18, 12, COLORS.cereal, 1)
+            .setDepth(2);
 
         this.foodContainer = this.add.container(viewportX, visibleTop).setDepth(5);
     }
 
     private populateFoodBar(foods: FoodItem[]) {
         const { width } = this.scale;
-        
-        const barWidth    = Math.round(width * 0.82);
-        const arrowWidth  = 64;
-        const viewportW   = barWidth - arrowWidth * 2;
+
+        const barWidth = Math.round(width * 0.82);
+        const arrowWidth = 64;
+        const viewportW = barWidth - arrowWidth * 2;
 
         const contentSpan = (foods.length - 1) * FOOD_ITEM_SPACING + FOOD_ITEM_SIZE;
         const xPad = Math.max(0, (viewportW - contentSpan) / 2);
@@ -490,18 +604,18 @@ export class Nivel2Scene extends Phaser.Scene {
                 fontFamily: 'Arial, sans-serif', stroke: '#5E412F', strokeThickness: 4,
             }).setOrigin(0.5).setAlpha(0);
 
-            const categoria = item.category === 'cereal'  ? 'cereal'
-                            : item.category === 'legume'  ? 'leguminosa'
-                            : 'sebo';
+            const categoria = item.category === 'cereal' ? 'cereal'
+                : item.category === 'legume' ? 'leguminosa'
+                    : 'sebo';
 
             this.input.setDraggable(sprite);
-            sprite.setData('categoria',   categoria);
-            sprite.setData('localHomeX',  localX);
-            sprite.setData('localHomeY',  localY);
-            sprite.setData('lastValidX',  localX);
-            sprite.setData('lastValidY',  localY);
+            sprite.setData('categoria', categoria);
+            sprite.setData('localHomeX', localX);
+            sprite.setData('localHomeY', localY);
+            sprite.setData('lastValidX', localX);
+            sprite.setData('lastValidY', localY);
             sprite.setData('fromFoodBar', true);
-            sprite.setData('texto',       texto);
+            sprite.setData('texto', texto);
 
             this.foodContainer.add([sprite, texto]);
 
@@ -548,7 +662,7 @@ export class Nivel2Scene extends Phaser.Scene {
             if (!this.waveInProgress) return;
 
             const categoriaItem = gameObject.getData('categoria') as string;
-            const categoriaZona = dropZone.getData('categoria')   as string;
+            const categoriaZona = dropZone.getData('categoria') as string;
 
             if (categoriaItem === categoriaZona) {
                 const targetPanel = categoriaZona === 'cereal' ? this.segmentoCereales : this.segmentoLeguminosas;
@@ -564,8 +678,8 @@ export class Nivel2Scene extends Phaser.Scene {
                 gameObject.clearTint();
                 this.input.setDraggable(gameObject, false);
                 gameObject.disableInteractive();
-                gameObject.setData('placed',   true);
-                gameObject.setData('basket',   targetPanel);
+                gameObject.setData('placed', true);
+                gameObject.setData('basket', targetPanel);
                 gameObject.setData('slotRelY', gameObject.y - targetPanel.y);
                 this.placedFoods.push(gameObject);
 
@@ -618,7 +732,7 @@ export class Nivel2Scene extends Phaser.Scene {
     // ─── RETURN TO BAR ────────────────────────────────────────────────────────
 
     private returnToFoodBar(gameObject: Phaser.GameObjects.Image) {
-        const texto      = gameObject.getData('texto')     as Phaser.GameObjects.Text | undefined;
+        const texto = gameObject.getData('texto') as Phaser.GameObjects.Text | undefined;
         const localHomeX = gameObject.getData('localHomeX') as number;
         const localHomeY = gameObject.getData('localHomeY') as number;
         const targetX = this.foodContainer.x + localHomeX;
@@ -647,7 +761,7 @@ export class Nivel2Scene extends Phaser.Scene {
     // ─── INVENTORY SLOTS ──────────────────────────────────────────────────────
 
     private static readonly SLOT_COL_OFFSETS = [-240, -80, 80, 240];
-    private static readonly SLOT_ROW_OFFSETS = [-154,  12, 185];
+    private static readonly SLOT_ROW_OFFSETS = [-154, 12, 185];
 
     private getInventorySlotPositions(panel: Phaser.GameObjects.Image) {
         // Always use cereales scaleX (0.60) — leguminosas uses setDisplaySize so its
@@ -665,7 +779,7 @@ export class Nivel2Scene extends Phaser.Scene {
         panel: Phaser.GameObjects.Image, nearX: number, nearY: number,
         excluding?: Phaser.GameObjects.Image
     ): { x: number; y: number } | null {
-        const slots    = this.getInventorySlotPositions(panel);
+        const slots = this.getInventorySlotPositions(panel);
         const occupied = this.placedFoods.filter(p => p !== excluding)
             .map(p => ({ x: Math.round(p.x), y: Math.round(p.y) }));
         let best: { x: number; y: number } | null = null;
@@ -694,12 +808,12 @@ export class Nivel2Scene extends Phaser.Scene {
 
                 const txt = this.add.text(cx, cy,
                     'Este es el nivel 2,\nCereales vs Leguminosas.\nEn este nivel desbloquearás\ntus lotes de alimentos del\ntipo cereales y leguminosas.',
-                    { fontSize: '27px', color: '#000000', fontFamily: 'Gill Sans MT', align: 'left', wordWrap: { width: 400 } }
+                    { fontSize: '27px', color: '#000000', fontFamily: FONT_MONO, align: 'left', wordWrap: { width: 400 } }
                 ).setOrigin(0.5).setDepth(12).setAlpha(0);
 
                 const pad = 24;
                 const bx = cx - txt.width / 2 - pad, by = cy - txt.height / 2 - pad;
-                const bw = txt.width + pad * 2,       bh = txt.height + pad * 2;
+                const bw = txt.width + pad * 2, bh = txt.height + pad * 2;
 
                 const bubble = this.add.graphics().setDepth(11).setAlpha(0);
                 bubble.fillStyle(0xFFFAED, 0.97);
@@ -732,9 +846,9 @@ export class Nivel2Scene extends Phaser.Scene {
 
     private clearToast() {
         if (this.toastTimer) { this.toastTimer.destroy(); this.toastTimer = undefined; }
-        if (this.toastBg)    { this.tweens.killTweensOf(this.toastBg);    this.toastBg.destroy();    this.toastBg    = undefined; }
+        if (this.toastBg) { this.tweens.killTweensOf(this.toastBg); this.toastBg.destroy(); this.toastBg = undefined; }
         if (this.toastLabel) { this.tweens.killTweensOf(this.toastLabel); this.toastLabel.destroy(); this.toastLabel = undefined; }
-        if (this.toastTxt)   { this.tweens.killTweensOf(this.toastTxt);   this.toastTxt.destroy();   this.toastTxt   = undefined; }
+        if (this.toastTxt) { this.tweens.killTweensOf(this.toastTxt); this.toastTxt.destroy(); this.toastTxt = undefined; }
     }
 
     private showEducationalFeedback(itemCat: string, zoneCat: string) {
@@ -826,17 +940,6 @@ export class Nivel2Scene extends Phaser.Scene {
         const visibleBottom = visibleTop + window.innerHeight / screenScale;
 
         if (this.txtInstrucciones) this.txtInstrucciones.setY(visibleTop + 75);
-        
-        if (this.txtTiempo) {
-            this.txtTiempo.setPosition(visibleLeft + visibleWidth - 110, visibleTop + 60);
-            this.timerText.setPosition(visibleLeft + visibleWidth - 110, visibleTop + 90);
-            this.timerWarningText.setPosition(visibleLeft + visibleWidth - 110, visibleTop + 126);
-        }
-
-        if (this.txtVidas) {
-            this.txtVidas.setPosition(visibleLeft + 220, visibleTop + 60);
-            this.livesText.setPosition(visibleLeft + 220, visibleTop + 90);
-        }
 
         if (this.platon && !this.tweens.isTweening(this.platon)) {
             if (this.platon.x < width / 2) {
@@ -859,7 +962,10 @@ export class Nivel2Scene extends Phaser.Scene {
         if (this.foodBarBg) {
             const stripTop = visibleTop + 140;
             const stripHeight = 148;
-            this.foodBarBg.setY(stripTop + stripHeight / 2);
+            const stripCenterY = stripTop + stripHeight / 2;
+            this.foodBarShadow.setY(stripCenterY + 8);
+            this.foodBarBg.setY(stripCenterY);
+            this.foodBarAccent.setY(stripCenterY - stripHeight / 2 + 14);
             if (this.foodContainer) {
                 this.foodContainer.setY(visibleTop);
             }
@@ -877,16 +983,16 @@ export class Nivel2Scene extends Phaser.Scene {
 
         if (this.zonaBordeCereales) {
             this.zonaBordeCereales.y = this.segmentoCereales.y;
-            this.zonaCereales.y      = this.segmentoCereales.y + this.zcOffY;
+            this.zonaCereales.y = this.segmentoCereales.y + this.zcOffY;
         }
         if (this.zonaBordeLeguminosas) {
             this.zonaBordeLeguminosas.y = this.segmentoLeguminosas.y;
-            this.zonaLeguminosas.y      = this.segmentoLeguminosas.y + this.zlOffY;
+            this.zonaLeguminosas.y = this.segmentoLeguminosas.y + this.zlOffY;
         }
 
         for (const food of this.placedFoods) {
             const basket = food.getData('basket') as Phaser.GameObjects.Image | undefined;
-            const relY   = food.getData('slotRelY') as number | undefined;
+            const relY = food.getData('slotRelY') as number | undefined;
             if (basket === undefined || relY === undefined) continue;
             food.y = basket.y + relY;
             const texto = food.getData('texto') as Phaser.GameObjects.Text | undefined;

@@ -1,30 +1,16 @@
 import * as Phaser from 'phaser';
-import { PrefabButtons } from '../../componentes/PrefabButtons';
+import { BACK_BUTTON_WIDTH, PrefabButtons } from '../../componentes/PrefabButtons';
+import { CLOSE_BUTTON_PATH, CLOSE_BUTTON_TEXTURE } from '../../componentes/CloseButton';
 import { PlayerService } from '../../services/PlayerService';
 import type { Sexo } from '../../types/player-types';
+import { MAIN_MENU_COLORS as COLORS } from '../../config/gameColors';
+import { HEX } from '../../config/gameColors';
 
 const WIDTH = 1920;
 const HEIGHT = 1080;
 const MENU_KITCHEN_BACKGROUND_ALPHA = 1;
 const MENU_SCRIM_CENTER_ALPHA = 0.48;
 const MENU_SCRIM_EDGE_ALPHA = 0.70;
-
-const COLORS = {
-    bg: 0xfffbf0,
-    bgCard: 0xffffff,
-    ink: 0x2e3142,
-    inkHex: '#2E3142',
-    ink2Hex: '#4F5266',
-    inkMuteHex: '#9094A4',
-    frutas: 0x7ad3a0,
-    frutasTint: 0xe4f4ea,
-    cereales: 0xf9cd55,
-    cerealesTint: 0xfcefc9,
-    cerealesDimHex: '#A6811A',
-    legumin: 0xff9580,
-    accent: 0x8a95e0,
-    accentTint: 0xe6e9f6,
-};
 
 const FONT_DISPLAY = '"Pixelify Sans", Arial, sans-serif';
 const FONT_MONO = '"VT323", "Courier New", monospace';
@@ -36,10 +22,11 @@ type ModalButtonConfig = {
 
 type ModalButtonLayoutConfig = ModalButtonConfig & {
     isCancel: boolean;
+    isBack: boolean;
     width: number;
 };
 
-type FormButtonVariant = 'save' | 'continue' | 'cancel';
+type FormButtonVariant = 'save' | 'continue';
 
 const FOOD_FLOATS = [
     { key: 'menu_apple', path: '/iconsFood/frutas/apple.png', x: 154, y: 130, angle: -12, scale: 1.35 },
@@ -88,6 +75,9 @@ export class MainMenu extends Phaser.Scene {
         }
         if (!this.textures.exists('CancelButton')) {
             this.load.image('CancelButton', '/assets/Buttons/Cancel.png');
+        }
+        if (!this.textures.exists(CLOSE_BUTTON_TEXTURE)) {
+            this.load.image(CLOSE_BUTTON_TEXTURE, CLOSE_BUTTON_PATH);
         }
 
         FOOD_FLOATS.forEach(food => {
@@ -297,7 +287,7 @@ export class MainMenu extends Phaser.Scene {
     private createTitleStack(): void {
         const logo = this.add.container(WIDTH / 2, 482).setDepth(6);
         logo.add([
-            this.createLogoLayer(12, 12, 'COLORS.cereales'),
+            this.createLogoLayer(12, 12, COLORS.cerealesDimHex),
             this.createLogoLayer(6, 6, '#7AD3A0'),
             this.createLogoLayer(0, 0, '#FFFFFF'),
         ]);
@@ -402,7 +392,11 @@ export class MainMenu extends Phaser.Scene {
     }
 
     private createModalButton(button: ModalButtonLayoutConfig, x: number): Phaser.GameObjects.Container {
-        const factory = button.isCancel ? PrefabButtons.cerrar : PrefabButtons.continuar;
+        const factory = button.isBack
+            ? PrefabButtons.volver
+            : button.isCancel
+                ? PrefabButtons.cerrar
+                : PrefabButtons.continuar;
 
         return factory(this, x, 104, button.onClick, {
             text: button.label,
@@ -417,13 +411,6 @@ export class MainMenu extends Phaser.Scene {
             this.scene.start("TutorialScene")
         })
         button.type = 'submit';
-        return button;
-    }
-
-    private createCloseFormButton(): HTMLButtonElement {
-        const button = this.createFormButton('CERRAR', 'cancel');
-        button.type = 'button';
-        button.addEventListener('click', () => this.removePlayerFormOverlay());
         return button;
     }
 
@@ -446,6 +433,7 @@ export class MainMenu extends Phaser.Scene {
                     : 'No se pudo seleccionar el jugador.';
             }
         });
+        button.style.justifySelf = 'center';
         return button;
     }
 
@@ -464,7 +452,7 @@ export class MainMenu extends Phaser.Scene {
         button.style.backgroundSize = '100% 100%';
         button.style.padding = style.padding;
         button.style.fontFamily = '"Pixelify Sans", Arial, sans-serif';
-        button.style.fontSize = '18px';
+        button.style.fontSize = style.fontSize;
         button.style.fontWeight = '700';
         button.style.cursor = 'pointer';
         button.style.display = 'inline-flex';
@@ -472,6 +460,23 @@ export class MainMenu extends Phaser.Scene {
         button.style.justifyContent = 'center';
         button.style.textAlign = 'center';
         button.style.lineHeight = '1';
+        button.style.whiteSpace = 'nowrap';
+        button.style.imageRendering = 'pixelated';
+        button.style.transition = 'transform 120ms ease';
+
+        button.addEventListener('mouseenter', () => {
+            this.hoverSound?.play();
+            button.style.transform = 'scale(1.03)';
+        });
+        button.addEventListener('mouseleave', () => {
+            button.style.transform = 'scale(1)';
+        });
+        button.addEventListener('mousedown', () => {
+            button.style.transform = 'scale(0.96)';
+        });
+        button.addEventListener('mouseup', () => {
+            button.style.transform = 'scale(1.03)';
+        });
 
         return button;
     }
@@ -482,33 +487,26 @@ export class MainMenu extends Phaser.Scene {
         color: string;
         backgroundImage: string;
         padding: string;
+        fontSize: string;
     } {
-        if (variant === 'cancel') {
-            return {
-                width: '153px',
-                height: '54px',
-                color: '#FFFFFF',
-                backgroundImage: '/assets/Buttons/Cancel.png',
-                padding: '0 12px 4px',
-            };
-        }
-
         if (variant === 'continue') {
             return {
-                width: '153px',
-                height: '54px',
+                width: '190px',
+                height: '67px',
                 color: '#2E3142',
                 backgroundImage: '/assets/Buttons/MainButton.png',
-                padding: '0 18px 4px',
+                padding: '0 20px 5px',
+                fontSize: '18px',
             };
         }
 
         return {
-            width: '153px',
-            height: '54px',
+            width: '220px',
+            height: '78px',
             color: '#2E3142',
             backgroundImage: '/assets/Buttons/MainButton.png',
-            padding: '0 18px 4px',
+            padding: '0 24px 6px',
+            fontSize: '18px',
         };
     }
 
@@ -517,7 +515,7 @@ export class MainMenu extends Phaser.Scene {
         const left = this.add.text(-174, 0, 'O PRESIONA', {
             fontFamily: FONT_MONO,
             fontSize: '22px',
-            color: COLORS.ink2Hex,
+            color: HEX.ink,
         }).setOrigin(0.5);
 
         const kbdShadow = this.add.rectangle(-28, 3, 76, 26, COLORS.ink, 1);
@@ -526,13 +524,13 @@ export class MainMenu extends Phaser.Scene {
         const kbdText = this.add.text(-30, 0, '[SPACE]', {
             fontFamily: FONT_MONO,
             fontSize: '20px',
-            color: COLORS.inkHex,
+            color: HEX.ink,
         }).setOrigin(0.5);
 
         const right = this.add.text(110, 0, 'PARA EMPEZAR', {
             fontFamily: FONT_MONO,
             fontSize: '22px',
-            color: COLORS.ink2Hex,
+            color: HEX.ink, 
         }).setOrigin(0.5);
 
         hint.add([left, kbdShadow, kbd, kbdText, right]);
@@ -653,12 +651,43 @@ export class MainMenu extends Phaser.Scene {
         panel.style.boxShadow = '10px 10px 0 #2E3142';
         panel.style.padding = '24px';
         panel.style.color = '#2E3142';
+        panel.style.position = 'relative';
+
+        const closeButton = document.createElement('button');
+        closeButton.type = 'button';
+        closeButton.setAttribute('aria-label', 'Cerrar');
+        closeButton.style.position = 'absolute';
+        closeButton.style.top = '10px';
+        closeButton.style.right = '10px';
+        closeButton.style.width = '54px';
+        closeButton.style.height = '54px';
+        closeButton.style.padding = '0';
+        closeButton.style.border = '0';
+        closeButton.style.background = 'transparent';
+        closeButton.style.backgroundImage = 'url("/assets/Buttons/Close.png")';
+        closeButton.style.backgroundRepeat = 'no-repeat';
+        closeButton.style.backgroundPosition = 'center';
+        closeButton.style.backgroundSize = '100% 100%';
+        closeButton.style.cursor = 'pointer';
+        closeButton.style.imageRendering = 'pixelated';
+        closeButton.addEventListener('mouseenter', () => {
+            this.hoverSound?.play();
+            closeButton.style.transform = 'scale(1.08)';
+        });
+        closeButton.addEventListener('mouseleave', () => {
+            closeButton.style.transform = 'scale(1)';
+        });
+        closeButton.addEventListener('click', () => {
+            this.clickSound?.play();
+            this.removePlayerFormOverlay();
+        });
 
         const title = document.createElement('h2');
         title.textContent = jugadores.length > 0 ? 'SELECCIONAR JUGADOR' : 'CREAR JUGADOR';
         title.style.margin = '0 0 8px';
         title.style.fontSize = '32px';
         title.style.lineHeight = '1';
+        title.style.paddingRight = '64px';
 
         const description = document.createElement('p');
         description.textContent = jugadores.length > 0
@@ -713,11 +742,9 @@ export class MainMenu extends Phaser.Scene {
         actions.style.gap = '12px';
         actions.style.marginTop = '8px';
         actions.style.flexWrap = 'wrap';
+        actions.style.justifyContent = 'center';
 
-        actions.append(
-            this.createSaveAndPlayButton(),
-            this.createCloseFormButton()
-        );
+        actions.append(this.createSaveAndPlayButton());
 
         if (jugadores.length > 0) {
             const existingBlock = this.createExistingPlayersBlock(jugadores, errorBox);
@@ -755,7 +782,7 @@ export class MainMenu extends Phaser.Scene {
             }
         });
 
-        panel.append(title, description, errorBox, form);
+        panel.append(closeButton, title, description, errorBox, form);
         overlay.append(panel);
         document.body.append(overlay);
         this.playerFormOverlay = overlay;
@@ -896,19 +923,33 @@ export class MainMenu extends Phaser.Scene {
         }).setOrigin(0.5);
         this.fitTextToBox(bodyText, bodyMaxHeight, 28, 18);
 
-        modal.add([overlay, shadow, bg, titleText, bodyText]);
-
-        const modalButtons: ModalButtonLayoutConfig[] = buttons.map(button => {
-            const isCancel = this.isCancelButtonLabel(button.label);
-            return {
-                ...button,
-                isCancel,
-                width: isCancel ? 153 : 190,
-            };
+        const closeButton = PrefabButtons.cerrarIcono(this, modalWidth / 2 - 18, -modalHeight / 2 + 18, () => {
+            this.closeModal();
+        }, {
+            size: 54,
+            hoverSound: this.hoverSound,
+            clickSound: this.clickSound,
         });
+
+        modal.add([overlay, shadow, bg, titleText, bodyText, closeButton]);
+
+        const modalButtons: ModalButtonLayoutConfig[] = buttons
+            .filter(button => !this.isCloseOnlyButtonLabel(button.label))
+            .map(button => {
+                const isCancel = this.isCancelButtonLabel(button.label);
+                const isBack = this.isBackButtonLabel(button.label);
+                return {
+                    ...button,
+                    isCancel,
+                    isBack,
+                    width: isBack ? BACK_BUTTON_WIDTH : isCancel ? 153 : 190,
+                };
+            });
         const buttonGap = 16;
-        const totalWidth = modalButtons.reduce((sum, button) => sum + button.width, 0)
-            + (modalButtons.length - 1) * buttonGap;
+        const totalWidth = modalButtons.length > 0
+            ? modalButtons.reduce((sum, button) => sum + button.width, 0)
+            + (modalButtons.length - 1) * buttonGap
+            : 0;
         let nextButtonX = -totalWidth / 2;
 
         modalButtons.forEach(button => {
@@ -923,6 +964,14 @@ export class MainMenu extends Phaser.Scene {
 
     private isCancelButtonLabel(label: string): boolean {
         return ['CERRAR', 'CANCELAR', 'REGRESAR', 'VOLVER'].includes(label.trim().toUpperCase());
+    }
+
+    private isCloseOnlyButtonLabel(label: string): boolean {
+        return label.trim().toUpperCase() === 'CERRAR';
+    }
+
+    private isBackButtonLabel(label: string): boolean {
+        return ['REGRESAR', 'VOLVER'].includes(label.trim().toUpperCase());
     }
 
     private fitTextToBox(

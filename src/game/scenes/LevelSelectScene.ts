@@ -72,8 +72,8 @@ const SECTIONS: SectionConfig[] = [
         rightAssetKey: 'roadmap_fruits',
         leftAssetPath: '/iconsFood/verduras/broccoli.png',
         rightAssetPath: '/iconsFood/frutas/apple.png',
-        progressText: '0/8',
-        progressValue: 0 / 8,
+        progressText: '0/1',
+        progressValue: 0 / 1,
         unlocked: true,
         sceneKey: 'Nivel1Scene',
     },
@@ -90,8 +90,8 @@ const SECTIONS: SectionConfig[] = [
         rightAssetKey: 'roadmap_cereals',
         leftAssetPath: '/iconsFood/leguminosas/beans.png',
         rightAssetPath: '/iconsFood/cereales/corn.png',
-        progressText: '0/8',
-        progressValue: 0,
+        progressText: '0/1',
+        progressValue: 0/1,
         unlocked: false,
         sceneKey: 'Nivel2Scene',
     },
@@ -458,9 +458,9 @@ export class LevelSelectScene extends Phaser.Scene {
         }
 
         const footer = this.add.text(panelX, panelY, 'CONOCER  --->  CLASIFICAR', {
-            fontFamily: FONT_MONO,
+            fontFamily: FONT_DISPLAY,
             fontSize: '18px',
-            color: active ? HEX.mutedInk : HEX.ink,
+            color: HEX.ink
         }).setOrigin(0.5);
 
         parent.add([panel, route]);
@@ -617,7 +617,7 @@ export class LevelSelectScene extends Phaser.Scene {
             fontStyle: 'bold',
             color: HEX.ink,
         }).setOrigin(0, 0.5);
-        const current = this.add.text(-640, -27, 'Clasificar', {
+        const current = this.add.text(-638, -27, 'Clasificar', {
             fontFamily: FONT_DISPLAY,
             fontSize: '30px',
             fontStyle: 'bold',
@@ -676,7 +676,7 @@ export class LevelSelectScene extends Phaser.Scene {
 
         PrefabButtons.secundario(this, 200, 90, () => this.scene.start('TutorialScene'), {
             text: '< Presentacion',
-            width: 340,
+            width: 275,
             fontSize: 30,
             hoverSound: this.hoverSound,
             clickSound: this.clickSound,

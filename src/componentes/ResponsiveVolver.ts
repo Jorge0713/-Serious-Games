@@ -1,4 +1,5 @@
 import * as Phaser from 'phaser';
+import { BACK_BUTTON_WIDTH } from './PrefabButtons';
 
 export function makeResponsiveVolver(scene: Phaser.Scene, btn: Phaser.GameObjects.Image | Phaser.GameObjects.Sprite) {
     const updatePosition = () => {
@@ -10,7 +11,7 @@ export function makeResponsiveVolver(scene: Phaser.Scene, btn: Phaser.GameObject
         const visibleTop = (1080 - window.innerHeight / scale) / 2;
 
         // Queremos que el botón mida 140px físicos en la pantalla, igual que en React
-        const targetScale = 140 / (btn.width * scale);
+        const targetScale = BACK_BUTTON_WIDTH / (btn.width * scale);
         btn.setScale(targetScale);
 
         // Posicionar a 20px de la esquina superior izquierda, igual que React (top: 20px, left: 20px)

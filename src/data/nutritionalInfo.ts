@@ -1923,7 +1923,7 @@ export const nutritionalInfo: FoodItem[] = ([
         name: 'Corn',
         nameES: 'Maíz',
         category: 'cereal',
-        image: '/iconsFood/cereales/corn_yellow.png',
+        image: '/iconsFood/cereales/corn.png',
         description: 'Rico en vitaminas del grupo B y minerales esenciales. Su fibra dietética ayuda al tracto digestivo y sus antioxidantes (luteína) protegen la salud ocular.'
     },
     {

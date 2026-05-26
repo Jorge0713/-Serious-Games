@@ -113,7 +113,7 @@ export class CrucigramaSaludableScene extends Phaser.Scene {
         btnVolver.setScrollFactor(0); // Fijo en pantalla
 
         hoverScale(this, btnVolver, {
-            scaleOver: 0.45,
+            scaleOver: btnVolver.scale * 1.04,
             duration: 150,
             hoverSound: this.hoverSound
         });
