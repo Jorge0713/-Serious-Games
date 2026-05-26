@@ -1622,7 +1622,7 @@ export class Nivel1Scene extends Phaser.Scene {
     }
 
     private mostrarPlaton(esFeliz: boolean) {
-        const { width, height } = this.scale;
+        const { height } = this.scale;
         this.tweens.killTweensOf(this.platon);
         this.platon.setTexture(esFeliz ? "platon-feliz" : "platon-triste");
         // Always snap x back to the gameplay position (after tutorial it ends off-screen right)

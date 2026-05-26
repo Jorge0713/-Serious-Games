@@ -1,6 +1,6 @@
 import * as Phaser from 'phaser';
 import { FONT_DISPLAY, FONT_MONO } from '../../config/gameFonts';
-import { BACK_BUTTON_HEIGHT, BACK_BUTTON_WIDTH } from '../../componentes/PrefabButtons';
+
 
 interface LevelCompleteOverlayConfig {
     title: string;
