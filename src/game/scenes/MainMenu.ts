@@ -91,6 +91,18 @@ export class MainMenu extends Phaser.Scene {
     }
 
     create(): void {
+
+                        // BOTÓN PAUSA
+        PrefabButtons.icono(this, 1860, 100, () => {
+            this.scene.pause();
+            this.scene.launch('PauseScene', { previousScene: this.scene.key });
+        }, {
+            width:60,
+            height:60,
+            text: 'II',
+            fontSize: '28px'
+        }).setDepth(20);
+
         this.cameras.main.setBackgroundColor('#FFFBF0');
         this.createGeneratedTextures();
         this.createBackground();
@@ -108,6 +120,8 @@ export class MainMenu extends Phaser.Scene {
         }
 
         this.createMenuContent();
+
+
     }
 
     private createMenuContent(): void {

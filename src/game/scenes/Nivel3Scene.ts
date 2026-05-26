@@ -982,7 +982,9 @@ export class Nivel3Scene extends Phaser.Scene {
     }
 
     private mostrarPlaton(esFeliz: boolean) {
+        this.tweens.killTweensOf(this.platon);
         this.platon.setTexture(esFeliz ? 'platon-feliz' : 'platon-triste');
+        this.platon.setPosition(300, this.scale.height - 200);
         this.tweens.add({
             targets: this.platon, alpha: 1, y: this.scale.height - 250, duration: 300, ease: 'Back.easeOut',
             onComplete: () => {

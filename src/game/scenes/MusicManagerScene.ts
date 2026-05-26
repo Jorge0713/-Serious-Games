@@ -20,7 +20,7 @@ export class MusicManagerScene extends Phaser.Scene {
     } else {
       this.bgMusic = this.sound.add("menuMusic", {
         loop: true,
-        volume: 0,
+        volume: 0.2,
       });
 
       try { this.bgMusic.play(); } catch { void 0; }

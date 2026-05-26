@@ -18,10 +18,6 @@ interface TutorialRouteOptions {
   finishLabel?: string;
 }
 
-interface PreTutorialConceptosOptions {
-  nextLevel?: string;
-}
-
 declare global {
   interface Window {
     __phaserGame?: Phaser.Game;
@@ -32,7 +28,7 @@ declare global {
     goToNivel1?: () => void;
     goToNivel2?: () => void;
     goToNivel3?: () => void;
-    showPreTutorialConceptos?: (options?: PreTutorialConceptosOptions) => void;
+    showPreTutorialConceptos?: (data?: any) => void;
   }
 }
 
@@ -87,19 +83,11 @@ const getDefaultTitle = (categories: FoodCategory[]): string => {
 };
 
 const getDefaultNextScene = (categories: FoodCategory[]): string => {
-  if (categories.includes('vegetable') && categories.includes('fruit')) {
-    return 'Nivel1Scene';
-  }
-
-  if (categories.includes('legume') && categories.includes('cereal')) {
-    return 'Nivel2Scene';
-  }
-
   if (categories.includes('animal')) {
     return 'Nivel3Scene';
   }
 
-  if (categories.includes('cereal') || categories.includes('legume')) {
+  if (categories.includes('legume') || categories.includes('cereal')) {
     return 'Nivel2Scene';
   }
 
@@ -107,20 +95,20 @@ const getDefaultNextScene = (categories: FoodCategory[]): string => {
 };
 
 const getDefaultFinishLabel = (sceneKey: string): string => {
-  if (sceneKey === 'Nivel2Scene') return 'Empezar Nivel 2';
-  if (sceneKey === 'Nivel3Scene') return 'Empezar Nivel 3';
-  if (sceneKey === 'LevelSelectScene') return 'Volver al mapa';
-  return 'Empezar Nivel 1';
+  if (sceneKey === 'Nivel2Scene') return 'Ir al Nivel 2';
+  if (sceneKey === 'Nivel3Scene') return 'Ir al Nivel 3';
+
+  return 'Ir al Nivel 1';
 };
 
 function App() {
   const [showTutorialUI, setShowTutorialUI] = useState(false);
   const [showConceptosUI, setShowConceptosUI] = useState(false);
+  const [conceptosNextScene, setConceptosNextScene] = useState('CrucigramaSaludableScene');
   const [currentSectionIndex, setCurrentSectionIndex] = useState(0);
   const [activeTutorialSections, setActiveTutorialSections] = useState<TutorialSection[]>(defaultTutorialSections);
   const [tutorialNextScene, setTutorialNextScene] = useState('Nivel1Scene');
   const [tutorialFinishLabel, setTutorialFinishLabel] = useState(getDefaultFinishLabel('Nivel1Scene'));
-  const [conceptosNextScene, setConceptosNextScene] = useState('CrucigramaSaludableScene');
 
   const currentSection = activeTutorialSections[currentSectionIndex] ?? activeTutorialSections[0] ?? defaultTutorialSections[0];
 
@@ -129,13 +117,28 @@ function App() {
     setShowConceptosUI(false);
 
     const game = window.__phaserGame;
-    if (!game) return;
+    if (!game) {
+      console.warn('No phaser game instance found.');
+      return;
+    }
 
     game.input.enabled = true;
     game.scene.stop('TutorialScene');
     game.scene.stop('LevelSelectScene');
     game.scene.stop('PreTutorialConceptosScene');
-    game.scene.start(sceneKey);
+    game.scene.stop('MainMenu');
+    game.scene.stop('CrucigramaSaludableScene');
+    game.scene.stop('PlatoBalanceadoScene');
+    game.scene.stop('Nivel1Scene');
+    game.scene.stop('Nivel2Scene');
+    game.scene.stop('Nivel3Scene');
+    game.scene.stop('PauseScene');
+    
+    setTimeout(() => {
+      game.scene.start(sceneKey);
+      game.scene.bringToTop(sceneKey);
+      game.scene.resume(sceneKey);
+    }, 50);
   }, []);
 
   const startNivel1 = useCallback(() => {
@@ -185,16 +188,15 @@ function App() {
     window.goToNivel1 = startNivel1;
     window.goToNivel2 = startNivel2;
     window.goToNivel3 = startNivel3;
-    window.showPreTutorialConceptos = (options: PreTutorialConceptosOptions = {}) => {
-      setConceptosNextScene(options.nextLevel ?? 'CrucigramaSaludableScene');
+    window.showPreTutorialConceptos = (data?: any) => {
+      if (data && data.nextLevel) {
+        setConceptosNextScene(data.nextLevel);
+      } else {
+        setConceptosNextScene('CrucigramaSaludableScene');
+      }
       setShowConceptosUI(true);
     };
   }, [startNivel1, startNivel2, startNivel3]);
-
-  const finishPreTutorialConceptos = useCallback(() => {
-    FlowProgressService.markCompleted('preTutorialConceptosCompleted');
-    startPhaserScene(conceptosNextScene);
-  }, [conceptosNextScene, startPhaserScene]);
 
   useEffect(() => {
     const game = window.__phaserGame;
@@ -236,8 +238,11 @@ function App() {
           onPointerUp={event => event.stopPropagation()}
         >
           <PreTutorialConceptos
-            onBackToMenu={() => startPhaserScene('LevelSelectScene')}
-            onFinish={finishPreTutorialConceptos}
+            onBackToMenu={() => startPhaserScene('MainMenu')}
+            onFinish={() => {
+              FlowProgressService.markCompleted('preTutorialConceptosCompleted');
+              startPhaserScene(conceptosNextScene);
+            }}
           />
         </div>
       )}

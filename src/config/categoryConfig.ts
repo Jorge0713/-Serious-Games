@@ -9,7 +9,7 @@ export const categoryConfig = {
   },
     legume: {
     label: 'Leguminosas',
-    emoji: '🫘'
+    emoji: '🥜'
   },
     cereal: {
     label: 'Cereales y Tubérculos',

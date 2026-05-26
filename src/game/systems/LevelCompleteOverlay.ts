@@ -97,9 +97,9 @@ export const showLevelCompleteOverlay = (
         color: COLOR_HEX.neutral,
     }).setOrigin(0.5).setVisible(Boolean(config.scoreText));
 
-    const isBackButton = config.buttonLabel.toLowerCase().includes('volver');
-    const buttonWidth = isBackButton ? BACK_BUTTON_WIDTH : 380;
-    const buttonHeight = isBackButton ? BACK_BUTTON_HEIGHT : 70;
+    // Todos los botones en el overlay final tendrán el tamaño grande
+    const buttonWidth = 380;
+    const buttonHeight = 70;
 
     const button = scene.add.rectangle(0, 180, buttonWidth, buttonHeight, COLORS.primary, 1)
         .setStrokeStyle(5, COLORS.tertiary)

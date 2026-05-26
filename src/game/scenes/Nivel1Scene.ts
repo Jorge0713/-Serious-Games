@@ -311,7 +311,7 @@ export class Nivel1Scene extends Phaser.Scene {
         }).setOrigin(0.5).setDepth(20);
 
         // PLATÓN
-        this.platon = this.add.image(width - 200, visibleBottom - 100, "platon-feliz")
+        this.platon = this.add.image(width - 1600, visibleBottom - 100, "platon-feliz")
             .setAlpha(0).setScale(0.8);
 
         // FOOD BAR (shell: background + buttons + container)
@@ -1626,7 +1626,7 @@ export class Nivel1Scene extends Phaser.Scene {
         this.tweens.killTweensOf(this.platon);
         this.platon.setTexture(esFeliz ? "platon-feliz" : "platon-triste");
         // Always snap x back to the gameplay position (after tutorial it ends off-screen right)
-        this.platon.setPosition(width - 300, height - 200);
+        this.platon.setPosition(300, height - 200);
         this.tweens.add({
             targets: this.platon,
             alpha: 1,
