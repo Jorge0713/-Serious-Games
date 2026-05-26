@@ -138,9 +138,9 @@ export class CrucigramaSaludableScene extends Phaser.Scene {
         }
         
         // Dibujamos con el top fijado debajo del título
-        this.drawGrid(-280, 170);
-        this.drawHintsPanel(400, 520);
-        this.drawActionButtons(400, 100);
+        this.drawGrid(-360, 170);
+        this.drawHintsPanel(438, 510);
+        this.drawActionButtons(440, 80);
 
         this.setupScrolling(scaleFactor);
     }
@@ -334,8 +334,8 @@ export class CrucigramaSaludableScene extends Phaser.Scene {
         const container = this.add.container(startX, startY);
         this.centerContainer.add(container);
 
-        const createBtn = (x: number, y: number, text: string, color: number, textColor: string, callback: () => void) => {
-            const w = 180;
+        const createBtn = (x: number, y: number, text: string, color: number, textColor: string, callback: () => void, btnWidth = 180) => {
+            const w = btnWidth;
             const h = 50;
             const btnCont = this.add.container(x, y);
             const bg = this.add.rectangle(0, 0, w, h, color)
@@ -369,6 +369,10 @@ export class CrucigramaSaludableScene extends Phaser.Scene {
         createBtn(-220, 0, 'C Limpiar', 0xEAE0D5, this.colorMaderaOscuro, () => this.limpiar());
         createBtn(0, 0, '💡 Pista', 0xF4A261, '#FFFFFF', () => this.darPista());
         createBtn(220, 0, '✓ Validar', this.colorVerde, '#FFFFFF', () => this.validar());
+        
+        createBtn(0, 65, 'Generar Nuevo Crucigrama', 0x457B9D, '#FFFFFF', () => {
+            this.scene.restart();
+        }, 320);
     }
 
     private setActiveCell(key: string) {
