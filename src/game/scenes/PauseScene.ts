@@ -72,25 +72,37 @@ export class PauseScene extends Phaser.Scene {
             this.setGlobalVolume(v);
         }, { text: '+', width: 50, height: 50 });
 
-        // Botón: Volver al Mapa
-        PrefabButtons.volver(this, width / 2, height / 2 + 150, () => {
-            this.clearCheckpointForPreviousScene();
-            this.scene.stop(this.previousSceneKey);
-            // Parar pre-tutoriales o audios adicionales si estaban corriendo
-            this.scene.stop();
-            this.sound.stopAll();
-            
-            // Volver al LevelSelectScene o MainMenu si veníamos de ahí
-            if (this.previousSceneKey !== 'LevelSelectScene' && this.previousSceneKey !== 'MainMenu') {
-                this.scene.start('LevelSelectScene');
-            } else {
-                this.scene.resume(this.previousSceneKey);
+        if (this.previousSceneKey === 'MainMenu') {
+            // En el menú principal: "SALIR DEL JUEGO" en rojo → cierra la ventana
+            PrefabButtons.volver(this, width / 2, height / 2 + 150, () => {
+                this.sound.stopAll();
+                window.close();
+            }, {
+                text: 'SALIR DEL JUEGO',
+                fontSize: 18,
+                textColor: '#D03B2C',
+            });
+        } else {
+            // Botón: Volver al Mapa
+            PrefabButtons.volver(this, width / 2, height / 2 + 150, () => {
+                this.clearCheckpointForPreviousScene();
+                this.scene.stop(this.previousSceneKey);
+                // Parar pre-tutoriales o audios adicionales si estaban corriendo
                 this.scene.stop();
-            }
-        }, {
-            text: 'VOLVER AL MAPA',
-            fontSize: 18
-        });
+                this.sound.stopAll();
+
+                // Volver al LevelSelectScene o MainMenu si veníamos de ahí
+                if (this.previousSceneKey !== 'LevelSelectScene' && this.previousSceneKey !== 'MainMenu') {
+                    this.scene.start('LevelSelectScene');
+                } else {
+                    this.scene.resume(this.previousSceneKey);
+                    this.scene.stop();
+                }
+            }, {
+                text: 'VOLVER AL MAPA',
+                fontSize: 18
+            });
+        }
     }
 
     private clearCheckpointForPreviousScene(): void {
