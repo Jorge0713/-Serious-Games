@@ -751,7 +751,7 @@ export class MainMenu extends Phaser.Scene {
                 }
 
                 this.removePlayerFormOverlay();
-                this.scene.start('LevelSelectScene');
+                this.scene.start('TutorialScene');
             } catch (error) {
                 errorBox.textContent = error instanceof Error
                     ? error.message

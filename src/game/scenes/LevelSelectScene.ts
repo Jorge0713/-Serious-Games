@@ -375,9 +375,16 @@ export class LevelSelectScene extends Phaser.Scene {
         SECTIONS.forEach((section, index) => {
             const x = left + index * (cardWidth + gap);
             const sectionProgress = this.getSectionCardProgress(section, progress);
+
+            let isUnlocked = false;
+            if (section.index === 1) isUnlocked = true;
+            else if (section.index === 2) isUnlocked = progress.tutorialFrutasDone;
+            else if (section.index === 3) isUnlocked = progress.tutorialCerealesDone;
+            else if (section.index === 4) isUnlocked = progress.tutorialAnimalDone;
+
             this.createSectionCard({
                 ...section,
-                unlocked: true,
+                unlocked: isUnlocked,
                 progressText: sectionProgress.text,
                 progressValue: sectionProgress.value,
             }, x, top, cardWidth, cardHeight);
@@ -933,6 +940,11 @@ export class LevelSelectScene extends Phaser.Scene {
     }
 
     private handleSectionSelection(section: SectionConfig): void {
+        if (!section.unlocked) {
+            this.showToast('Completa el nivel anterior para desbloquear.');
+            return;
+        }
+
         if (section.flow === 'concepts') {
             this.startConceptsFlow();
             return;
