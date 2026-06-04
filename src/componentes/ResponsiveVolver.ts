@@ -3,18 +3,18 @@ import { BACK_BUTTON_WIDTH } from './PrefabButtons';
 
 export function makeResponsiveVolver(scene: Phaser.Scene, btn: Phaser.GameObjects.Image | Phaser.GameObjects.Sprite) {
     const updatePosition = () => {
-        // En modo ENVELOP, la escala visual real de la pantalla
+        // Cálculo de la escala visual real en modo ENVELOP
         const scale = Math.max(window.innerWidth / 1920, window.innerHeight / 1080);
         
-        // Coordenadas en el mundo del juego que corresponden a la esquina superior izquierda de la ventana
+        // Coordenadas del mundo asociadas a la esquina superior izquierda visible
         const visibleLeft = (1920 - window.innerWidth / scale) / 2;
         const visibleTop = (1080 - window.innerHeight / scale) / 2;
 
-        // Queremos que el botón mida 140px físicos en la pantalla, igual que en React
+        // Configuración del tamaño físico del botón para igualar la medida usada en React
         const targetScale = BACK_BUTTON_WIDTH / (btn.width * scale);
         btn.setScale(targetScale);
 
-        // Posicionar a 20px de la esquina superior izquierda, igual que React (top: 20px, left: 20px)
+        // Posicionamiento a 20px de la esquina superior izquierda visible
         const gameX = visibleLeft + 20 / scale + btn.displayWidth / 2;
         const gameY = visibleTop + 20 / scale + btn.displayHeight / 2;
 

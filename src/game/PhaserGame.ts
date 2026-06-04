@@ -10,7 +10,6 @@ import { PreTutorialConceptosScene } from './scenes/PreTutorialConceptosScene'
 import { CrucigramaSaludableScene } from './scenes/CrucigramaSaludableScene'
 import { PauseScene } from './scenes/PauseScene'
 
-// Forzar actualización de TypeScript
 import { PlatoBalanceadoScene } from './scenes/PlatoBalanceadoScene'
 
 export const createGame = (parent: HTMLElement): Phaser.Game => {

@@ -1,4 +1,4 @@
-# Logs
+# Archivos de registro
 logs
 *.log
 npm-debug.log*
@@ -12,11 +12,11 @@ dist
 dist-ssr
 *.local
 
-# Editor directories and files
+# Directorios y archivos del editor
 .vscode/*
 !.vscode/extensions.json
 .idea
-# Logs
+# Archivos de registro
 logs
 *.log
 npm-debug.log*
@@ -30,7 +30,7 @@ dist
 dist-ssr
 *.local
 
-# Editor directories and files
+# Directorios y archivos del editor
 .vscode/*
 !.vscode/extensions.json
 .idea
@@ -41,5 +41,4 @@ dist-ssr
 *.sln
 *.sw?
 .claude/
-release/  
- 
+release/

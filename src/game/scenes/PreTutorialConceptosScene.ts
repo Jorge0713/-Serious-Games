@@ -7,11 +7,11 @@ export class PreTutorialConceptosScene extends Phaser.Scene {
 
     create(data?: Record<string, unknown>) {
         if (window.showPreTutorialConceptos) {
-            // Muestra la UI en React
+            // Renderizado de la UI administrada por React
             window.showPreTutorialConceptos(data);
         } else {
             console.warn('window.showPreTutorialConceptos no está definido. Asegúrate de estar en el entorno React.');
-            // Fallback en caso de estar fuera de React (ej. pruebas aisladas)
+            // Fallback para ejecuciones fuera del entorno React
             this.scene.start('CrucigramaSaludableScene');
         }
     }

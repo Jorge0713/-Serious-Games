@@ -86,7 +86,7 @@ export const showLevelCompleteOverlay = (
         align: 'center',
         wordWrap: { width: 760 },
         lineSpacing: 6,
-    }).setOrigin(0.5, 0); // Origin at top-center to grow downwards
+    }).setOrigin(0.5, 0); // Origen superior centrado para expandir el texto hacia abajo
 
     const scorePill = scene.add.rectangle(0, 84, 440, 54, COLORS.primary, 1)
         .setStrokeStyle(4, COLORS.tertiary)
@@ -97,7 +97,7 @@ export const showLevelCompleteOverlay = (
         color: COLOR_HEX.neutral,
     }).setOrigin(0.5).setVisible(Boolean(config.scoreText));
 
-    // Todos los botones en el overlay final tendrán el tamaño grande
+    // Tamaño uniforme para los botones del overlay final
     const buttonWidth = 380;
     const buttonHeight = 70;
 

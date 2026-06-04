@@ -29,7 +29,7 @@ export class Nivel2Scene extends Phaser.Scene {
     private placedFoods: Phaser.GameObjects.Image[] = [];
     private isTutorialActive = false;
 
-    // Wave state
+    // Estado de oleadas
     private waveNumber = 0;
     private waveCorrectTarget = 0;
     private waveAciertos = 0;
@@ -40,7 +40,7 @@ export class Nivel2Scene extends Phaser.Scene {
     private hoverSound!: Phaser.Sound.BaseSound;
     private clickSound!: Phaser.Sound.BaseSound;
 
-    // Timer
+    // Temporizador
     private timerSeconds = WAVE_TIME_NORMAL;
     private timerEvent?: Phaser.Time.TimerEvent;
     private timerText!: Phaser.GameObjects.Text;
@@ -48,11 +48,11 @@ export class Nivel2Scene extends Phaser.Scene {
     private tickingSound?: Phaser.Sound.BaseSound;
     private urgentMode = false;
 
-    // Lives
+    // Vidas
     private lives = 3;
     private livesText!: Phaser.GameObjects.Text;
 
-    // Basket drop zones (synced every frame)
+    // Zonas de drop sincronizadas por frame
     private zonaBordeCereales!: Phaser.GameObjects.Zone;
     private zonaCereales!: Phaser.GameObjects.Zone;
     private zcOffY = 0;
@@ -60,13 +60,13 @@ export class Nivel2Scene extends Phaser.Scene {
     private zonaLeguminosas!: Phaser.GameObjects.Zone;
     private zlOffY = 0;
 
-    // Educational feedback toast
+    // Toast de feedback educativo
     private toastBg?: Phaser.GameObjects.Rectangle;
     private toastLabel?: Phaser.GameObjects.Text;
     private toastTxt?: Phaser.GameObjects.Text;
     private toastTimer?: Phaser.Time.TimerEvent;
 
-    // UI Elements for resizing
+    // Elementos de UI para redimensionamiento
     private txtInstrucciones!: Phaser.GameObjects.Text;
     private lblCereales!: Phaser.GameObjects.Text;
     private lblLeguminosas!: Phaser.GameObjects.Text;
@@ -141,7 +141,7 @@ export class Nivel2Scene extends Phaser.Scene {
             .setDepth(-1);
 
 
-        // CANASTAS
+        // Canastas
         const escalaCanasta = 0.60;
         const canastaCentroY = visibleTop + (visibleBottom - visibleTop) * 0.65;
 
@@ -221,7 +221,7 @@ export class Nivel2Scene extends Phaser.Scene {
         this.startBasketIdleAnim(this.segmentoCereales, 0);
         this.startBasketIdleAnim(this.segmentoLeguminosas, 450);
 
-        // TIMER
+        // Temporizador
         const timerX = 1700;
         const timerY = height / 2;
         const timerPanelWidth = 250;
@@ -251,7 +251,7 @@ export class Nivel2Scene extends Phaser.Scene {
             fontStyle: 'bold', stroke: '#5E412F', strokeThickness: 5,
         }).setOrigin(0.5).setDepth(20).setVisible(false);
 
-        // VIDAS
+        // Vidas
         const livesX = timerX;
         const livesPanelWidth = 250;
         const livesPanelHeight = 112;
@@ -359,7 +359,7 @@ export class Nivel2Scene extends Phaser.Scene {
         });
     }
 
-    // ─── WAVE SYSTEM ──────────────────────────────────────────────────────────
+    // Sistema de oleadas
 
     private initWavePools() {
         const allCereales = nutritionalInfo.filter(f => f.category === 'cereal');
@@ -370,7 +370,7 @@ export class Nivel2Scene extends Phaser.Scene {
         this.remainingLeguminosas = Phaser.Utils.Array.Shuffle([...allLeguminosas]) as FoodItem[];
         this.seboPool = Phaser.Utils.Array.Shuffle([...allSebos]) as FoodItem[];
 
-        // Arroz primero en la oleada 1
+        // Arroz en primera posición durante la oleada inicial
         const riceIdx = this.remainingCereales.findIndex(f => f.id === 'rice');
         if (riceIdx > 0) {
             const [rice] = this.remainingCereales.splice(riceIdx, 1);
@@ -402,7 +402,7 @@ export class Nivel2Scene extends Phaser.Scene {
             this.waveInProgress = true;
         };
 
-        // Solo limpiar la canasta cuando alcance los 12 elementos exactos.
+        // Limpieza de la canasta al alcanzar exactamente 12 elementos.
         const cerealesFull    = this.placedFoods.filter(f => f.getData('basket') === this.segmentoCereales).length    >= 12;
         const leguminosasFull = this.placedFoods.filter(f => f.getData('basket') === this.segmentoLeguminosas).length >= 12;
 
@@ -535,7 +535,7 @@ export class Nivel2Scene extends Phaser.Scene {
         });
     }
 
-    // ─── TIMER ────────────────────────────────────────────────────────────────
+    // Temporizador
 
     private startTimer(seconds: number) {
         this.timerSeconds = seconds;
@@ -592,7 +592,7 @@ export class Nivel2Scene extends Phaser.Scene {
         this.executeGameOver('¡Se acabó el tiempo!');
     }
 
-    // ─── LIVES ────────────────────────────────────────────────────────────────
+    // Vidas
 
     private updateLivesDisplay() {
         if (!this.livesText) return;
@@ -630,7 +630,7 @@ export class Nivel2Scene extends Phaser.Scene {
         });
     }
 
-    // ─── FOOD BAR ─────────────────────────────────────────────────────────────
+    // Barra de alimentos
 
     private buildFoodBarShell(width: number, visibleTop: number = 0) {
         const barWidth = Math.round(width * 0.82);
@@ -700,7 +700,7 @@ export class Nivel2Scene extends Phaser.Scene {
         });
     }
 
-    // ─── DRAG & DROP ──────────────────────────────────────────────────────────
+    // Drag and drop
 
     private setupDragDrop() {
         this.input.on('dragstart', (pointer: Phaser.Input.Pointer, gameObject: Phaser.GameObjects.Image) => {
@@ -802,7 +802,7 @@ export class Nivel2Scene extends Phaser.Scene {
 
 
 
-    // ─── RETURN TO BAR ────────────────────────────────────────────────────────
+    // Retorno a la barra
 
     private returnToFoodBar(gameObject: Phaser.GameObjects.Image) {
         const texto = gameObject.getData('texto') as Phaser.GameObjects.Text | undefined;
@@ -831,15 +831,14 @@ export class Nivel2Scene extends Phaser.Scene {
         });
     }
 
-    // ─── INVENTORY SLOTS ──────────────────────────────────────────────────────
+    // Slots de inventario
 
     private static readonly SLOT_COL_OFFSETS = [-240, -80, 80, 240];
     private static readonly SLOT_ROW_OFFSETS = [-154, 12, 185];
 
     private getInventorySlotPositions(panel: Phaser.GameObjects.Image) {
-        // Always use cereales scaleX (0.60) — leguminosas uses setDisplaySize so its
-        // scaleX differs from 0.60, but both panels have identical display dimensions,
-        // so the slot pixel offsets must be the same for both.
+        // Uso de scaleX de cereales para mantener offsets idénticos entre paneles.
+        // Leguminosas usa setDisplaySize, por lo que su scaleX difiere aunque el tamaño visual sea igual.
         const s = this.segmentoCereales.scaleX;
         const slots: { x: number; y: number }[] = [];
         for (const ry of Nivel2Scene.SLOT_ROW_OFFSETS)
@@ -915,7 +914,7 @@ export class Nivel2Scene extends Phaser.Scene {
         });
     }
 
-    // ─── EDUCATIONAL FEEDBACK ─────────────────────────────────────────────────
+    // Feedback educativo
 
     private clearToast() {
         if (this.toastTimer) { this.toastTimer.destroy(); this.toastTimer = undefined; }
@@ -962,7 +961,7 @@ export class Nivel2Scene extends Phaser.Scene {
         this.time.delayedCall(620, () => { basket.clearTint(); });
     }
 
-    // ─── PLATÓN ───────────────────────────────────────────────────────────────
+    // Platón
 
     private startBasketIdleAnim(basket: Phaser.GameObjects.Image, phaseDelay: number) {
         const baseY = basket.y;
@@ -1004,7 +1003,7 @@ export class Nivel2Scene extends Phaser.Scene {
         });
     }
 
-    // ─── UPDATE ───────────────────────────────────────────────────────────────
+    // Update
 
     private repositionUI() {
         const { width, height } = this.scale;

@@ -25,14 +25,14 @@ export class CrucigramaSaludableScene extends Phaser.Scene {
     private winSound!: Phaser.Sound.BaseSound;
     private inputActive = false;
 
-    // UI Elements
+    // Elementos de UI
     private uiContainer!: Phaser.GameObjects.Container;
     private centerContainer!: Phaser.GameObjects.Container;
     private maxScrollY: number = 1000;
     private maxCameraScroll: number = 0;
     private visibleScreenHeight: number = 0;
 
-    // Colors (Bosque Cálido)
+    // Paleta de colores Bosque Cálido
     private colorVerde = 0x58B15B;
     private colorMaderaOscuro = '#5D4037';
     private colorMaderaOscuroHex = 0x5D4037;
@@ -72,7 +72,7 @@ export class CrucigramaSaludableScene extends Phaser.Scene {
             this.input.keyboard?.on('keydown', this.handleKeydown, this);
             this.scale.on('resize', () => this.handleResize());
             
-            // Para asegurar que la escena se muestre
+            // Priorización visual de la escena activa
             this.scene.bringToTop();
         } catch (e: any) {
             console.error("Error en CrucigramaSaludableScene:", e);
@@ -83,21 +83,21 @@ export class CrucigramaSaludableScene extends Phaser.Scene {
     private setupUI() {
         const { width, height } = this.scale;
         
-        // Calcular área visible real debido al modo ENVELOP
+        // Cálculo del área visible real en modo ENVELOP
         const screenScale = Math.max(window.innerWidth / width, window.innerHeight / height);
         const visibleTop = (height - window.innerHeight / screenScale) / 2;
         
-        // Limpiar si ya existe
+        // Limpieza del contenedor previo
         if (this.uiContainer) this.uiContainer.destroy();
         this.uiContainer = this.add.container(0, 0);
 
-        // Center container alineado a la parte visible superior
+        // Alineación del contenedor central con la parte superior visible
         const scaleFactor = Math.min(window.innerWidth / 1300, 1);
         this.centerContainer = this.add.container(width / 2, visibleTop);
         this.centerContainer.setScale(scaleFactor);
         this.uiContainer.add(this.centerContainer);
 
-        // Título ahora empieza en coordenadas positivas relativas a visibleTop
+        // Posicionamiento del título en coordenadas relativas a visibleTop
         const title = this.add.text(-630, 40, 'Crucigrama Saludable', {
             fontSize: '48px',
             color: this.colorMaderaOscuro,
@@ -127,16 +127,16 @@ export class CrucigramaSaludableScene extends Phaser.Scene {
             hoverSound: this.hoverSound,
             clickSound: this.clickSound,
         });
-        btnVolver.setScrollFactor(0); // Fijo en pantalla
+        btnVolver.setScrollFactor(0); // Fijación del botón en pantalla
 
         this.uiContainer.add([btnVolver]);
 
-        // Re-construir grid de datos si está vacío
+        // Reconstrucción de la cuadrícula de datos cuando está vacía
         if (Object.keys(this.cells).length === 0) {
             this.buildGrid();
         }
         
-        // Dibujamos con el top fijado debajo del título
+        // Dibujo con el borde superior fijado debajo del título
         this.drawGrid(-360, 170);
         this.drawHintsPanel(438, 510);
         this.drawActionButtons(440, 80);
@@ -147,25 +147,25 @@ export class CrucigramaSaludableScene extends Phaser.Scene {
     private setupScrolling(scaleFactor: number) {
         const { width, height } = this.scale;
         
-        // Calcular área visible real debido al modo ENVELOP
+        // Cálculo del área visible real en modo ENVELOP
         const screenScale = Math.max(window.innerWidth / width, window.innerHeight / height);
         const visibleHeight = window.innerHeight / screenScale;
         this.visibleScreenHeight = visibleHeight;
         
         const contentHeight = this.maxScrollY * scaleFactor;
 
-        // Siempre iniciamos arriba
+        // Inicio del desplazamiento en la parte superior
         this.cameras.main.scrollY = 0;
 
-        // Si el contenido cabe en la pantalla, no hay scroll
+        // Desactivación del desplazamiento cuando el contenido cabe en pantalla
         if (contentHeight <= visibleHeight) {
             this.maxCameraScroll = 0;
             return;
         }
 
-        // Límites de scroll
+        // Límites de desplazamiento
         const minScroll = 0; 
-        const maxScroll = contentHeight - visibleHeight + 40; // 40px de padding final
+        const maxScroll = contentHeight - visibleHeight + 40; // Padding final de 40px
         this.maxCameraScroll = maxScroll;
 
         let isDragging = false;

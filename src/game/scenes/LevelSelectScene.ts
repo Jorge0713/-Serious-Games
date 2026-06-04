@@ -936,7 +936,7 @@ export class LevelSelectScene extends Phaser.Scene {
     }
 
     private createExtraButtons(): void {
-        // Tutorial, conceptos y nivel principal viven dentro de sus tarjetas o la barra inferior.
+        // Tutorial, conceptos y nivel principal se agrupan en tarjetas o barra inferior.
     }
 
     private handleSectionSelection(section: SectionConfig): void {

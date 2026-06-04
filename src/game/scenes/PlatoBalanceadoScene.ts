@@ -7,7 +7,7 @@ import { FONT_DISPLAY, FONT_MONO } from '../../config/gameFonts';
 import { nutritionalInfo } from '../../data/nutritionalInfo';
 import type { FoodItem } from '../../data/nutritionalInfo';
 
-// ─── Paleta (alineada con el estilo global del juego) ────────────────────────
+// Paleta alineada con el estilo global del juego
 const P = {
     bg:           0xf2eadb,
     bgHex:        '#F2EADB',
@@ -41,7 +41,7 @@ const P = {
 const SFT = FONT_DISPLAY;
 const MFT = FONT_MONO;
 
-// ─── Tipos ───────────────────────────────────────────────────────────────────
+// Tipos
 type Grupo = 'verduras_frutas' | 'cereal' | 'leguminosa_aoa';
 
 function mapToGrupo(item: FoodItem): Grupo {
@@ -70,7 +70,7 @@ interface SafeArea {
     width: number; height: number;
 }
 
-// ─── Constantes ───────────────────────────────────────────────────────────────
+// Constantes
 const TABS = [
     { id: 'verduras_frutas' as Grupo, label: 'Verduras y Frutas' },
     { id: 'cereal'          as Grupo, label: 'Cereales'           },
@@ -86,15 +86,14 @@ const ITEM_COLS   = 2;
 const ITEM_GAP_X  = 14;
 const CARD_H      = 120;
 const IMG_SZ_BAR  = 48;
-const ITEM_ROW_H  = CARD_H + 12;    // 132
-// SCROLL_STEP eliminado por estar sin uso
+const ITEM_ROW_H  = CARD_H + 12;
 const TAB_H       = 50;
 const TAB_GAP     = 6;
 
-// ─── Escena ───────────────────────────────────────────────────────────────────
+// Escena
 export class PlatoBalanceadoScene extends Phaser.Scene {
 
-    // Estado de juego
+    // Estado del juego
     private activeTab:    Grupo = 'verduras_frutas';
     private placedCounts: Record<Grupo, number> = { verduras_frutas: 0, cereal: 0, leguminosa_aoa: 0 };
     private placedFoods:  DraggableFood[] = [];
@@ -123,7 +122,7 @@ export class PlatoBalanceadoScene extends Phaser.Scene {
     private platoSize    = 0;
     private platoDropZone!: Phaser.GameObjects.Zone;
 
-    // Sidebar scroll (camera-based — no Container/GeometryMask)
+    // Scroll del sidebar basado en cámara sin Container ni GeometryMask
     private sidebarViewportY  = 0;
     private sidebarViewportH  = 0;
     private listCam!:         Phaser.Cameras.Scene2D.Camera;
@@ -144,7 +143,7 @@ export class PlatoBalanceadoScene extends Phaser.Scene {
 
     constructor() { super('PlatoBalanceadoScene'); }
 
-    // ─── PRELOAD ─────────────────────────────────────────────────────────────
+    // Preload
     preload() {
         nutritionalInfo.forEach(food => this.load.image(food.id, food.image));
         this.load.image('pb_plate', '/assets/Plato/plateSquare.webp');
@@ -155,7 +154,7 @@ export class PlatoBalanceadoScene extends Phaser.Scene {
         PrefabButtons.precargar(this);
     }
 
-    // ─── CREATE ──────────────────────────────────────────────────────────────
+    // Create
     create() {
         this.jugadorActivo = PlayerService.obtenerJugadorActivo();
         if (this.jugadorActivo) {
@@ -185,12 +184,12 @@ export class PlatoBalanceadoScene extends Phaser.Scene {
             y: this.safeArea.top - 64,
         });
 
-        // CRT overlay cosmético
+        // Overlay CRT cosmético
         this.ensureCrtTexture();
         this.add.tileSprite(width / 2, height / 2, width, height, 'pb_crt')
             .setAlpha(0.18).setDepth(998);
 
-        // Hide all non-list objects from listCam (so they don't render twice in the viewport)
+        // Ocultamiento de objetos ajenos a la lista para evitar doble renderizado en listCam
         const listItemSet = new Set(this.listAllItems);
         const listCamId   = this.listCam.id;
         this.children.getAll().forEach(child => {
@@ -200,7 +199,7 @@ export class PlatoBalanceadoScene extends Phaser.Scene {
         });
     }
 
-    // ─── ESTADO ──────────────────────────────────────────────────────────────
+    // Estado
     private resetState() {
         this.activeTab    = 'verduras_frutas';
         this.placedCounts = { verduras_frutas: 0, cereal: 0, leguminosa_aoa: 0 };
@@ -209,30 +208,30 @@ export class PlatoBalanceadoScene extends Phaser.Scene {
         this.nutritionTotals = { calories: 0, protein: 0, carbs: 0, fat: 0, fiber: 0, sugar: 0, sodium: 0, scoreSum: 0 };
     }
 
-    // ─── LAYOUT ──────────────────────────────────────────────────────────────
+    // Layout
     private setupLayout(width: number, height: number) {
         const safe = this.getSafeArea(width, height);
         this.safeArea = safe;
 
         const gutter = 20;
 
-        // Sidebar izquierdo (selección de alimentos)
+        // Sidebar izquierdo de selección de alimentos
         this.sidebarW   = Math.round(Phaser.Math.Clamp(safe.width * 0.195, 310, 350));
         this.sidebarX   = safe.left;
         this.sidebarTop    = safe.top + 100;
         this.sidebarBottom = safe.bottom - 16;
 
-        // Panel de stats (derecho)
+        // Panel derecho de estadísticas
         this.statsW = Math.round(Phaser.Math.Clamp(safe.width * 0.215, 340, 390));
         this.statsX = safe.right - this.statsW;
         this.statsTop = safe.top + 100;
         this.proportionBarW = this.statsW - 52;
 
-        // Plato (centro)
+        // Plato central
         const plateAreaL = this.sidebarX + this.sidebarW + gutter;
         const plateAreaR = this.statsX - gutter;
         const plateAreaW = plateAreaR - plateAreaL;
-        const plateAreaH = safe.height - 100 - 80; // minus header and eval btn row
+        const plateAreaH = safe.height - 100 - 80; // Descuento del header y la fila del botón de evaluación
         const rawSize    = Math.min(plateAreaW * 0.84, plateAreaH * 0.82, 590);
         this.platoSize   = Math.round(rawSize);
         this.platoCenterX = Math.round((plateAreaL + plateAreaR) / 2);
@@ -254,12 +253,12 @@ export class PlatoBalanceadoScene extends Phaser.Scene {
         };
     }
 
-    // ─── FONDO ───────────────────────────────────────────────────────────────
+    // Fondo
     private buildBackground(width: number, height: number) {
         this.add.image(width / 2, height / 2, 'pb_bg').setDisplaySize(width, height).setDepth(0);
         this.add.rectangle(width / 2, height / 2, width, height, P.white, 0.7).setDepth(1);
         
-        // Dot tile sutil
+        // Patrón sutil de puntos
         this.ensureDotTexture();
         this.add.tileSprite(width / 2, height / 2, width, height, 'pb_dot').setAlpha(0.65).setDepth(1);
     }
@@ -289,7 +288,7 @@ export class PlatoBalanceadoScene extends Phaser.Scene {
         this.textures.addCanvas('pb_crt', cvs);
     }
 
-    // ─── HEADER ──────────────────────────────────────────────────────────────
+    // Header
     private buildHeader() {
         const safe = this.safeArea;
         const cx   = safe.left + safe.width / 2;
@@ -316,7 +315,7 @@ export class PlatoBalanceadoScene extends Phaser.Scene {
             fontFamily: SFT, fontSize: '32px', fontStyle: 'bold', color: P.inkHex,
         }).setOrigin(0, 0.5).setDepth(7);
         
-        // Botones de Tipo de Comida
+        // Botones de tipo de comida
         const btnY = cy + 16;
         const tipos = [
             { id: 'desayuno', label: 'Desayuno' },
@@ -345,7 +344,7 @@ export class PlatoBalanceadoScene extends Phaser.Scene {
             curX += 118;
         });
 
-        // Score (derecha)
+        // Puntaje derecho
         const scoreX = safe.right - 130;
         this.add.rectangle(scoreX + 4, cy + 4, 190, 60, P.ink, 1).setDepth(5);
         this.add.rectangle(scoreX, cy, 190, 60, P.paperAlt, 1)
@@ -357,7 +356,7 @@ export class PlatoBalanceadoScene extends Phaser.Scene {
             fontFamily: SFT, fontSize: '26px', fontStyle: 'bold', color: P.coralHex,
         }).setOrigin(0.5, 0.5).setDepth(7);
 
-        // Botón reset
+        // Botón de reinicio
         const rstX = safe.right - 30;
         const rstBg = this.add.rectangle(rstX + 3, cy + 3, 44, 44, P.ink, 1).setDepth(5);
         void rstBg;
@@ -372,7 +371,7 @@ export class PlatoBalanceadoScene extends Phaser.Scene {
         rstBtn.on('pointerdown',  () => { try { this.sound.play('pb_click'); } catch { void 0; } this.scene.restart(); });
     }
 
-    // ─── SIDEBAR ─────────────────────────────────────────────────────────────
+    // Sidebar
     private buildSidebar() {
         const sx   = this.sidebarX;
         const sw   = this.sidebarW;
@@ -380,19 +379,19 @@ export class PlatoBalanceadoScene extends Phaser.Scene {
         const sb   = this.sidebarBottom;
         const totalH = sb - st;
 
-        // Panel shadow + bg
+        // Sombra y fondo del panel
         this.add.rectangle(sx + sw / 2 + 8, st + totalH / 2 + 8, sw, totalH, P.ink, 1).setDepth(4);
         this.add.rectangle(sx + sw / 2, st + totalH / 2, sw, totalH, P.paper, 1)
             .setStrokeStyle(4, P.ink).setDepth(5);
 
-        // Título sidebar
+        // Título del sidebar
         const titleBg = this.add.rectangle(sx + sw / 2, st + 28, sw, 48, P.ink, 1).setDepth(6);
         void titleBg;
         this.add.text(sx + sw / 2, st + 28, '¡ ARRASTRA COMIDA !', {
             fontFamily: MFT, fontSize: '24px', color: P.greenHex,
         }).setOrigin(0.5).setDepth(7);
 
-        // Tabs
+        // Pestañas
         const tabsTop = st + 62;
         const tabW    = (sw - 24 - (TABS.length - 1) * TAB_GAP) / TABS.length;
         TABS.forEach((tab, i) => {
@@ -431,7 +430,7 @@ export class PlatoBalanceadoScene extends Phaser.Scene {
             sw - 20, this.sidebarViewportH, P.paperAlt, 0.6,
         ).setStrokeStyle(1, P.ink, 0.2).setDepth(5);
 
-        // Dedicated camera: viewport = list area, transparent bg (main cam renders panel behind)
+        // Cámara dedicada con viewport de lista y fondo transparente para conservar el panel de mainCam
         this.listCam = this.cameras.add(
             Math.round(sx + 10), Math.round(listTop),
             Math.round(sw - 20), Math.round(this.sidebarViewportH),
@@ -470,31 +469,31 @@ export class PlatoBalanceadoScene extends Phaser.Scene {
     }
 
     private rebuildFoodList() {
-        // Destroy previous items
+        // Eliminación de elementos previos
         this.listAllItems.forEach(item => item.destroy());
         this.listAllItems = [];
 
-        // Reset scroll
+        // Reinicio del desplazamiento
         this.listScrollY = 0;
         this.listCam.setScroll(this.listBaseScrollX, this.sidebarViewportY);
 
         const items  = nutritionalInfo.filter(f => mapToGrupo(f) === this.activeTab);
         const innerW = this.sidebarW - 42;
         const colW   = (innerW - ITEM_GAP_X) / ITEM_COLS;
-        const ox     = this.sidebarX + 14;        // world X origin of list
-        const oy     = this.sidebarViewportY;     // world Y origin of list
+        const ox     = this.sidebarX + 14;        // Origen X de la lista en coordenadas de mundo
+        const oy     = this.sidebarViewportY;     // Origen Y de la lista en coordenadas de mundo
         const MAIN_ID = this.cameras.main.id;
 
         items.forEach((foodItem, i) => {
             if (!this.textures.exists(foodItem.id)) return;
             const col  = i % ITEM_COLS;
             const row  = Math.floor(i / ITEM_COLS);
-            // local offsets (same as before)
+            // Offsets locales de la tarjeta
             const lx   = col * (colW + ITEM_GAP_X) + colW / 2 + 2;
             const ly   = row * ITEM_ROW_H + CARD_H / 2 + 6;
             const lImgY = ly - CARD_H / 2 + 8 + IMG_SZ_BAR / 2;
             const lLblY = ly - CARD_H / 2 + 8 + IMG_SZ_BAR + 6;
-            // world positions
+            // Posiciones en coordenadas de mundo
             const wx    = ox + lx;
             const wy    = oy + ly;
             const wImgY = oy + lImgY;
@@ -521,13 +520,13 @@ export class PlatoBalanceadoScene extends Phaser.Scene {
             }).setOrigin(0.5, 0).setDepth(10);
             img.labelText = lbl;
 
-            // Hide from main camera — only visible through listCam viewport
+            // Ocultamiento en mainCam para mostrar el elemento solo mediante listCam
             cardShadow.cameraFilter = MAIN_ID;
             card.cameraFilter       = MAIN_ID;
             img.cameraFilter        = MAIN_ID;
             lbl.cameraFilter        = MAIN_ID;
 
-            // Hover: absolute targets — no Y drift if interrupted
+            // Hover con objetivos absolutos para evitar desplazamiento vertical al interrumpir la animación
             img.on('pointerover', () => {
                 if (img.placed) return;
                 this.tweens.killTweensOf([img, card, lbl]);
@@ -564,26 +563,26 @@ export class PlatoBalanceadoScene extends Phaser.Scene {
         });
     }
 
-    // ─── PLATO ───────────────────────────────────────────────────────────────
+    // Plato
     private buildPlatZone() {
         const cx   = this.platoCenterX;
         const cy   = this.platoCenterY;
         const size = this.platoSize;
         const pad  = 24;
 
-        // Shadow exterior
+        // Sombra exterior
         this.add.rectangle(cx + 10, cy + 12, size + pad + 10, size + pad + 10, P.ink, 0.30).setDepth(4);
 
-        // Marco del plato (fondo de madera)
+        // Marco del plato con fondo de madera
         this.add.rectangle(cx, cy, size + pad, size + pad, P.paper, 1)
             .setStrokeStyle(6, P.ink).setDepth(5);
 
-        // Imagen real del plato
+        // Imagen del plato
         this.add.image(cx, cy, 'pb_plate')
             .setDisplaySize(size, size)
             .setDepth(6);
 
-        // Etiqueta "TU PLATO" encima
+        // Etiqueta superior del plato
         this.add.rectangle(cx + 4, cy - size / 2 - 34 + 4, 180, 38, P.ink, 1).setDepth(6);
         this.add.rectangle(cx, cy - size / 2 - 34, 180, 38, P.green, 1)
             .setStrokeStyle(3, P.ink).setDepth(7);
@@ -591,50 +590,42 @@ export class PlatoBalanceadoScene extends Phaser.Scene {
             fontFamily: SFT, fontSize: '22px', fontStyle: 'bold', color: P.inkHex,
         }).setOrigin(0.5).setDepth(8);
 
-        // Zona drop: cubre el plato completo (forma circular)
-        // ======= AJUSTES DEL ÁREA DEL PLATO =======
-        // Cambia este número si quieres que la zona donde se suelta la comida
-        // sea más pequeña (ejemplo: size / 2.5) o más grande.
+        // Zona de drop circular sobre el plato completo
         const radioPlato = size / 2; 
-        const radioInterno = radioPlato * 0.70; // 70% del radio exterior (círculo gris interior)
+        const radioInterno = radioPlato * 0.70; // Radio interior equivalente al 70% del radio exterior
 
         this.platoDropZone = this.add.zone(cx, cy, size, size)
-            // Usamos un rectángulo amplio para el detector nativo de Phaser
-            // para evitar los bugs del hit area circular desfasada.
-            // Nuestra validación matemática en el evento 'drop' filtrará esto 
-            // a un círculo perfecto.
+            // Rectángulo amplio para el detector nativo de Phaser.
+            // La validación matemática del evento 'drop' limita el área a un círculo.
             .setRectangleDropZone(size, size)
             .setDepth(9);
         this.platoDropZone.setData('isPlato', true);
         this.platoDropZone.setData('radioPlato', radioPlato);
         this.platoDropZone.setData('radioInterno', radioInterno);
 
-        // El debug visual fue removido a peticion del usuario.
-        // ==========================================
-
-        // Texto guía (solo si está vacío)
+        // Texto guía visible solo cuando el plato está vacío
         this.progressText = this.add.text(cx, cy, '¡Arrastra alimentos\nal plato!', {
             fontFamily: MFT, fontSize: '28px', color: P.mutedHex,
             align: 'center', lineSpacing: 6,
         }).setOrigin(0.5).setDepth(7).setAlpha(0.6);
     }
 
-    // ─── PANEL DE STATS (DERECHO) ─────────────────────────────────────────────
+    // Panel derecho de estadísticas
     private buildStatsPanel() {
         const sx = this.statsX;
         const sw = this.statsW;
         const st = this.statsTop;
         const h  = this.sidebarBottom - st;
 
-        // Shadow
+        // Sombra
         this.add.rectangle(sx + sw / 2 + 8, st + h / 2 + 8, sw, h, P.ink, 1).setDepth(4);
-        // BG
+        // Fondo
         this.add.rectangle(sx + sw / 2, st + h / 2, sw, h, P.paper, 1)
             .setStrokeStyle(4, P.ink).setDepth(5);
 
         let curY = st + 18;
 
-        // ── SECCIÓN: PROPORCIÓN ──────────────────────────────────────────────
+        // Sección de proporción
         this.add.rectangle(sx + sw / 2, curY + 18, sw, 42, P.ink, 1).setDepth(6);
         this.add.text(sx + sw / 2, curY + 18, 'PROPORCIÓN IDEAL', {
             fontFamily: MFT, fontSize: '22px', color: P.greenHex,
@@ -651,7 +642,7 @@ export class PlatoBalanceadoScene extends Phaser.Scene {
             const colorHex = GRUPO_COLOR_HEX[g.id];
             const color    = GRUPO_COLOR[g.id];
 
-            // Etiqueta + porcentaje
+            // Etiqueta y porcentaje
             this.add.rectangle(sx + 14, curY + 4, 10, 24, color, 1).setDepth(6);
             this.add.text(sx + 30, curY - 2, g.label, {
                 fontFamily: MFT, fontSize: '18px', color: P.inkHex,
@@ -675,7 +666,7 @@ export class PlatoBalanceadoScene extends Phaser.Scene {
         this.add.rectangle(sx + sw / 2, curY + 2, sw - 20, 2, P.ink, 0.18).setDepth(6);
         curY += 14;
 
-        // ── SECCIÓN: NUTRICIÓN ───────────────────────────────────────────────
+        // Sección de nutrición
         this.add.rectangle(sx + sw / 2, curY + 16, sw, 36, P.ink, 1).setDepth(6);
         this.add.text(sx + sw / 2, curY + 16, 'NUTRICIÓN', {
             fontFamily: MFT, fontSize: '20px', color: P.yellowHex,
@@ -692,7 +683,7 @@ export class PlatoBalanceadoScene extends Phaser.Scene {
         this.add.rectangle(sx + sw / 2, curY + 2, sw - 20, 2, P.ink, 0.18).setDepth(6);
         curY += 14;
 
-        // ── SECCIÓN: FEEDBACK ────────────────────────────────────────────────
+        // Sección de feedback
         this.add.rectangle(sx + sw / 2, curY + 16, sw, 36, P.ink, 1).setDepth(6);
         this.add.text(sx + sw / 2, curY + 16, 'RESULTADO', {
             fontFamily: MFT, fontSize: '20px', color: P.coralHex,
@@ -713,7 +704,7 @@ export class PlatoBalanceadoScene extends Phaser.Scene {
         ).setDepth(7);
     }
 
-    // ─── BOTÓN EVALUAR ────────────────────────────────────────────────────────
+    // Botón de evaluación
     private buildEvaluateButton() {
         const cx  = this.platoCenterX;
         const cy  = this.platoCenterY + this.platoSize / 2 + 48;
@@ -730,15 +721,15 @@ export class PlatoBalanceadoScene extends Phaser.Scene {
         });
     }
 
-    // ─── DRAG & DROP ─────────────────────────────────────────────────────────
+    // Drag and drop
     private setupDragEvents() {
         this.input.on('dragstart', (_ptr: Phaser.Input.Pointer, obj: DraggableFood) => {
             if (obj.fromBar) {
-                // Cálculo de la Y visual exacta en la pantalla al inicio del clic
+                // Cálculo de la posición Y visual al inicio del clic
                 const visualY = obj.localHomeY - this.listCam.scrollY + this.sidebarViewportY;
                 
-                // Guardamos el offset real absoluto entre la punta del mouse y el centro del sprite.
-                // Usamos _ptr.x y _ptr.y que son coordenadas nativas de pantalla sin afectación de cámara
+                // Registro del offset absoluto entre el puntero y el centro del sprite.
+                // _ptr.x y _ptr.y usan coordenadas nativas de pantalla sin afectación de cámara.
                 obj.setData('dragOffsetX', obj.x - _ptr.x);
                 obj.setData('dragOffsetY', visualY - _ptr.y);
 
@@ -755,8 +746,8 @@ export class PlatoBalanceadoScene extends Phaser.Scene {
                 obj.setDisplaySize(ITEM_SIZE, ITEM_SIZE);
                 obj.setAlpha(0.88);
             } else {
-                // Es un PlacedFood ya en el plato. 
-                // En este caso su Y global ya es su Y visual porque está en mainCam.
+                // PlacedFood existente en el plato.
+                // Su posición Y global coincide con la visual porque pertenece a mainCam.
                 obj.setData('dragOffsetX', obj.x - _ptr.x);
                 obj.setData('dragOffsetY', obj.y - _ptr.y);
 
@@ -768,9 +759,8 @@ export class PlatoBalanceadoScene extends Phaser.Scene {
         });
 
         this.input.on('drag', (_ptr: Phaser.Input.Pointer, obj: DraggableFood, _dragX: number, _dragY: number) => {
-            // IGNORAMOS _dragX y _dragY porque el InputManager de Phaser los corrompe
-            // al cambiar el cameraFilter y modificar obj.y en el frame anterior.
-            // Forzamos la posición usando el offset real bloqueado en el mouse.
+            // Omisión de _dragX y _dragY porque InputManager puede alterarlos al cambiar cameraFilter.
+            // Posicionamiento mediante el offset real bloqueado en el puntero.
             const newX = _ptr.x + obj.getData('dragOffsetX');
             const newY = _ptr.y + obj.getData('dragOffsetY');
             
@@ -808,14 +798,14 @@ export class PlatoBalanceadoScene extends Phaser.Scene {
                 return; 
             }
 
-            // Calculamos si necesita "autodirección" al círculo interior
+            // Cálculo de autodirección hacia el círculo interior
             const radioInterno = zone.getData('radioInterno') || (zone.width / 2) * 0.7;
             let finalX = obj.x;
             let finalY = obj.y;
             let deslizar = false;
 
             if (distanceToCenter > radioInterno) {
-                // Lo empujamos hacia el borde interior para que no toque el aro oscuro
+                // Ajuste hacia el borde interior para evitar contacto con el aro oscuro
                 const distanciaSegura = radioInterno - (ITEM_SIZE / 3);
                 finalX = zone.x + Math.cos(angulo) * distanciaSegura;
                 finalY = zone.y + Math.sin(angulo) * distanciaSegura;
@@ -823,13 +813,13 @@ export class PlatoBalanceadoScene extends Phaser.Scene {
             }
 
             if (isOriginal) {
-                // Instanciar clon y agregarlo al plato. Inicialmente en obj.x, obj.y.
-                // Si hay autodirección, createPlacedFood lo deslizará.
+                // Instanciación del clon y asociación al plato desde la posición actual.
+                // createPlacedFood aplica el deslizamiento cuando existe autodirección.
                 this.createPlacedFood(obj, obj.x, obj.y, finalX, finalY, deslizar);
-                // Devolver el original silenciosamente a la barra
+                // Retorno silencioso del original a la barra
                 this.resetOriginalToBar(obj);
             } else {
-                // Ya estaba en el plato, solo se reacomodó
+                // Reacomodo de alimento ya colocado en el plato
                 obj.clearTint();
                 obj.setAlpha(1);
                 obj.setDepth(12 + this.placedFoods.length);
@@ -954,13 +944,13 @@ export class PlatoBalanceadoScene extends Phaser.Scene {
     }
 
     private returnToBar(obj: DraggableFood) {
-        // Bloqueamos interacciones mientras regresa
+        // Bloqueo de interacciones durante el retorno
         obj.disableInteractive();
 
         obj.clearTint();
         obj.setTint(0xffaaaa); 
 
-        // Posición visual en mainCam a la que debe viajar
+        // Posición visual de destino en mainCam
         const targetVisualY = obj.localHomeY - this.listCam.scrollY + this.sidebarViewportY;
         const labelVisualY = targetVisualY + (IMG_SZ_BAR / 2) + 14;
 
@@ -974,7 +964,7 @@ export class PlatoBalanceadoScene extends Phaser.Scene {
                 obj.setDepth(10);
                 obj.setDisplaySize(IMG_SZ_BAR, IMG_SZ_BAR);
                 
-                // Regresamos al mundo real y a la cámara de la lista
+                // Restauración al mundo real y a la cámara de la lista
                 obj.y = obj.localHomeY;
                 obj.cameraFilter = this.cameras.main.id;
                 obj.setInteractive({ useHandCursor: true });
@@ -995,12 +985,12 @@ export class PlatoBalanceadoScene extends Phaser.Scene {
         }
     }
 
-    // ─── ACTUALIZACIÓN EN TIEMPO REAL ────────────────────────────────────────
+    // Actualización en tiempo real
     private updateProgressLive() {
         const total = this.placedFoods.length;
         const nt    = this.nutritionTotals;
 
-        // Ocultar texto guía cuando hay alimentos
+        // Ocultamiento del texto guía cuando hay alimentos
         if (this.progressText) this.progressText.setVisible(total === 0);
 
         if (total === 0) {
@@ -1025,7 +1015,7 @@ export class PlatoBalanceadoScene extends Phaser.Scene {
         });
     }
 
-    // ─── EVALUACIÓN ──────────────────────────────────────────────────────────
+    // Evaluación
     private evaluatePlate() {
         const total = this.placedFoods.length;
         if (total === 0) {
@@ -1051,7 +1041,7 @@ export class PlatoBalanceadoScene extends Phaser.Scene {
 
         const warnings: string[] = [];
         
-        // --- CÁLCULOS METABÓLICOS Y CLÍNICOS ---
+        // Cálculos metabólicos y clínicos
         let metaCalorias = 0;
         if (this.tipoComida === 'desayuno') metaCalorias = this.tmb * 0.25;
         else if (this.tipoComida === 'comida') metaCalorias = this.tmb * 0.35;
@@ -1082,7 +1072,7 @@ export class PlatoBalanceadoScene extends Phaser.Scene {
                 warnings.push('PELIGRO: Exceso de Sodio para hipertenso (>500mg)');
             }
         } else {
-            // Evaluaciones genéricas (Warnings antiguos pero ajustados a Totales en vez de Averages)
+            // Evaluaciones genéricas ajustadas a totales en lugar de promedios
             if (nt.sodium > 800) { score -= 8; warnings.push('Alto en sodio general'); }
             if (nt.sugar > 25) { score -= 6; warnings.push('Alto en azúcar general'); }
         }
@@ -1126,7 +1116,7 @@ export class PlatoBalanceadoScene extends Phaser.Scene {
 
         this.feedbackText.setColor(color).setText(msg);
 
-        // Colorear barras según tolerancia ±10%
+        // Coloración de barras según tolerancia del 10%
         (Object.keys(IDEAL) as Grupo[]).forEach(g => {
             const ok = Math.abs(realPct[g] - IDEAL[g]) <= 10;
             this.barFills[g].setFillStyle(ok ? P.route : P.coral, 1);

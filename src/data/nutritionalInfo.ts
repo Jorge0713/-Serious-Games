@@ -1498,9 +1498,7 @@ const enrichFoodItem = (food: BaseFoodItem): FoodItem => {
 };
 
 export const nutritionalInfo: FoodItem[] = ([
-    // ==========================================
-    // Vegetales (vegetable)
-    // ==========================================    
+    // Vegetales
     {
         id: 'artichoke',
         name: 'Artichoke',
@@ -1637,9 +1635,7 @@ export const nutritionalInfo: FoodItem[] = ([
         image: '/iconsFood/verduras/zucchini_green.png',
         description: 'Baja en calorías y rica en vitamina A, C y manganeso. Contiene antioxidantes que protegen el corazón y apoyan la salud digestiva.'
     },
-    // ==========================================
-    // Frutas (fruit)
-    // ==========================================
+    // Frutas
     {
         id: 'banana',
         name: 'Banana',
@@ -1816,9 +1812,7 @@ export const nutritionalInfo: FoodItem[] = ([
         image: '/iconsFood/frutas/watermelon.png',
         description: 'Rica en licopeno y vitamina C para la salud cardíaca. Su alto contenido de agua (92%) ayuda a mantener la hidratación óptima.'
     },
-    // ==========================================
-    // LEGUMINOSAS (legume)
-    // ==========================================
+    // Leguminosas
     {
         id: 'beans',
         name: 'Beans',
@@ -1899,9 +1893,7 @@ export const nutritionalInfo: FoodItem[] = ([
         image: '/iconsFood/leguminosas/runner_beans_white.png',
         description: 'Aportan una gran cantidad de manganeso, hierro y fibra. Ayudan a estabilizar los niveles de azúcar en la sangre y proporcionan energía de manera constante.'
     },
-    // ==========================================
-    // CEREALES Y TUBÉRCULOS (cereal)
-    // ==========================================
+    // Cereales y tubérculos
     {
         id: 'oats',
         name: 'Oats',
@@ -1999,9 +1991,7 @@ export const nutritionalInfo: FoodItem[] = ([
         description: 'Elaborada con trigo entero, mantiene el salvado y el germen. Proporciona carbohidratos de absorción lenta para una energía sostenida a lo largo del día.'
     },
 
-    // ==========================================
-    // PRODUCTOS DE ORIGEN ANIMAL (animal)
-    // ==========================================
+    // Productos de origen animal
     {
         id: 'egg',
         name: 'Egg',

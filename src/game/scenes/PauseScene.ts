@@ -19,15 +19,15 @@ export class PauseScene extends Phaser.Scene {
 
         // Overlay oscuro translúcido
         const overlay = this.add.rectangle(width / 2, height / 2, width, height, 0x000000, 0.6);
-        overlay.setInteractive(); // Bloquear clicks a las escenas de abajo
+        overlay.setInteractive(); // Bloqueo de clics hacia escenas inferiores
 
-        // Panel
+        // Panel principal
         const panelW = 480;
         const panelH = 420;
         this.add.rectangle(width / 2, height / 2, panelW, panelH, 0xF5FBF2, 1)
             .setStrokeStyle(6, 0x5D4037);
 
-        // Título
+        // Título del panel
         this.add.text(width / 2, height / 2 - 140, 'PAUSA', {
             fontFamily: FONT_DISPLAY,
             fontSize: '48px',
@@ -35,7 +35,7 @@ export class PauseScene extends Phaser.Scene {
             color: '#5D4037'
         }).setOrigin(0.5);
 
-        // Botón: Reanudar
+        // Botón de reanudación
         PrefabButtons.continuar(this, width / 2, height / 2 - 40, () => {
             this.scene.resume(this.previousSceneKey);
             this.scene.stop();
@@ -44,7 +44,7 @@ export class PauseScene extends Phaser.Scene {
             width: 260
         });
 
-        // Controles de Volumen
+        // Controles de volumen
         this.add.text(width / 2, height / 2 + 35, 'Volumen General', {
             fontFamily: FONT_DISPLAY,
             fontSize: '24px',
@@ -58,14 +58,14 @@ export class PauseScene extends Phaser.Scene {
             color: '#2E3142'
         }).setOrigin(0.5);
 
-        // Menos volumen
+        // Reducción de volumen
         PrefabButtons.secundario(this, width / 2 - 80, height / 2 + 70, () => {
             let v = this.sound.volume - 0.1;
             if (v < 0) v = 0;
             this.setGlobalVolume(v);
         }, { text: '-', width: 50, height: 50 });
 
-        // Más volumen
+        // Aumento de volumen
         PrefabButtons.secundario(this, width / 2 + 80, height / 2 + 70, () => {
             let v = this.sound.volume + 0.1;
             if (v > 1) v = 1;
@@ -73,7 +73,7 @@ export class PauseScene extends Phaser.Scene {
         }, { text: '+', width: 50, height: 50 });
 
         if (this.previousSceneKey === 'MainMenu') {
-            // En el menú principal: "SALIR DEL JUEGO" en rojo → cierra la ventana
+            // Cierre de la ventana desde el menú principal
             PrefabButtons.volver(this, width / 2, height / 2 + 150, () => {
                 this.sound.stopAll();
                 window.close();
@@ -83,15 +83,15 @@ export class PauseScene extends Phaser.Scene {
                 textColor: '#D03B2C',
             });
         } else {
-            // Botón: Volver al Mapa
+            // Botón para volver al mapa
             PrefabButtons.volver(this, width / 2, height / 2 + 150, () => {
                 this.clearCheckpointForPreviousScene();
                 this.scene.stop(this.previousSceneKey);
-                // Parar pre-tutoriales o audios adicionales si estaban corriendo
+                // Detención de pretutoriales o audios adicionales en ejecución
                 this.scene.stop();
                 this.sound.stopAll();
 
-                // Volver al LevelSelectScene o MainMenu si veníamos de ahí
+                // Retorno a LevelSelectScene o MainMenu según la escena previa
                 if (this.previousSceneKey !== 'LevelSelectScene' && this.previousSceneKey !== 'MainMenu') {
                     this.scene.start('LevelSelectScene');
                 } else {

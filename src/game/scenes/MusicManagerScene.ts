@@ -12,7 +12,7 @@ export class MusicManagerScene extends Phaser.Scene {
   }
 
   create() {
-    // Evita duplicados
+    // Prevención de instancias duplicadas de música
     const existingMusic = this.sound.get("menuMusic");
 
     if (existingMusic) {

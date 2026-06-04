@@ -31,7 +31,7 @@ export class Nivel1Scene extends Phaser.Scene {
     private isTutorialActive = false;
     private hoverSound!: Phaser.Sound.BaseSound;
     private clickSound!: Phaser.Sound.BaseSound;
-    // Wave state
+    // Estado de oleadas
     private waveNumber = 0;
     private waveCorrectTarget = 0;
     private waveAciertos = 0;
@@ -40,7 +40,7 @@ export class Nivel1Scene extends Phaser.Scene {
     private seboPool: FoodItem[] = [];
     private waveInProgress = false;
 
-    // Wave checkpoint for game-over restart
+    // Checkpoint de oleada para reinicio tras game over
     private waveCheckpoint: {
         waveNumber: number;
         remainingVerduras: FoodItem[];
@@ -49,7 +49,7 @@ export class Nivel1Scene extends Phaser.Scene {
         savedInventory?: { id: string, categoria: string }[];
     } | null = null;
 
-    // Timer
+    // Temporizador
     private timerSeconds = WAVE_TIME_NORMAL;
     private timerEvent?: Phaser.Time.TimerEvent;
     private timerText!: Phaser.GameObjects.Text;
@@ -57,11 +57,11 @@ export class Nivel1Scene extends Phaser.Scene {
     private tickingSound?: Phaser.Sound.BaseSound;
     private urgentMode = false;
 
-    // Lives
+    // Vidas
     private lives = 3;
     private livesText!: Phaser.GameObjects.Text;
 
-    // Basket drop zones (synced every frame to follow bobbing baskets)
+    // Zonas de drop sincronizadas con la animación de las canastas
     private zonaBordeVerduras!: Phaser.GameObjects.Zone;
     private zonaVerduras!: Phaser.GameObjects.Zone;
     private zvOffY = 0;
@@ -78,13 +78,13 @@ export class Nivel1Scene extends Phaser.Scene {
     private tutorialBubbleTxt?: Phaser.GameObjects.Text;
     private isTutorialDragging = false;
 
-    // Educational feedback toast (only one at a time)
+    // Toast de feedback educativo con una sola instancia activa
     private toastBg?: Phaser.GameObjects.Rectangle;
     private toastLabel?: Phaser.GameObjects.Text;
     private toastTxt?: Phaser.GameObjects.Text;
     private toastTimer?: Phaser.Time.TimerEvent;
 
-    // UI Elements for resizing
+    // Elementos de UI para redimensionamiento
     private txtInstrucciones!: Phaser.GameObjects.Text;
     private lblVerduras!: Phaser.GameObjects.Text;
     private lblFrutas!: Phaser.GameObjects.Text;
@@ -141,12 +141,12 @@ export class Nivel1Scene extends Phaser.Scene {
 
         const { width, height } = this.scale;
 
-        // Calcular área visible real (modo ENVELOP)
+        // Cálculo del área visible real en modo ENVELOP
         const screenScale = Math.max(window.innerWidth / width, window.innerHeight / height);
         const visibleTop = (height - window.innerHeight / screenScale) / 2;
         const visibleBottom = visibleTop + window.innerHeight / screenScale;
 
-        // FONDO
+        // Fondo
         this.fondo_cocina = this.add.image(width / 2, height / 2, "Fondo-cocina")
             .setScale(0.5)
             .setDisplaySize(width, height)
@@ -156,7 +156,7 @@ export class Nivel1Scene extends Phaser.Scene {
         this.add.rectangle(width / 2, height / 2, width, height, COLORS.bg, BACKGROUND_OVERLAY_ALPHA)
             .setDepth(-1);
 
-        // INSTRUCCIÓN (posicionado relativo al top visible, dejando espacio para el botón Volver de React)
+        // Instrucción posicionada respecto al borde superior visible
         this.add.text(WIDTH / 2 + 4, 92 + 5, 'Arrastra los alimentos a su seccion', {
             fontFamily: FONT_DISPLAY,
             fontSize: '56px',
@@ -177,7 +177,7 @@ export class Nivel1Scene extends Phaser.Scene {
 
 
 
-        // CANASTAS + ZONAS
+        // Canastas y zonas
         const escalaCanasta = 0.60;
         const canastaCentroY = visibleTop + (visibleBottom - visibleTop) * 0.65;
 
@@ -219,7 +219,7 @@ export class Nivel1Scene extends Phaser.Scene {
         this.zonaFrutas.setData("categoria", "fruta");
         this.zonaBordeFrutas.setData("snapToZone", this.zonaFrutas);
 
-        // LABELS canastas
+        // Etiquetas de canastas
 
         this.lblVerduras = this.add.text(670, 92 + 5, 'Verduras', {
             fontFamily: FONT_DISPLAY,
@@ -241,11 +241,11 @@ export class Nivel1Scene extends Phaser.Scene {
             strokeThickness: 4,
         }).setOrigin(0.5).setDepth(19);
 
-        // CANASTA IDLE ANIMATIONS
+        // Animaciones idle de canastas
         this.startBasketIdleAnim(this.segmentoVerduras, 0);
         this.startBasketIdleAnim(this.segmentoFrutas, 450);
 
-        // BOTÓN PAUSA
+        // Botón de pausa
         PrefabButtons.icono(this, 1800, 90, () => {
             this.scene.pause();
             this.scene.launch('PauseScene', { previousScene: this.scene.key });
@@ -256,7 +256,7 @@ export class Nivel1Scene extends Phaser.Scene {
             fontSize: '28px'
         }).setDepth(20);
 
-        // TIMER
+        // Temporizador
         const timerX = 1700;
         const timerY = height / 2;
         const timerPanelWidth = 250;
@@ -286,7 +286,7 @@ export class Nivel1Scene extends Phaser.Scene {
             fontStyle: 'bold', stroke: '#5E412F', strokeThickness: 5,
         }).setOrigin(0.5).setDepth(20).setVisible(false);
 
-        // VIDAS
+        // Vidas
         const livesX = timerX;
         const livesPanelWidth = 250;
         const livesPanelHeight = 112;
@@ -310,19 +310,19 @@ export class Nivel1Scene extends Phaser.Scene {
             fontStyle: 'bold', stroke: '#5E412F', strokeThickness: 5,
         }).setOrigin(0.5).setDepth(20);
 
-        // PLATÓN
+        // Platón
         this.platon = this.add.image(width - 1600, visibleBottom - 100, "platon-feliz")
             .setAlpha(0).setScale(0.8);
 
-        // FOOD BAR (shell: background + buttons + container)
+        // Barra de alimentos con fondo, botones y contenedor
         this.buildFoodBarShell(width, visibleTop);
 
-        // DRAG & DROP
+        // Drag and drop
         this.setupDragDrop();
 
         this.events.once('shutdown', () => this.stopTimer());
 
-        // Check for wave checkpoint (game-over in wave 2+)
+        // Verificación del checkpoint de oleada para reinicios desde game over
         const checkpoint = this.registry.get('nivel1_checkpoint') as {
             waveNumber: number;
             remainingVerduras: FoodItem[];
@@ -336,7 +336,7 @@ export class Nivel1Scene extends Phaser.Scene {
             this.remainingVerduras = [...checkpoint.remainingVerduras];
             this.remainingFrutas   = [...checkpoint.remainingFrutas];
             this.seboPool          = [...checkpoint.seboPool];
-            // startNextWave increments waveNumber, so set to one before the saved wave
+            // Ajuste previo porque startNextWave incrementa waveNumber
             this.waveNumber = checkpoint.waveNumber - 1;
             
             if (checkpoint.savedInventory) {
@@ -345,7 +345,7 @@ export class Nivel1Scene extends Phaser.Scene {
             
             this.time.delayedCall(400, () => this.startNextWave());
         } else if (this.registry.get('introCompleted_Nivel1') || this.registry.get('tutorialCompleted_Nivel1')) {
-            // INTRO PLATÓN → luego oleadas → luego tutorial mano
+            // Secuencia de introducción de Platón, oleadas y tutorial de mano
             this.time.delayedCall(400, () => this.initWavePools());
         } else {
             this.time.delayedCall(400, () => this.showIntroPlaton());
@@ -380,7 +380,7 @@ export class Nivel1Scene extends Phaser.Scene {
         this.scene.start('LevelSelectScene');
     }
 
-    // ─── WAVE SYSTEM ──────────────────────────────────────────────────────────
+    // Sistema de oleadas
 
     private initWavePools() {
         const allVerduras = nutritionalInfo.filter(f => f.category === 'vegetable');
@@ -391,7 +391,7 @@ export class Nivel1Scene extends Phaser.Scene {
         this.remainingFrutas = Phaser.Utils.Array.Shuffle([...allFrutas]) as FoodItem[];
         this.seboPool = Phaser.Utils.Array.Shuffle([...allSebos]) as FoodItem[];
 
-        // Zanahoria primero en oleada 1 para el tutorial
+        // Zanahoria en primera posición durante la oleada inicial del tutorial
         const carrotIdx = this.remainingVerduras.findIndex(f => f.id === 'carrot');
         if (carrotIdx > 0) {
             const [carrot] = this.remainingVerduras.splice(carrotIdx, 1);
@@ -406,7 +406,7 @@ export class Nivel1Scene extends Phaser.Scene {
         this.waveAciertos = 0;
         this.waveInProgress = false;
 
-        // Save checkpoint BEFORE splicing the pools
+        // Registro del checkpoint antes de modificar los pools
         this.waveCheckpoint = {
             waveNumber:        this.waveNumber,
             remainingVerduras: [...this.remainingVerduras],
@@ -415,10 +415,10 @@ export class Nivel1Scene extends Phaser.Scene {
             savedInventory:    this.placedFoods.map(f => ({ id: f.texture.key, categoria: f.getData("categoria") as string }))
         };
 
-        // Reset foodContainer scroll position
+        // Reinicio del desplazamiento de foodContainer
         if (this.foodContainer) this.foodContainer.x = this.buildFoodBarViewportX();
 
-        // Per-basket full-clear instead of clearing all placed foods each wave
+        // Limpieza por canasta llena sin eliminar todos los alimentos colocados
         const verdurasFull = this.placedFoods.filter(f => f.getData('basket') === this.segmentoVerduras).length >= 12;
         const frutasFull   = this.placedFoods.filter(f => f.getData('basket') === this.segmentoFrutas).length   >= 12;
 
@@ -448,7 +448,7 @@ export class Nivel1Scene extends Phaser.Scene {
         }
     }
 
-    /** Returns the foodContainer's initial viewport X (mirrors buildFoodBarShell logic). */
+    /** Devuelve la posición X inicial del viewport de foodContainer según buildFoodBarShell. */
     private buildFoodBarViewportX(): number {
         const { width } = this.scale;
         const barWidth   = Math.round(width * 0.82);
@@ -458,18 +458,18 @@ export class Nivel1Scene extends Phaser.Scene {
     }
 
     /**
-     * Clears only the placed foods belonging to `panel`.
-     * Flashes the basket green, then tweens foods out.
+     * Limpia solo los alimentos colocados asociados a `panel`.
+     * Resalta la canasta en verde antes de retirar los alimentos con tween.
      */
     private clearBasketFoods(panel: Phaser.GameObjects.Image, onDone?: () => void) {
         const foods = this.placedFoods.filter(f => f.getData('basket') === panel);
         if (foods.length === 0) { onDone?.(); return; }
 
-        // Flash basket green
+        // Resaltado temporal de la canasta en verde
         panel.setTint(0x44ff44);
         this.time.delayedCall(500, () => { panel.clearTint(); });
 
-        // Stop per-frame Y sync for these foods
+        // Detención de la sincronización vertical por frame para estos alimentos
         foods.forEach(s => { s.setData('basket', undefined); s.setData('slotRelY', undefined); });
 
         const targets: Phaser.GameObjects.GameObject[] = [];
@@ -479,7 +479,7 @@ export class Nivel1Scene extends Phaser.Scene {
             targets.push(sprite);
         });
 
-        // Remove from placedFoods array first
+        // Eliminación previa del arreglo placedFoods
         this.placedFoods = this.placedFoods.filter(f => !foods.includes(f));
 
         this.tweens.add({
@@ -508,7 +508,7 @@ export class Nivel1Scene extends Phaser.Scene {
 
         const mixed = [...waveVerduras, ...waveFrutas, ...waveSebos];
 
-        // Oleada 1: zanahoria en índice 0 para el tutorial
+        // Oleada 1 con zanahoria en índice 0 para el tutorial
         if (this.waveNumber === 1) {
             const ci = mixed.findIndex(f => f.id === 'carrot');
             if (ci > 0) {
@@ -520,33 +520,6 @@ export class Nivel1Scene extends Phaser.Scene {
 
         return { foods: Phaser.Utils.Array.Shuffle(mixed) as FoodItem[], correctCount };
     }
-
-    /* private clearPlacedFoods(onDone: () => void) {
-        if (this.placedFoods.length === 0) { onDone(); return; }
-
-        // Stop per-frame Y sync before tweening so there's no conflict
-        this.placedFoods.forEach(s => { s.setData('basket', undefined); s.setData('slotRelY', undefined); });
-
-        const targets: Phaser.GameObjects.GameObject[] = [];
-        this.placedFoods.forEach(sprite => {
-            const texto = sprite.getData("texto") as Phaser.GameObjects.Text | undefined;
-            if (texto) targets.push(texto);
-            targets.push(sprite);
-        });
-
-        this.tweens.add({
-            targets,
-            alpha: 0,
-            y: '-=40',
-            duration: 350,
-            ease: 'Power2',
-            onComplete: () => {
-                targets.forEach(obj => obj.destroy());
-                this.placedFoods = [];
-                onDone();
-            }
-        });
-    } */
 
     private clearFoodBar() {
         if (!this.foodContainer) return;
@@ -565,7 +538,7 @@ export class Nivel1Scene extends Phaser.Scene {
 
         // Ancho real del contenido (de borde a borde del primer y último alimento)
         const contentSpan = (foods.length - 1) * FOOD_ITEM_SPACING + FOOD_ITEM_SIZE;
-        // Padding izquierdo para centrar cuando el contenido es más angosto que el viewport
+        // Padding izquierdo para centrar contenido más angosto que el viewport
         const xPad = Math.max(0, (viewportW - contentSpan) / 2);
 
         foods.forEach((item, index) => {
@@ -576,13 +549,13 @@ export class Nivel1Scene extends Phaser.Scene {
                 : item.category === 'fruit' ? 'fruta'
                     : 'sebo';
 
-            // Sprite en su posición final; animación pop desde escala 0
+            // Sprite en posición final con animación pop desde escala 0
             const sprite = this.add.image(localX, localY, item.id)
                 .setDisplaySize(FOOD_ITEM_SIZE, FOOD_ITEM_SIZE)
                 .setAlpha(0)
                 .setInteractive({ useHandCursor: true });
 
-            // Guardar escala destino antes de poner a 0
+            // Registro de escala destino antes de iniciar desde 0
             const tScaleX = sprite.scaleX;
             const tScaleY = sprite.scaleY;
             sprite.setScale(0);
@@ -610,7 +583,7 @@ export class Nivel1Scene extends Phaser.Scene {
 
             this.foodContainer.add([sprite, texto]);
 
-            // Animación carta: aparece de la nada (pop) con delay escalonado
+            // Animación de carta con aparición pop y delay escalonado
             this.time.delayedCall(index * 160, () => {
                 try { this.sound.play("carta-sonido"); } catch { void 0; }
                 this.tweens.add({
@@ -627,14 +600,14 @@ export class Nivel1Scene extends Phaser.Scene {
         });
     }
 
-    // ─── TIMER ────────────────────────────────────────────────────────────────
+    // Temporizador
 
     private startTimer(seconds: number) {
         this.timerSeconds = seconds;
         this.updateTimerDisplay();
         if (this.timerEvent) this.timerEvent.destroy();
 
-        // Ticking clock sound
+        // Sonido de reloj activo
         this.urgentMode = false;
         if (this.tickingSound) { try { this.tickingSound.stop(); } catch { void 0; } }
         try {
@@ -698,14 +671,14 @@ export class Nivel1Scene extends Phaser.Scene {
         this.executeGameOver('¡Se acabó el tiempo!');
     }
 
-    // Muestra la pantalla de game over y reinicia — sin depender de waveInProgress
+    // Pantalla de game over con reinicio independiente de waveInProgress
     private executeGameOver(reason: string) {
         this.isTutorialActive = false;
         try { this.sound.play("sonido-error"); } catch { void 0; }
         this.mostrarPlaton(false);
 
-        // Save checkpoint so wave 2+ restarts from the same wave
-        // Use current placedFoods (not wave-start snapshot) so basket persists on restart
+        // Registro de checkpoint para reiniciar oleadas 2+ desde la misma oleada
+        // Uso de placedFoods actual para conservar la canasta durante el reinicio
         if (this.waveNumber >= 2 && this.waveCheckpoint) {
             this.registry.set('nivel1_checkpoint', {
                 ...this.waveCheckpoint,
@@ -748,7 +721,7 @@ export class Nivel1Scene extends Phaser.Scene {
         });
     }
 
-    // ─── LIVES ────────────────────────────────────────────────────────────────
+    // Vidas
 
     private updateLivesDisplay() {
         if (!this.livesText) return;
@@ -810,7 +783,7 @@ export class Nivel1Scene extends Phaser.Scene {
         this.time.delayedCall(620, () => { basket.clearTint(); });
     }
 
-    // ─── WAVE COMPLETE ────────────────────────────────────────────────────────
+    // Oleada completada
 
     private onWaveComplete() {
         if (!this.waveInProgress) return;
@@ -836,7 +809,7 @@ export class Nivel1Scene extends Phaser.Scene {
         const overlay = this.add.rectangle(cx, cy, width, height, 0x000000, 0.72)
             .setDepth(100).setAlpha(0);
 
-        // Platón a la derecha
+        // Platón ubicado a la derecha
         const platonBig = this.add.image(width * 0.78, cy + 30, "platon-feliz")
             .setScale(0).setDepth(101);
 
@@ -876,7 +849,7 @@ export class Nivel1Scene extends Phaser.Scene {
         });
     }
 
-    // ─── FOOD BAR SHELL ───────────────────────────────────────────────────────
+    // Estructura de la barra de alimentos
 
     private buildFoodBarShell(width: number, visibleTop: number = 0) {
         const barWidth = Math.round(width * 0.82);
@@ -898,12 +871,12 @@ export class Nivel1Scene extends Phaser.Scene {
         this.foodContainer = this.add.container(viewportX, visibleTop).setDepth(5);
     }
 
-    // ─── DRAG & DROP ──────────────────────────────────────────────────────────
+    // Drag and drop
 
     private setupDragDrop() {
         this.input.on('dragstart', (pointer: Phaser.Input.Pointer, gameObject: Phaser.GameObjects.Image) => {
             if (this.isTutorialActive && gameObject !== this.tutorialCarrot) return;
-            // Hide hand while user is actively dragging
+            // Ocultamiento de la mano durante el arrastre activo del usuario
             if (this.isTutorialActive && this.tutorialHand) {
                 this.tweens.killTweensOf(this.tutorialHand);
                 this.tutorialHand.setAlpha(0);
@@ -950,7 +923,7 @@ export class Nivel1Scene extends Phaser.Scene {
             const categoriaZona = dropZone.getData("categoria") as string;
 
             if (categoriaItem === categoriaZona) {
-                // Siempre snapeamos al slot de inventario libre más cercano
+                // Ajuste al slot de inventario libre más cercano
                 const targetPanel = categoriaZona === 'verdura' ? this.segmentoVerduras : this.segmentoFrutas;
                 const slot = this.findNearestFreeInventorySlot(targetPanel, gameObject.x, gameObject.y, gameObject);
                 if (slot) {
@@ -964,7 +937,7 @@ export class Nivel1Scene extends Phaser.Scene {
                     return;
                 }
 
-                // ACIERTO
+                // Acierto
                 gameObject.clearTint();
                 this.input.setDraggable(gameObject, false);
                 gameObject.disableInteractive();
@@ -982,7 +955,7 @@ export class Nivel1Scene extends Phaser.Scene {
                     this.pulseBasket(categoriaZona === 'verdura' ? this.segmentoVerduras : this.segmentoFrutas);
                     this.waveAciertos++;
 
-                    // Check if this specific basket is now full (12 items)
+                    // Verificación de canasta llena con 12 elementos
                     const basketFull = this.placedFoods.filter(f => f.getData('basket') === targetPanel).length >= 12;
                     if (basketFull) {
                         this.time.delayedCall(800, () => this.clearBasketFoods(targetPanel));
@@ -994,13 +967,13 @@ export class Nivel1Scene extends Phaser.Scene {
                 }
 
             } else {
-                // ERROR
+                // Error
                 gameObject.clearTint();
                 try { this.sound.play("sonido-error"); } catch { void 0; }
                 try { this.mostrarPlaton(false); } catch { void 0; }
 
                 if (categoriaItem === 'verdura' || categoriaItem === 'fruta') {
-                    // Fruta/verdura en zona incorrecta → sacudir la canasta equivocada, mostrar pista, perder vida
+                    // Error de zona para fruta o verdura con sacudida, pista y pérdida de vida
                     this.shakeWrongFood(gameObject);
                     const dropZoneBasket = categoriaZona === 'verdura' ? this.segmentoVerduras : this.segmentoFrutas;
                     this.shakeWrongBasket(dropZoneBasket);
@@ -1015,7 +988,7 @@ export class Nivel1Scene extends Phaser.Scene {
                         this.time.delayedCall(400, () => this.executeGameOver('¡Pusiste el alimento en el lugar equivocado!'));
                     }
                 } else {
-                    // Sebo → sacudir, mostrar pista, regresa a la barra
+                    // Error de sebo con sacudida, pista y retorno a la barra
                     this.shakeWrongFood(gameObject);
                     this.showEducationalFeedback(categoriaItem, categoriaZona);
                     this.returnToFoodBar(gameObject);
@@ -1039,7 +1012,7 @@ export class Nivel1Scene extends Phaser.Scene {
         });
     }
 
-    // ─── RETURN TO BAR ────────────────────────────────────────────────────────
+    // Retorno a la barra
 
     private returnToFoodBar(gameObject: Phaser.GameObjects.Image) {
         const texto = gameObject.getData("texto") as Phaser.GameObjects.Text | undefined;
@@ -1075,9 +1048,9 @@ export class Nivel1Scene extends Phaser.Scene {
         });
     }
 
-    // ─── INVENTORY SLOTS ─────────────────────────────────────────────────────
-    // Imagen 784×680 px, centro en (392, 340).
-    // 4 columnas × 3 filas. Offsets en píxeles nativos desde el centro.
+    // Slots de inventario
+    // Imagen de 784x680 px con centro en (392, 340).
+    // Cuadrícula de 4 columnas por 3 filas con offsets nativos desde el centro.
     private static readonly SLOT_COL_OFFSETS = [-240, -80, 80, 240];
     private static readonly SLOT_ROW_OFFSETS = [-154, 12, 185];
 
@@ -1155,7 +1128,7 @@ export class Nivel1Scene extends Phaser.Scene {
         });
     }
 
-    // ─── UPDATE ───────────────────────────────────────────────────────────────
+    // Update
 
     private repositionUI() {
         const { width, height } = this.scale;
@@ -1205,7 +1178,7 @@ export class Nivel1Scene extends Phaser.Scene {
         this.isTutorialActive = true;
         const { width, height } = this.scale;
 
-        // Platón inicia fuera de pantalla por la derecha, invisible
+        // Platón inicia invisible fuera de pantalla por la derecha
         this.platon
             .setTexture('platon-feliz')
             .setScale(0.8)
@@ -1213,7 +1186,7 @@ export class Nivel1Scene extends Phaser.Scene {
             .setAlpha(0)
             .setDepth(10);
 
-        // Se arrastra hacia la izquierda hasta el lado izquierdo del plato
+        // Desplazamiento hacia el lado izquierdo del plato
         this.tweens.add({
             targets: this.platon,
             x: 300,
@@ -1242,7 +1215,7 @@ export class Nivel1Scene extends Phaser.Scene {
                 const bh = txt.height + pad * 2;
 
                 const bubble = this.add.graphics().setDepth(11).setAlpha(0);
-                // Cola del globo (se dibuja primero para que el rect tape el borde superior)
+                // Cola del globo dibujada antes del cuerpo para cubrir el borde superior
                 bubble.fillStyle(0xFFFAED, 0.97);
                 bubble.fillTriangle(bx + 40, by + bh, bx + 85, by + bh, bx - 20, by + bh + 58);
                 // Cuerpo del globo
@@ -1266,7 +1239,7 @@ export class Nivel1Scene extends Phaser.Scene {
                         onComplete: () => {
                             bubble.destroy();
                             txt.destroy();
-                            // Poblar barra; el timer arranca DESPUÉS del tutorial
+                            // Población de la barra con inicio del temporizador después del tutorial
                             this.initWavePools();
                             if (!this.registry.get('introCompleted_Nivel1') && !this.registry.get('tutorialCompleted_Nivel1')) {
                                 this.stopTimer();
@@ -1280,7 +1253,7 @@ export class Nivel1Scene extends Phaser.Scene {
         });
     }
 
-    // ─── TUTORIAL INTERACTIVO (3 pasos) ──────────────────────────────────────
+    // Tutorial interactivo de tres pasos
 
     private startTutorial() {
         this.isTutorialActive = true;
@@ -1289,36 +1262,36 @@ export class Nivel1Scene extends Phaser.Scene {
         if (!carrot) { this.isTutorialActive = false; this.waveInProgress = true; this.startTimer(WAVE_TIME_NORMAL); return; }
         this.tutorialCarrot = carrot;
 
-        // Solo la zanahoria es interactiva; habilitar arrastre desde el paso 1
+        // Habilitación de arrastre solo para la zanahoria desde el paso 1
         this.foodContainer.list.forEach(child => {
             if (child instanceof Phaser.GameObjects.Image) child.disableInteractive();
         });
         carrot.setInteractive({ useHandCursor: true });
         this.input.setDraggable(carrot, true);
 
-        // Platón aparece en el lado izquierdo (ya está en x=220, alpha=0 tras el intro)
+        // Aparición de Platón en el lado izquierdo tras la introducción
         this.platon.setTexture('platon-feliz').setDepth(10);
         this.tweens.add({ targets: this.platon, alpha: 1, duration: 600, ease: 'Power2.easeOut' });
 
-        // Burbuja paso 1
+        // Burbuja del paso 1
         this.showTutBubble('Arrastra la zanahoria\na su canasta manteniendo\npresionado el click.');
 
-        // Manita apuntando a la zanahoria
+        // Mano indicadora apuntando a la zanahoria
         const wx = this.foodContainer.x + carrot.x;
         const wy = this.foodContainer.y + carrot.y;
         this.tutorialHand = this.add.image(wx + 15, wy + 20, 'manita')
             .setDepth(50).setAlpha(0).setScale(1.1);
 
-        // Resaltar el slot objetivo desde el inicio
+        // Resaltado inicial del slot objetivo
         const slot = this.getInventorySlotPositions(this.segmentoVerduras)[0];
         this.tutorialHighlight = this.add.rectangle(slot.x, slot.y, 84, 84, 0x76ff76, 0.28)
             .setDepth(45).setStrokeStyle(3, 0x44cc44, 1);
         this.tweens.add({ targets: this.tutorialHighlight, alpha: { from: 0.28, to: 0.68 }, duration: 440, yoyo: true, repeat: -1 });
 
-        // Activar animación de arrastre inmeEStamente
+        // Activación inmediata de la animación de arrastre
         this.loopTutHand(slot.x, slot.y);
 
-        // Paso 1 → avanza al empezar a arrastrar la zanahoria
+        // Avance del paso 1 al iniciar el arrastre de la zanahoria
         carrot.once('dragstart', () => this.onTutorialStep2());
     }
 
@@ -1327,10 +1300,10 @@ export class Nivel1Scene extends Phaser.Scene {
 
         this.isTutorialDragging = true;
 
-        // Actualizar burbuja
+        // Actualización de la burbuja
         this.showTutBubble('¡Muy bien! Llévala\nhasta la zona resaltada.');
 
-        // Ocultar la manita y fantasma mientras el usuario ya lo tiene agarrado
+        // Ocultamiento de mano y fantasma durante el arrastre manual
         if (this.tutorialHand) {
             this.tweens.killTweensOf(this.tutorialHand);
             this.tutorialHand.setAlpha(0);
@@ -1352,7 +1325,7 @@ export class Nivel1Scene extends Phaser.Scene {
         const hand = this.tutorialHand;
         hand.setPosition(startX, startY).setAlpha(0).setScale(1.1);
 
-        // Crear/Reiniciar el fantasma
+        // Creación o reinicio del fantasma
         if (!this.tutorialGhostCarrot) {
             this.tutorialGhostCarrot = this.add.image(carrotStartX, carrotStartY, this.tutorialCarrot.texture.key)
                 .setDepth(48).setAlpha(0).setScale(this.tutorialCarrot.scaleX);
@@ -1362,30 +1335,30 @@ export class Nivel1Scene extends Phaser.Scene {
 
         const ghost = this.tutorialGhostCarrot;
 
-        // Fase 1: Aparecer la mano
+        // Fase 1: aparición de la mano
         this.tweens.add({
             targets: hand, alpha: 1, duration: 300,
             onComplete: () => {
                 if (!this.isTutorialActive || !this.tutorialHand || this.isTutorialDragging) return;
 
-                // Pequeña pausa antes de hacer clic
+                // Pausa breve antes del clic
                 this.time.delayedCall(200, () => {
                     if (!this.isTutorialActive || !this.tutorialHand || this.isTutorialDragging) return;
 
-                    // Fase 2: Simular click (bajar escala, NO yoyo)
+                    // Fase 2: simulación de clic con reducción de escala sin yoyo
                     this.tweens.add({
                         targets: hand, scaleX: 0.9, scaleY: 0.9, duration: 350, ease: 'Sine.easeOut',
                         onComplete: () => {
                             if (!this.isTutorialActive || !this.tutorialHand || this.isTutorialDragging) return;
 
-                            // Fase 3: Aparecer el fantasma de zanahoria como si la agarrara
+                            // Fase 3: aparición del fantasma de zanahoria durante el agarre
                             ghost.setAlpha(0.6);
 
-                            // Pausa breve con el click apretado antes de arrastrar
+                            // Pausa breve con el clic sostenido antes del arrastre
                             this.time.delayedCall(200, () => {
                                 if (!this.isTutorialActive || !this.tutorialHand || this.isTutorialDragging) return;
 
-                                // Fase 4: Mover mano y fantasma hacia el objetivo (más lento)
+                                // Fase 4: movimiento de mano y fantasma hacia el objetivo
                                 this.tweens.add({
                                     targets: [hand], x: slotX + 15, y: slotY - 8, duration: 1300, ease: 'Power2.easeInOut'
                                 });
@@ -1394,12 +1367,12 @@ export class Nivel1Scene extends Phaser.Scene {
                                     onComplete: () => {
                                         if (!this.isTutorialActive || !this.tutorialHand || this.isTutorialDragging) return;
 
-                                        // Fase 4.5: Soltar click (restaurar escala)
+                                        // Fase intermedia: liberación del clic y restauración de escala
                                         this.tweens.add({
                                             targets: hand, scaleX: 1.1, scaleY: 1.1, duration: 250
                                         });
 
-                                        // Fase 5: Desaparecer
+                                        // Fase 5: desaparición
                                         this.tweens.add({
                                             targets: [hand, ghost], alpha: 0, duration: 400, delay: 300,
                                             onComplete: () => {
@@ -1435,7 +1408,7 @@ export class Nivel1Scene extends Phaser.Scene {
             return;
         }
 
-        // Colocar en slot
+        // Colocación en slot
         gameObject.x = slot.x;
         gameObject.y = slot.y;
         const textoSlot = gameObject.getData('texto') as Phaser.GameObjects.Text | undefined;
@@ -1451,18 +1424,18 @@ export class Nivel1Scene extends Phaser.Scene {
         this.placedFoods.push(gameObject);
         this.waveAciertos++;
 
-        // Pop de celebración
+        // Animación pop de celebración
         const sx = gameObject.scaleX, sy = gameObject.scaleY;
         this.tweens.add({ targets: gameObject, scaleX: { from: 1.5, to: sx }, scaleY: { from: 1.5, to: sy }, duration: 380, ease: 'Back.easeOut' });
         try { this.sound.play('object_win'); } catch { void 0; }
 
-        // Detener manita, fantasma y resaltado
+        // Detención de mano, fantasma y resaltado
         this.isTutorialActive = false;
         if (this.tutorialHand) this.tweens.killTweensOf(this.tutorialHand);
         if (this.tutorialHighlight) this.tweens.killTweensOf(this.tutorialHighlight);
         if (this.tutorialGhostCarrot) { this.tweens.killTweensOf(this.tutorialGhostCarrot); this.tutorialGhostCarrot.setAlpha(0); }
 
-        // Burbuja paso 3
+        // Burbuja del paso 3
         this.showTutBubble('¡Excelente! Has guardado\nun nuevo alimento en\ntu inventario.');
 
         this.time.delayedCall(2800, () => this.endTutorial());
@@ -1471,7 +1444,7 @@ export class Nivel1Scene extends Phaser.Scene {
     private showTutWrongHint() {
         this.isTutorialDragging = false;
         this.tweens.add({ targets: this.segmentoVerduras, alpha: { from: 1, to: 0.4 }, duration: 160, yoyo: true, repeat: 2 });
-        // Reiniciar loop de manita tras el regreso del alimento a la barra
+        // Reinicio del loop de mano tras el retorno del alimento a la barra
         this.time.delayedCall(380, () => {
             if (this.isTutorialActive && this.tutorialHand && this.tutorialCarrot) {
                 const slot = this.getInventorySlotPositions(this.segmentoVerduras)[0];
@@ -1486,10 +1459,10 @@ export class Nivel1Scene extends Phaser.Scene {
         if (this.tutorialGhostCarrot) { this.tweens.killTweensOf(this.tutorialGhostCarrot); this.tutorialGhostCarrot.destroy(); this.tutorialGhostCarrot = undefined; }
         this.destroyTutBubble();
 
-        // Platón se va
+        // Salida de Platón
         this.tweens.add({ targets: this.platon, x: this.scale.width + 300, alpha: 0, duration: 700, ease: 'Power2.easeIn' });
 
-        // Rehabilitar todos los alimentos restantes en la barra
+        // Rehabilitación de alimentos restantes en la barra
         this.foodContainer.list.forEach(child => {
             if (child instanceof Phaser.GameObjects.Image) {
                 child.setInteractive({ useHandCursor: true });
@@ -1503,7 +1476,7 @@ export class Nivel1Scene extends Phaser.Scene {
         this.registry.set('introCompleted_Nivel1', true);
         this.registry.remove('tutorialCompleted_Nivel1');
         this.waveInProgress = true;
-        this.startTimer(WAVE_TIME_NORMAL);   // contador arranca en 60 s
+        this.startTimer(WAVE_TIME_NORMAL);   // Inicio del contador en 60 s
     }
 
     private showTutBubble(text: string) {
@@ -1553,7 +1526,7 @@ export class Nivel1Scene extends Phaser.Scene {
             this.repositionUI();
         }
 
-        // Keep drop zones aligned with bobbing basket images
+        // Alineación de zonas de drop con la animación de las canastas
         if (this.zonaBordeVerduras) {
             this.zonaBordeVerduras.y = this.segmentoVerduras.y;
             this.zonaVerduras.y = this.segmentoVerduras.y + this.zvOffY;
@@ -1563,14 +1536,14 @@ export class Nivel1Scene extends Phaser.Scene {
             this.zonaFrutas.y = this.segmentoFrutas.y + this.zfOffY;
         }
 
-        // Keep tutorial highlight on the target slot as basket bobs
+        // Alineación del resaltado del tutorial con la canasta animada
         if (this.tutorialHighlight) {
             const slot = this.getInventorySlotPositions(this.segmentoVerduras)[0];
             this.tutorialHighlight.x = slot.x;
             this.tutorialHighlight.y = slot.y;
         }
 
-        // Keep placed foods glued to their basket's current Y
+        // Sincronización vertical de alimentos colocados con su canasta
         for (const food of this.placedFoods) {
             const basket = food.getData('basket') as Phaser.GameObjects.Image | undefined;
             const relY = food.getData('slotRelY') as number | undefined;
@@ -1581,7 +1554,7 @@ export class Nivel1Scene extends Phaser.Scene {
         }
     }
 
-    // ─── PLATÓN ───────────────────────────────────────────────────────────────
+    // Platón
 
     private startBasketIdleAnim(basket: Phaser.GameObjects.Image, phaseDelay: number) {
         const baseY = basket.y;
@@ -1625,7 +1598,7 @@ export class Nivel1Scene extends Phaser.Scene {
         const { height } = this.scale;
         this.tweens.killTweensOf(this.platon);
         this.platon.setTexture(esFeliz ? "platon-feliz" : "platon-triste");
-        // Always snap x back to the gameplay position (after tutorial it ends off-screen right)
+        // Restauración de X a la posición de juego tras finalizar el tutorial fuera de pantalla
         this.platon.setPosition(300, height - 200);
         this.tweens.add({
             targets: this.platon,
@@ -1646,7 +1619,7 @@ export class Nivel1Scene extends Phaser.Scene {
         });
     }
 
-    // ─── LEVEL COMPLETE ───────────────────────────────────────────────────────
+    // Nivel completado
 
     private mostrarPantallaFinal() {
 

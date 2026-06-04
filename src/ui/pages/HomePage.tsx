@@ -21,7 +21,7 @@ function HomePage() {
         window.__phaserGame = game
 
         return () => {
-            // No destruimos el juego al desmontar para que sobreviva al overlay de React
+            // Conservación de la instancia Phaser al desmontar el overlay de React
         }
     }, [])
     return <div ref={divRef} style={{ width: '100%', height: '100%' }} />

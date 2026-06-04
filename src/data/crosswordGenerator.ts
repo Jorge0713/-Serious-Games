@@ -49,7 +49,7 @@ export const CROSSWORD_DICTIONARY = [
 export function generateDynamicCrossword(maxWords: number = 7): WordConfig[] {
     let bestGrid: WordConfig[] = [];
 
-    // Intentar varias veces para obtener el crucigrama más denso posible
+    // Ejecución de varios intentos para obtener el crucigrama más denso posible
     for (let attempt = 0; attempt < 10; attempt++) {
         const pool = [...CROSSWORD_DICTIONARY].sort(() => Math.random() - 0.5);
         const placed: WordConfig[] = [];
@@ -74,17 +74,17 @@ export function generateDynamicCrossword(maxWords: number = 7): WordConfig[] {
                 const cellLetter = grid.get(key);
 
                 if (cellLetter) {
-                    if (cellLetter !== word[i]) return false; // Clash
+                    if (cellLetter !== word[i]) return false; // Conflicto de letras
                     intersections++;
                 } else {
-                    // Check adjacent cells
+                    // Validación de celdas adyacentes
                     const adj1 = horizontal ? `${x},${y - 1}` : `${x - 1},${y}`;
                     const adj2 = horizontal ? `${x},${y + 1}` : `${x + 1},${y}`;
                     if (grid.has(adj1) || grid.has(adj2)) return false;
                 }
             }
 
-            // Check ends of the word
+            // Validación de extremos de la palabra
             const beforeX = horizontal ? startX - 1 : startX;
             const beforeY = horizontal ? startY : startY - 1;
             if (grid.has(`${beforeX},${beforeY}`)) return false;
@@ -96,13 +96,13 @@ export function generateDynamicCrossword(maxWords: number = 7): WordConfig[] {
             return intersections > 0 || placed.length === 0;
         }
 
-        // Place first word
+        // Colocación de la primera palabra
         if (pool.length > 0) {
             addWord(pool[0], 0, 0, true);
             pool.splice(0, 1);
         }
 
-        // Try placing remaining words
+        // Colocación de las palabras restantes
         for (const wordObj of pool) {
             if (placed.length >= maxWords) break;
 
@@ -111,12 +111,12 @@ export function generateDynamicCrossword(maxWords: number = 7): WordConfig[] {
 
             for (const p of placed) {
                 for (let i = 0; i < word.length; i++) {
-                    // Saltar la primera letra de la palabra nueva para evitar ambigüedad de inicio
+                    // Omisión de la primera letra de la palabra nueva para evitar ambigüedad de inicio
                     if (i === 0) continue;
 
                     const char = word[i];
                     for (let j = 0; j < p.answer.length; j++) {
-                        // Saltar la primera letra de la palabra ya colocada para evitar ambigüedad de inicio
+                        // Omisión de la primera letra de la palabra ya colocada para evitar ambigüedad de inicio
                         if (j === 0) continue;
 
                         if (p.answer[j] === char) {                            const intersectX = p.horizontal ? p.startX + j : p.startX;
@@ -142,7 +142,7 @@ export function generateDynamicCrossword(maxWords: number = 7): WordConfig[] {
             }
         }
 
-        // Normalize coordinates
+        // Normalización de coordenadas
         let minX = Infinity, minY = Infinity;
         for (const p of placed) {
             if (p.startX < minX) minX = p.startX;
@@ -153,12 +153,12 @@ export function generateDynamicCrossword(maxWords: number = 7): WordConfig[] {
             p.startY -= minY;
         }
 
-        // Si este intento logró colocar más palabras que el anterior, lo guardamos
+        // Conservación del intento con mayor cantidad de palabras colocadas
         if (placed.length > bestGrid.length) {
             bestGrid = placed;
         }
 
-        // Si ya conseguimos el máximo de palabras deseadas, terminamos la búsqueda
+        // Finalización de la búsqueda al alcanzar el máximo de palabras deseadas
         if (bestGrid.length === maxWords) {
             break;
         }

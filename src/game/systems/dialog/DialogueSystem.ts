@@ -33,10 +33,10 @@ export class DialogueSystem {
     this.y = config.y;
     this.width = config.width;
 
-    // Caja de diálogo
+    // Inicialización de la caja de diálogo
     this.box = this.scene.add.graphics();
 
-    // Texto
+    // Inicialización del texto
     this.text = this.scene.add.text(this.x + this.padding, this.y + this.padding, "", {
       fontFamily: FONT_DISPLAY, 
       fontSize: "19px",
@@ -71,7 +71,7 @@ export class DialogueSystem {
 
     this.typeEffect();
 
-    // desbloquear después de X tiempo
+    // Habilitación de avance después del tiempo configurado
     this.scene.time.delayedCall(duration, () => {
       this.canContinue = true;
     });

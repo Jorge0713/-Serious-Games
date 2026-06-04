@@ -26,7 +26,7 @@ export class Nivel3Scene extends Phaser.Scene {
     private placedFoods: Phaser.GameObjects.Image[] = [];
     private isTutorialActive = false;
 
-    // Wave state
+    // Estado de oleadas
     private waveNumber        = 0;
     private waveCorrectTarget = 0;
     private waveAciertos      = 0;
@@ -34,7 +34,7 @@ export class Nivel3Scene extends Phaser.Scene {
     private junkPool:        FoodItem[] = [];
     private waveInProgress = false;
 
-    // Wave checkpoint for game-over restart
+    // Checkpoint de oleada para reinicio tras game over
     private waveCheckpoint: {
         waveNumber: number;
         remainingAnimal: FoodItem[];
@@ -42,7 +42,7 @@ export class Nivel3Scene extends Phaser.Scene {
         savedInventory?: { id: string, categoria: string }[];
     } | null = null;
 
-    // Timer
+    // Temporizador
     private timerSeconds = WAVE_TIME_NORMAL;
     private timerEvent?: Phaser.Time.TimerEvent;
     private timerText!:        Phaser.GameObjects.Text;
@@ -50,21 +50,21 @@ export class Nivel3Scene extends Phaser.Scene {
     private tickingSound?: Phaser.Sound.BaseSound;
     private urgentMode = false;
 
-    // Lives
+    // Vidas
     private lives = 3;
     private livesText!: Phaser.GameObjects.Text;
 
-    // Drop zone (synced every frame to follow bobbing section)
+    // Zona de drop sincronizada con la animación de la sección
     private dropZone!: Phaser.GameObjects.Zone;
     private dzOffY    = 0;
 
-    // Educational feedback toast
+    // Toast de feedback educativo
     private toastBg?:    Phaser.GameObjects.Rectangle;
     private toastLabel?: Phaser.GameObjects.Text;
     private toastTxt?:   Phaser.GameObjects.Text;
     private toastTimer?: Phaser.Time.TimerEvent;
 
-    // UI Elements for resizing
+    // Elementos de UI para redimensionamiento
     private lblAnimal!: Phaser.GameObjects.Text;
     private foodBarShadow!: Phaser.GameObjects.Rectangle;
     private foodBarBg!: Phaser.GameObjects.Rectangle;
@@ -80,7 +80,7 @@ export class Nivel3Scene extends Phaser.Scene {
         this.lastWindowHeight = 0;
     }
 
-    // ── PRELOAD ───────────────────────────────────────────────────────────────
+    // Preload
     preload() {
         this.load.image('fondo_cocina3',    '/assets/Backgrounds/Fondo_Cocina.png');
         this.load.image('inventario-animal', '/assets/Plato/inventoryAnimal.webp');
@@ -97,7 +97,7 @@ export class Nivel3Scene extends Phaser.Scene {
         nutritionalInfo.forEach(food => this.load.image(food.id, food.image));
     }
 
-    // ── CREATE ────────────────────────────────────────────────────────────────
+    // Create
     create() {
         const { width, height } = this.scale;
         
@@ -138,7 +138,7 @@ export class Nivel3Scene extends Phaser.Scene {
 
         this.createBackButton();
 
-        // SECCIÓN ANIMAL
+        // Sección animal
         const escalaCanasta  = 0.60;
         const canastaCentroY = visibleTop + (visibleBottom - visibleTop) * 0.65;
 
@@ -164,7 +164,7 @@ export class Nivel3Scene extends Phaser.Scene {
 
         this.startSectionIdleAnim(this.animalSection);
 
-        // BOTÓN PAUSA
+        // Botón de pausa
         
         PrefabButtons.icono(this, 1800, 90, () => {
             this.scene.pause();
@@ -175,7 +175,7 @@ export class Nivel3Scene extends Phaser.Scene {
             text: 'II',
             fontSize: '28px'
         }).setDepth(20);
-        // TIMER
+        // Temporizador
         const timerX = 1700;
         const timerY = height / 2;
         const timerPanelWidth = 250;
@@ -205,7 +205,7 @@ export class Nivel3Scene extends Phaser.Scene {
             fontStyle: 'bold', stroke: '#5E412F', strokeThickness: 5,
         }).setOrigin(0.5).setDepth(20).setVisible(false);
 
-        // VIDAS
+        // Vidas
         const livesX = timerX;
         const livesPanelWidth = 250;
         const livesPanelHeight = 112;
@@ -236,7 +236,7 @@ export class Nivel3Scene extends Phaser.Scene {
 
         this.events.once('shutdown', () => this.stopTimer());
 
-        // Check for wave checkpoint (game-over in wave 2+)
+        // Verificación del checkpoint de oleada para reinicios desde game over
         const checkpoint = this.registry.get('nivel3_checkpoint') as {
             waveNumber: number;
             remainingAnimal: FoodItem[];
@@ -248,7 +248,7 @@ export class Nivel3Scene extends Phaser.Scene {
             this.registry.remove('nivel3_checkpoint');
             this.remainingAnimal = [...checkpoint.remainingAnimal];
             this.junkPool        = [...checkpoint.junkPool];
-            // startNextWave increments waveNumber, so set to one before the saved wave
+            // Ajuste previo porque startNextWave incrementa waveNumber
             this.waveNumber = checkpoint.waveNumber - 1;
             
             if (checkpoint.savedInventory) {
@@ -263,7 +263,7 @@ export class Nivel3Scene extends Phaser.Scene {
         }
     }
 
-    // ─── WAVE SYSTEM ──────────────────────────────────────────────────────────
+    // Sistema de oleadas
 
     private createBackButton(): void {
         PrefabButtons.volver(this, 110, 90, () => {
@@ -301,7 +301,7 @@ export class Nivel3Scene extends Phaser.Scene {
         this.remainingAnimal = Phaser.Utils.Array.Shuffle([...allAnimal]) as FoodItem[];
         this.junkPool        = Phaser.Utils.Array.Shuffle([...allJunk])   as FoodItem[];
 
-        // Huevo primero en oleada 1
+        // Huevo en primera posición durante la oleada inicial
         const eggIdx = this.remainingAnimal.findIndex(f => f.id === 'egg');
         if (eggIdx > 0) {
             const [egg] = this.remainingAnimal.splice(eggIdx, 1);
@@ -315,7 +315,7 @@ export class Nivel3Scene extends Phaser.Scene {
         this.waveAciertos   = 0;
         this.waveInProgress = false;
 
-        // Save checkpoint BEFORE splicing the pools
+        // Registro del checkpoint antes de modificar los pools
         this.waveCheckpoint = {
             waveNumber:     this.waveNumber,
             remainingAnimal: [...this.remainingAnimal],
@@ -323,7 +323,7 @@ export class Nivel3Scene extends Phaser.Scene {
             savedInventory:  this.placedFoods.map(f => ({ id: f.texture.key, categoria: f.getData("categoria") as string }))
         };
 
-        // Reset foodContainer scroll position
+        // Reinicio del desplazamiento de foodContainer
         if (this.foodContainer) this.foodContainer.x = this.buildFoodBarViewportX();
 
         const proceed = () => {
@@ -348,7 +348,7 @@ export class Nivel3Scene extends Phaser.Scene {
             this.waveInProgress = true;
         };
 
-        // Clear the basket if full (12 items), then proceed
+        // Limpieza de la canasta al alcanzar 12 elementos antes de continuar
         const animalFull = this.placedFoods.filter(f => f.getData('basket') === this.animalSection).length >= 12;
         if (animalFull) {
             this.clearBasketFoods(this.animalSection, proceed);
@@ -357,7 +357,7 @@ export class Nivel3Scene extends Phaser.Scene {
         }
     }
 
-    /** Returns the foodContainer's initial viewport X (mirrors buildFoodBarShell logic). */
+    /** Devuelve la posición X inicial del viewport de foodContainer según buildFoodBarShell. */
     private buildFoodBarViewportX(): number {
         const { width } = this.scale;
         const barWidth   = Math.round(width * 0.82);
@@ -367,8 +367,8 @@ export class Nivel3Scene extends Phaser.Scene {
     }
 
     /**
-     * Clears only the placed foods belonging to `panel`.
-     * Flashes the basket green, then tweens foods out.
+     * Limpia solo los alimentos colocados asociados a `panel`.
+     * Resalta la canasta en verde antes de retirar los alimentos con tween.
      */
     private clearBasketFoods(panel: Phaser.GameObjects.Image, onDone?: () => void) {
         const foods = this.placedFoods.filter(f => f.getData('basket') === panel);
@@ -393,24 +393,6 @@ export class Nivel3Scene extends Phaser.Scene {
             onComplete: () => { targets.forEach(obj => obj.destroy()); onDone?.(); }
         });
     }
-
-    /* private clearPlacedFoods(onDone: () => void) {
-        if (this.placedFoods.length === 0) { onDone(); return; }
-
-        this.placedFoods.forEach(s => { s.setData('basket', undefined); s.setData('slotRelY', undefined); });
-
-        const targets: Phaser.GameObjects.GameObject[] = [];
-        this.placedFoods.forEach(sprite => {
-            const texto = sprite.getData('texto') as Phaser.GameObjects.Text | undefined;
-            if (texto) targets.push(texto);
-            targets.push(sprite);
-        });
-
-        this.tweens.add({
-            targets, alpha: 0, y: '-=40', duration: 350, ease: 'Power2',
-            onComplete: () => { targets.forEach(o => o.destroy()); this.placedFoods = []; onDone(); }
-        });
-    } */
 
     private clearFoodBar() {
         if (!this.foodContainer) return;
@@ -481,7 +463,7 @@ export class Nivel3Scene extends Phaser.Scene {
 
     }
 
-    // ─── TIMER ────────────────────────────────────────────────────────────────
+    // Temporizador
 
     private startTimer(seconds: number) {
         this.timerSeconds = seconds;
@@ -538,7 +520,7 @@ export class Nivel3Scene extends Phaser.Scene {
         this.executeGameOver('¡Se acabó el tiempo!');
     }
 
-    // ─── LIVES ────────────────────────────────────────────────────────────────
+    // Vidas
 
     private updateLivesDisplay() {
         if (!this.livesText) return;
@@ -552,8 +534,8 @@ export class Nivel3Scene extends Phaser.Scene {
         try { this.sound.play('sonido-error'); } catch { void 0; }
         this.mostrarPlaton(false);
 
-        // Save checkpoint so wave 2+ restarts from the same wave
-        // Use current placedFoods (not wave-start snapshot) so basket persists on restart
+        // Registro de checkpoint para reiniciar oleadas 2+ desde la misma oleada
+        // Uso de placedFoods actual para conservar la canasta durante el reinicio
         if (this.waveNumber >= 2 && this.waveCheckpoint) {
             this.registry.set('nivel3_checkpoint', {
                 ...this.waveCheckpoint,
@@ -655,7 +637,7 @@ export class Nivel3Scene extends Phaser.Scene {
         });
     }
 
-    // ─── DRAG & DROP ─────────────────────────────────────────────────────────
+    // Drag and drop
 
     private setupDragDrop() {
         this.input.on('dragstart', (pointer: Phaser.Input.Pointer, gameObject: Phaser.GameObjects.Image) => {
@@ -723,7 +705,7 @@ export class Nivel3Scene extends Phaser.Scene {
 
                 this.waveAciertos++;
 
-                // Check if the basket is now full (12 items)
+                // Verificación de canasta llena con 12 elementos
                 const basketFull = this.placedFoods.filter(f => f.getData('basket') === this.animalSection).length >= 12;
                 if (basketFull) {
                     this.time.delayedCall(800, () => this.clearBasketFoods(this.animalSection));
@@ -733,7 +715,7 @@ export class Nivel3Scene extends Phaser.Scene {
                     this.time.delayedCall(800, () => this.onWaveComplete());
                 }
             } else {
-                // Chatarra en zona animal → error
+                // Error por colocar chatarra en zona animal
                 gameObject.clearTint();
                 try { this.sound.play('sonido-error'); } catch { void 0; }
                 try { this.mostrarPlaton(false); } catch { void 0; }
@@ -758,7 +740,7 @@ export class Nivel3Scene extends Phaser.Scene {
         });
     }
 
-    // ─── RETURN TO BAR ────────────────────────────────────────────────────────
+    // Retorno a la barra
 
     private returnToFoodBar(gameObject: Phaser.GameObjects.Image) {
         const texto      = gameObject.getData('texto')     as Phaser.GameObjects.Text | undefined;
@@ -787,7 +769,7 @@ export class Nivel3Scene extends Phaser.Scene {
         });
     }
 
-    // ─── INVENTORY SLOTS ──────────────────────────────────────────────────────
+    // Slots de inventario
 
     private static readonly SLOT_COL_OFFSETS = [-240, -80, 80, 240];
     private static readonly SLOT_ROW_OFFSETS = [-154,  12, 185];
@@ -909,7 +891,7 @@ export class Nivel3Scene extends Phaser.Scene {
         });
     }
 
-    // ─── EDUCATIONAL FEEDBACK ─────────────────────────────────────────────────
+    // Feedback educativo
 
     private clearToast() {
         if (this.toastTimer) { this.toastTimer.destroy(); this.toastTimer = undefined; }
@@ -950,7 +932,7 @@ export class Nivel3Scene extends Phaser.Scene {
         this.tweens.add({ targets: food, angle: 7, duration: 60, yoyo: true, repeat: 3, ease: 'Linear', onComplete: () => { food.setAngle(0); } });
     }
 
-    // ─── ANIMATIONS ───────────────────────────────────────────────────────────
+    // Animaciones
 
     private startSectionIdleAnim(section: Phaser.GameObjects.Image) {
         const baseY = section.y;
@@ -995,7 +977,7 @@ export class Nivel3Scene extends Phaser.Scene {
         });
     }
 
-    // ─── UPDATE ───────────────────────────────────────────────────────────────
+    // Update
 
     private repositionUI() {
         const { width, height } = this.scale;

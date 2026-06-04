@@ -54,7 +54,7 @@ export const ConceptosMain: React.FC<ConceptosMainProps> = ({
                 </div>
             </div>
 
-            {/* Navigation */}
+            {/* Navegación */}
             <div className="conceptos-nav">
                 <button 
                     className="nav-btn prev" 

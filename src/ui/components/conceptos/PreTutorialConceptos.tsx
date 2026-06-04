@@ -108,7 +108,7 @@ export const PreTutorialConceptos: React.FC<PreTutorialConceptosProps> = ({ onBa
     const isFirst = currentIndex === 0;
     const isLast = currentIndex === CONCEPTS.length - 1;
 
-    // Sonidos pre-cargados
+    // Precarga de sonidos de interacción
     useEffect(() => {
         const hoverAudio = new Audio('/Sound/hoverSound.mp3');
         const clickAudio = new Audio('/Sound/Click.mp3');

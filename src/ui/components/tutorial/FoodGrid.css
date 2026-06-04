@@ -1,4 +1,4 @@
-/* ─── Tokens de diseño (alineados con MAIN_MENU_COLORS / LEVEL_SELECT_COLORS) ── */
+/* Tokens de diseño alineados con MAIN_MENU_COLORS y LEVEL_SELECT_COLORS */
 .tutorial-container {
     --paper: #FFFBF0;
     --paper-soft: #F2EADB;
@@ -19,7 +19,7 @@
     --orange-rgb: 244, 163, 111;
     --accent: #8A95E0;
 
-    /* Aliases legacy: el .tsx y resto del CSS los siguen usando */
+    /* Alias heredados usados por el componente TSX y el resto del CSS */
     --green-main: var(--green);
     --wood: var(--ink);
     --wood-dark: var(--ink);
@@ -53,7 +53,7 @@
     position: relative;
 }
 
-/* Patrón de puntos sutil estilo MainMenu / LevelSelectScene */
+/* Patrón de puntos sutil alineado con MainMenu y LevelSelectScene */
 .tutorial-container::before {
     content: '';
     position: fixed;
@@ -110,7 +110,7 @@
     padding: 88px 0 56px;
 }
 
-/* ─── Hero ─────────────────────────────────────────────────────────────── */
+/* Hero */
 .tutorial-hero {
     text-align: center;
     animation: viewReveal 520ms ease both;
@@ -157,7 +157,7 @@
     font-family: var(--text-font);
 }
 
-/* ─── Nav superior ─────────────────────────────────────────────────────── */
+/* Navegación superior */
 .section-nav {
     position: fixed;
     top: 20px;
@@ -270,7 +270,7 @@
     width: 12px;
 }
 
-/* ─── Stack de secciones ───────────────────────────────────────────────── */
+/* Apilado de secciones */
 .sections-stack {
     display: grid;
     gap: 28px;
@@ -321,7 +321,7 @@
     font-family: var(--text-font);
 }
 
-/* ─── Panel principal del explorador ───────────────────────────────────── */
+/* Panel principal del explorador */
 .food-explorer {
     display: grid;
     grid-template-columns: minmax(0, 1fr) minmax(340px, 430px);
@@ -428,7 +428,7 @@
     scroll-padding: 12px;
 }
 
-/* ─── Panel de nutrición ───────────────────────────────────────────────── */
+/* Panel de nutrición */
 .nutrition-summary-panel {
     padding: 20px 22px 22px;
     color: var(--ink);
@@ -501,7 +501,7 @@
     overflow-wrap: anywhere;
 }
 
-/* ─── Tarjeta de alimento ─────────────────────────────────────────────── */
+/* Tarjeta de alimento */
 .food-card {
     position: relative;
     flex: 0 0 clamp(168px, 16vw, 214px);
@@ -628,7 +628,7 @@
     letter-spacing: 0.5px;
 }
 
-/* ─── Spotlight (ficha nutritiva) ──────────────────────────────────────── */
+/* Spotlight de ficha nutritiva */
 .food-spotlight {
     position: sticky;
     top: 88px;
@@ -780,7 +780,7 @@
     background: var(--yellow);
 }
 
-/* ─── Botón siguiente / final ──────────────────────────────────────────── */
+/* Botón siguiente o final */
 .btn-next {
     display: block;
     min-height: 58px;
@@ -830,7 +830,7 @@
     text-wrap: balance;
 }
 
-/* ─── Animaciones ──────────────────────────────────────────────────────── */
+/* Animaciones */
 @keyframes viewReveal {
     from {
         opacity: 0;
@@ -873,7 +873,7 @@
     }
 }
 
-/* ─── Responsivo ───────────────────────────────────────────────────────── */
+/* Responsivo */
 @media (max-width: 980px) {
     .tutorial-shell {
         width: min(100% - 28px, 760px);

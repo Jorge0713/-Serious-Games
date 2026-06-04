@@ -13,12 +13,12 @@ const INITIAL_DIALOG = "Hola aventurero. Soy Platon. Frente a ti esta el Plato d
 const TUTORIAL_KITCHEN_BACKGROUND_ALPHA = 1;
 const TUTORIAL_SCRIM_CENTER_ALPHA = 0.18;
 const TUTORIAL_SCRIM_EDGE_ALPHA = 0.45;
-const DIALOG_X_MAX = 620;                 // tope horizontal (px) — sube/baja este número
-const DIALOG_X_RATIO = 0.32;              // fracción del ancho de pantalla
-const DIALOG_Y_OFFSET_FROM_BOTTOM = 600;  // px arriba del borde inferior
-const DIALOG_WRAP_WIDTH_MAX = 520;        // ancho máximo del texto
-const DIALOG_WRAP_WIDTH_MIN = 370;        // ancho mínimo del texto
-const DIALOG_WRAP_RATIO = 0.28;           // fracción del ancho para el wrap
+const DIALOG_X_MAX = 620;                 // Límite horizontal máximo en píxeles
+const DIALOG_X_RATIO = 0.32;              // Proporción del ancho de pantalla
+const DIALOG_Y_OFFSET_FROM_BOTTOM = 600;  // Separación vertical desde el borde inferior
+const DIALOG_WRAP_WIDTH_MAX = 520;        // Ancho máximo del texto
+const DIALOG_WRAP_WIDTH_MIN = 370;        // Ancho mínimo del texto
+const DIALOG_WRAP_RATIO = 0.28;           // Proporción del ancho para el ajuste de línea
 const DIALOG_DEV_MODE = false;
 const DIALOG_NUDGE_STEP = 10;
 
@@ -119,17 +119,17 @@ export class TutorialScene extends Phaser.Scene {
     private createKitchenBackground(): void {
         const { width, height } = this.scale;
 
-        // Capa 1: rectángulo crema sólido
+        // Capa base con rectángulo crema sólido
         this.add.rectangle(width / 2, height / 2, width, height, 0xfffbf0, 1)
             .setDepth(-3);
 
-        // Capa 2: imagen de cocina con opacidad ajustable
+        // Capa de imagen de cocina con opacidad configurable
         this.add.image(width / 2, height / 2, "Fondo-cocina")
             .setDisplaySize(width, height)
             .setAlpha(TUTORIAL_KITCHEN_BACKGROUND_ALPHA)
             .setDepth(-2);
 
-        // Capa 3: scrim radial crema (claro al centro, más opaco en los bordes)
+        // Capa de scrim radial crema con mayor opacidad en los bordes
         this.createScrimTexture();
         this.add.image(width / 2, height / 2, "tutorial_scrim")
             .setDisplaySize(width, height)

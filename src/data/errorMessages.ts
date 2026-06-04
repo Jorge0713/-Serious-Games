@@ -1,18 +1,18 @@
 /**
- * Educational error messages shown when a player places a food in the wrong category.
+ * Mensajes educativos mostrados cuando un alimento se coloca en una categoría incorrecta.
  *
- * Keys follow the pattern  `{itemCategory}_{wrongZoneCategory}`
- * where categories use the game's internal Spanish names
- * (fruta, verdura, sebo, cereal, leguminosa, animal, chatarra, …).
+ * Las claves siguen el patrón `{itemCategory}_{wrongZoneCategory}`,
+ * usando los nombres internos de categorías del juego
+ * (fruta, verdura, sebo, cereal, leguminosa, animal, chatarra, ...).
  *
- * Add new entries here to support future levels without touching the main game code.
+ * Nuevas entradas permiten ampliar niveles sin modificar el código principal del juego.
  */
 
 type MessageSet = { messages: string[] };
 
 const errorData: Record<string, MessageSet> = {
 
-    // ── Nivel 1: Frutas y Verduras ─────────────────────────────────────────────
+    // Nivel 1: Frutas y verduras
 
     fruta_verdura: {
         messages: [
@@ -52,7 +52,7 @@ const errorData: Record<string, MessageSet> = {
         ],
     },
 
-    // ── Nivel 2: Cereales y Leguminosas ───────────────────────────────────────
+    // Nivel 2: Cereales y leguminosas
 
     cereal_leguminosa: {
         messages: [
@@ -86,7 +86,7 @@ const errorData: Record<string, MessageSet> = {
         ],
     },
 
-    // ── Nivel 3: Alimentos de Origen Animal ───────────────────────────────────
+    // Nivel 3: Alimentos de origen animal
 
     chatarra_animal: {
         messages: [
@@ -103,7 +103,7 @@ const errorData: Record<string, MessageSet> = {
         ],
     },
 
-    // ── Fallback genérico ─────────────────────────────────────────────────────
+    // Fallback genérico
 
     default: {
         messages: [
@@ -115,14 +115,14 @@ const errorData: Record<string, MessageSet> = {
     },
 };
 
-/** Tracks the index last shown per key to avoid consecutive repeats. */
+/** Registro del último índice mostrado por clave para evitar repeticiones consecutivas. */
 const lastShownIndex: Record<string, number> = {};
 
 /**
- * Returns a non-repeating random educational message for the given error.
+ * Devuelve un mensaje educativo aleatorio sin repetición consecutiva para el error indicado.
  *
- * @param itemCategory   Internal game category of the dragged food  (e.g. 'fruta', 'verdura')
- * @param zoneCategory   Internal game category of the drop zone      (e.g. 'verdura', 'fruta')
+ * @param itemCategory   Categoría interna del alimento arrastrado  (ej. 'fruta', 'verdura')
+ * @param zoneCategory   Categoría interna de la zona de destino    (ej. 'verdura', 'fruta')
  */
 export function getErrorMessage(itemCategory: string, zoneCategory: string): string {
     const key   = `${itemCategory}_${zoneCategory}`;

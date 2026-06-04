@@ -76,7 +76,7 @@ export class MainMenu extends Phaser.Scene {
         super({ key: 'MainMenu' });
     }
 
-    // ─────────────────────────── Phaser lifecycle ───────────────────────────
+    // Ciclo de vida de Phaser
 
     preload(): void {
         this.load.image('menu_kitchen_bg', '/assets/Backgrounds/Fondo_Cocina.png');
@@ -92,7 +92,7 @@ export class MainMenu extends Phaser.Scene {
 
     create(): void {
 
-                        // BOTÓN PAUSA
+                        // Botón de pausa
         PrefabButtons.icono(this, 1860, 100, () => {
             this.scene.pause();
             this.scene.launch('PauseScene', { previousScene: this.scene.key });
@@ -137,14 +137,14 @@ export class MainMenu extends Phaser.Scene {
         this.input.keyboard?.on('keydown-SPACE', () => this.startGame());
     }
 
-    // ─────────────────────────── Audio ───────────────────────────
+    // Audio
 
     private createAudio(): void {
         this.clickSound = this.sound.add('menu_click', { volume: 0.14, loop: false });
         this.hoverSound = this.sound.add('menu_hover', { volume: 0.08, loop: false });
     }
 
-    // ─────────────────────── Background & atmosphere ───────────────────────
+    // Fondo y atmósfera
 
     private createGeneratedTextures(): void {
         this.createScrimTexture();
@@ -282,7 +282,7 @@ export class MainMenu extends Phaser.Scene {
             .setDepth(13);
     }
 
-    // ─────────────────────────── HUD & title ───────────────────────────
+    // HUD y título
 
     private createHud(): void {
         this.createTextCard({
@@ -329,7 +329,7 @@ export class MainMenu extends Phaser.Scene {
         }).setOrigin(0.5);
     }
 
-    // ─────────────────────────── Main actions ───────────────────────────
+    // Acciones principales
 
     private createMainActions(): void {
         this.createPlayButton();
@@ -517,7 +517,7 @@ export class MainMenu extends Phaser.Scene {
     }
 
 
-    // ─────────────────────────── Footer ───────────────────────────
+    // Pie de pantalla
 
     private createFooter(): void {
         this.add.text(WIDTH / 2, HEIGHT - 16, '© 2026 PLACHEF · BASADO EN EL PLATO DEL BIEN COMER (NOM-043-SSA2)', {
@@ -527,7 +527,7 @@ export class MainMenu extends Phaser.Scene {
         }).setOrigin(0.5).setDepth(14);
     }
 
-    // ─────────────────────────── Font refresh ───────────────────────────
+    // Actualización de fuentes
 
     private refreshTextAfterFontsLoad(): void {
         if (!document.fonts) return;
@@ -545,7 +545,7 @@ export class MainMenu extends Phaser.Scene {
         });
     }
 
-    // ─────────────────────────── Reusable builders ───────────────────────────
+    // Constructores reutilizables
 
     private createTextCard(config: {
         x: number;
@@ -574,7 +574,7 @@ export class MainMenu extends Phaser.Scene {
         return card;
     }
 
-    // ─────────────────────────── Navigation ───────────────────────────
+    // Navegación
 
     private startGame(playSound = true): void {
         if (playSound) {
@@ -584,7 +584,7 @@ export class MainMenu extends Phaser.Scene {
         this.showPlayerFormOverlay();
     }
 
-    // ─────────────────────── Player form overlay (DOM) ───────────────────────
+    // Overlay DOM del formulario de jugador
 
     private showPlayerFormOverlay(): void {
         if (this.playerFormOverlay) {
@@ -905,7 +905,7 @@ export class MainMenu extends Phaser.Scene {
         this.playerFormOverlay = undefined;
     }
 
-    // ─────────────────────────── Modals ───────────────────────────
+    // Modales
 
     showLevelsModal(): void {
         this.showModal('Selecciona nivel', [
