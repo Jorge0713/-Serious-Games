@@ -1,73 +1,32 @@
-# React + TypeScript + Vite
+# Serious Games: Alimentacion App
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+## Descripcion del proyecto
+## Plachef
+Es un Serious Game educativo de escritorio creado para enseñar conceptos basicos de nutricion mediante una experiencia interactiva. El proyecto utiliza el tema del Plato del Bien Comer para guiar al usuario por los principales grupos de alimentos y reforzar el aprendizaje con recursos visuales, dialogos, animaciones y secciones explorables.
 
-Currently, two official plugins are available:
+Plachef fue desarrollado para el Centro de Salud Las Tinas de Jáltipan, en colaboración con la Dra. Angélica Irais Machorro Martínez. Su finalidad es servir como herramienta de apoyo en pláticas y consultas con los pacientes, ayudándolos a aprender cómo mejorar su alimentación y permitiendo que la doctora identifique de qué manera llevan su dieta.
+El juego está diseñado con tutoriales y niveles que enseñan los conceptos básicos de una alimentación balanceada. Al avanzar, el paciente llega a la sección “Arma tu plato”, donde aplica lo aprendido. A partir de sus elecciones, la aplicación puede mostrarle si está armando un plato adecuado o si necesita mejorar algunos aspectos de su alimentación.
+Además, Plachef toma en cuenta enfermedades que requieren mayor control en la dieta, como la diabetes o la hipertensión, con el objetivo de orientar al paciente sobre cómo regular mejor su forma de comer de manera correcta y saludable.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+La aplicacion combina una interfaz desarrollada con React y TypeScript con escenas interactivas construidas en Phaser. Desde el menu principal, el usuario puede acceder al tutorial del plato, interactuar con sus secciones y consultar informacion nutricional sobre frutas y verduras. El objetivo es que el aprendizaje sobre alimentacion saludable sea mas dinamico, visual y facil de recordar.
 
-## React Compiler
+## Objetivo
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+Promover el conocimiento sobre una alimentacion equilibrada a traves de un serious game que permita aprender jugando. La aplicacion busca apoyar la comprension de los grupos alimenticios, sus beneficios y la importancia de combinarlos correctamente en la vida diaria.
 
-## Expanding the ESLint configuration
+## Tecnologias utilizadas
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+- React
+- TypeScript
+- Vite
+- Phaser
+- Electron
+- CSS
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+## Estructura general
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
-
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
-
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+- `src/game`: escenas y logica interactiva del juego en Phaser.
+- `src/ui`: paginas y componentes visuales de React.
+- `src/data`: informacion nutricional utilizada en los tutoriales.
+- `electron`: configuracion principal para abrir la aplicacion de escritorio.
+- `public`: recursos graficos, sonidos e imagenes usados por el juego.
