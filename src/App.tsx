@@ -238,7 +238,7 @@ function App() {
           onPointerUp={event => event.stopPropagation()}
         >
           <PreTutorialConceptos
-            onBackToMenu={() => startPhaserScene('MainMenu')}
+            onBackToMenu={() => startPhaserScene('LevelSelectScene')}
             onFinish={() => {
               FlowProgressService.markCompleted('preTutorialConceptosCompleted');
               startPhaserScene(conceptosNextScene);

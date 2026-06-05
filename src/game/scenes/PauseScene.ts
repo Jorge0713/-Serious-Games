@@ -2,6 +2,8 @@ import * as Phaser from 'phaser';
 import { FONT_DISPLAY } from '../../config/gameFonts';
 import { PrefabButtons } from '../../componentes/PrefabButtons';
 
+const PAUSE_UI_DEPTH = 10000;
+
 export class PauseScene extends Phaser.Scene {
     private previousSceneKey: string = '';
     private volumeText!: Phaser.GameObjects.Text;
@@ -16,16 +18,19 @@ export class PauseScene extends Phaser.Scene {
 
     create() {
         const { width, height } = this.scale;
+        this.scene.bringToTop(this.scene.key);
 
         // Overlay oscuro translúcido
-        const overlay = this.add.rectangle(width / 2, height / 2, width, height, 0x000000, 0.6);
+        const overlay = this.add.rectangle(width / 2, height / 2, width, height, 0x000000, 0.72)
+            .setDepth(PAUSE_UI_DEPTH);
         overlay.setInteractive(); // Bloqueo de clics hacia escenas inferiores
 
         // Panel principal
         const panelW = 480;
         const panelH = 420;
         this.add.rectangle(width / 2, height / 2, panelW, panelH, 0xF5FBF2, 1)
-            .setStrokeStyle(6, 0x5D4037);
+            .setStrokeStyle(6, 0x5D4037)
+            .setDepth(PAUSE_UI_DEPTH + 1);
 
         // Título del panel
         this.add.text(width / 2, height / 2 - 140, 'PAUSA', {
@@ -33,7 +38,7 @@ export class PauseScene extends Phaser.Scene {
             fontSize: '48px',
             fontStyle: 'bold',
             color: '#5D4037'
-        }).setOrigin(0.5);
+        }).setOrigin(0.5).setDepth(PAUSE_UI_DEPTH + 2);
 
         // Botón de reanudación
         PrefabButtons.continuar(this, width / 2, height / 2 - 40, () => {
@@ -41,7 +46,8 @@ export class PauseScene extends Phaser.Scene {
             this.scene.stop();
         }, {
             text: 'REANUDAR',
-            width: 260
+            width: 260,
+            depth: PAUSE_UI_DEPTH + 3,
         });
 
         // Controles de volumen
@@ -49,28 +55,28 @@ export class PauseScene extends Phaser.Scene {
             fontFamily: FONT_DISPLAY,
             fontSize: '24px',
             color: '#5D4037'
-        }).setOrigin(0.5);
+        }).setOrigin(0.5).setDepth(PAUSE_UI_DEPTH + 2);
 
         this.volumeText = this.add.text(width / 2, height / 2 + 70, `${Math.round(this.sound.volume * 100)}%`, {
             fontFamily: FONT_DISPLAY,
             fontSize: '28px',
             fontStyle: 'bold',
             color: '#2E3142'
-        }).setOrigin(0.5);
+        }).setOrigin(0.5).setDepth(PAUSE_UI_DEPTH + 2);
 
         // Reducción de volumen
         PrefabButtons.secundario(this, width / 2 - 80, height / 2 + 70, () => {
             let v = this.sound.volume - 0.1;
             if (v < 0) v = 0;
             this.setGlobalVolume(v);
-        }, { text: '-', width: 50, height: 50 });
+        }, { text: '-', width: 50, height: 50, depth: PAUSE_UI_DEPTH + 3 });
 
         // Aumento de volumen
         PrefabButtons.secundario(this, width / 2 + 80, height / 2 + 70, () => {
             let v = this.sound.volume + 0.1;
             if (v > 1) v = 1;
             this.setGlobalVolume(v);
-        }, { text: '+', width: 50, height: 50 });
+        }, { text: '+', width: 50, height: 50, depth: PAUSE_UI_DEPTH + 3 });
 
         if (this.previousSceneKey === 'MainMenu') {
             // Cierre de la ventana desde el menú principal
@@ -81,6 +87,7 @@ export class PauseScene extends Phaser.Scene {
                 text: 'SALIR DEL JUEGO',
                 fontSize: 18,
                 textColor: '#D03B2C',
+                depth: PAUSE_UI_DEPTH + 3,
             });
         } else {
             // Botón para volver al mapa
@@ -100,7 +107,8 @@ export class PauseScene extends Phaser.Scene {
                 }
             }, {
                 text: 'VOLVER AL MAPA',
-                fontSize: 18
+                fontSize: 18,
+                depth: PAUSE_UI_DEPTH + 3,
             });
         }
     }

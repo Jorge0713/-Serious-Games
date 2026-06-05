@@ -188,6 +188,7 @@ export class Nivel2Scene extends Phaser.Scene {
         PrefabButtons.icono(this, 1800, 90, () => {
             this.scene.pause();
             this.scene.launch('PauseScene', { previousScene: this.scene.key });
+            this.scene.bringToTop('PauseScene');
         }, {
             width:60,
             height:60,
