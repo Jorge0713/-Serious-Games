@@ -42,3 +42,4 @@ dist-ssr
 *.sw?
 .claude/
 release/
+.electron-builder-cache/
